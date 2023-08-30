@@ -40,5 +40,13 @@ namespace BpmnToDcrConverter.BPMN
         {
             return _flowElements;
         }
+
+        public void TestGraphValidity()
+        {
+            foreach (BpmnFlowElement element in _flowElements)
+            {
+                element.TestArrowCountValidity();
+            }
+        }
     }
 }
