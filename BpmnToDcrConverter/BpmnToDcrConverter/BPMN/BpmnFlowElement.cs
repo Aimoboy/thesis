@@ -7,6 +7,10 @@ namespace BpmnToDcrConverter.BPMN
     public abstract class BpmnFlowElement
     {
         public int Id;
+        public List<BpmnFlowArrow> OutgoingArrows = new List<BpmnFlowArrow>();
+        public List<BpmnFlowArrow> IngoingArrows = new List<BpmnFlowArrow>();
+
+        public abstract bool TestArrowCountValidity();
     }
 
     public class BpmnActivity : BpmnFlowElement
@@ -52,5 +56,23 @@ namespace BpmnToDcrConverter.BPMN
     {
         Or,
         And
+    }
+
+    public class BpmnFlowArrow
+    {
+        public BpmnFlowArrowType Type;
+        public BpmnFlowElement Element;
+
+        public BpmnFlowArrow(BpmnFlowArrowType type, BpmnFlowElement element)
+        {
+            Type = type;
+            Element = element;
+        }
+    }
+
+    public enum BpmnFlowArrowType
+    {
+        Message,
+        Sequence
     }
 }

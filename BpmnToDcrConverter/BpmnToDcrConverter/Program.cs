@@ -1,4 +1,6 @@
-﻿using System;
+﻿using BpmnToDcrConverter.BPMN;
+using System;
+using System.Collections.Generic;
 
 namespace BpmnToDcrConverter
 {
@@ -6,10 +8,12 @@ namespace BpmnToDcrConverter
     {
         static void Main(string[] args)
         {
-            foreach (string arg in args)
-            {
-                Console.WriteLine(arg);
-            }
+            BpmnActivity activity1 = new BpmnActivity(0, "Activity1");
+            BpmnActivity activity2 = new BpmnActivity(1, "Activity2");
+            BpmnActivity activity3 = new BpmnActivity(2, "Activity3");
+
+            List<BpmnFlowElement> activities = new List<BpmnFlowElement> { activity1, activity2, activity3 };
+            BpmnGraph graph = new BpmnGraph(activities);
         }
     }
 }
