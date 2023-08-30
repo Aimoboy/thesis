@@ -98,19 +98,12 @@ namespace BpmnToDcrConverter.BPMN
             int outgoingArrowCount = OutgoingArrows.Count;
             int ingoingArrowCount = IngoingArrows.Count;
 
-            string gatewayString;
-
-            switch (Type)
+            string gatewayString = Type switch
             {
-                case BpmnGatewayType.Or:
-                    gatewayString = "OR";
-                    break;
-                case BpmnGatewayType.And:
-                    gatewayString = "AND";
-                    break;
-                default:
-                    throw new Exception($"Missing case for enum {Type}.");
-            }
+                BpmnGatewayType.Or => "OR",
+                BpmnGatewayType.And => "AND",
+                _ => throw new Exception($"Missing case for enum {Type}.")
+            };
 
             if (outgoingArrowCount == 0)
             {
