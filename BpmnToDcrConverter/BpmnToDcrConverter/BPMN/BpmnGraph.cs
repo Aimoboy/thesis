@@ -9,6 +9,11 @@ namespace BpmnToDcrConverter.BPMN
     {
         List<BpmnFlowElement> _flowElements;
 
+        public BpmnGraph()
+        {
+            _flowElements = new List<BpmnFlowElement>();
+        }
+
         public BpmnGraph(IEnumerable<BpmnFlowElement> flowElements)
         {
             List<string> duplicateIds = flowElements.GroupBy(x => x.Id).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
@@ -67,6 +72,11 @@ namespace BpmnToDcrConverter.BPMN
         {
             from.OutgoingArrows.Add(new BpmnFlowArrow(type, to));
             to.IngoingArrows.Add(new BpmnFlowArrow(type, from));
+        }
+
+        public BpmnFlowElement GetFlowElementFromId(string id)
+        {
+            return _flowElements.Where(x => x.Id == id).FirstOrDefault();
         }
     }
 }
