@@ -46,7 +46,27 @@ namespace BpmnToDcrConverter.BPMN
             foreach (BpmnFlowElement element in _flowElements)
             {
                 element.TestArrowCountValidity();
+                TestValidArrowReferences(element);
             }
+        }
+
+        private void TestValidArrowReferences(BpmnFlowElement element)
+        {
+            IEnumerable<BpmnFlowArrow> allArrows = element.OutgoingArrows.Concat(element.IngoingArrows);
+
+            foreach (BpmnFlowArrow arrow in allArrows)
+            {
+                if (!_flowElements.Contains(arrow.Element))
+                {
+                    throw new Exception($"BPMN flow element with id \"{element.Id}\" has a reference to a flow element that isn't in the graph.");
+                }
+            }
+        }
+
+        public void AddArrow(BpmnFlowArrowType type, BpmnFlowElement from, BpmnFlowElement to)
+        {
+            from.OutgoingArrows.Add(new BpmnFlowArrow(type, to));
+            to.IngoingArrows.Add(new BpmnFlowArrow(type, from));
         }
     }
 }
