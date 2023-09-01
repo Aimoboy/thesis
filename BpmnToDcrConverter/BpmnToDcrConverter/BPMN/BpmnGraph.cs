@@ -11,7 +11,7 @@ namespace BpmnToDcrConverter.BPMN
 
         public BpmnGraph(IEnumerable<BpmnFlowElement> flowElements)
         {
-            List<int> duplicateIds = flowElements.GroupBy(x => x.Id).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
+            List<string> duplicateIds = flowElements.GroupBy(x => x.Id).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
             if (duplicateIds.Any())
             {
                 string exceptionString = string.Join(", ", duplicateIds);
@@ -23,7 +23,7 @@ namespace BpmnToDcrConverter.BPMN
 
         public void AddFlowElements(IEnumerable<BpmnFlowElement> flowElements)
         {
-            HashSet<int> ids = _flowElements.Select(x => x.Id).ToHashSet();
+            HashSet<string> ids = _flowElements.Select(x => x.Id).ToHashSet();
 
             foreach (BpmnFlowElement element in flowElements)
             {

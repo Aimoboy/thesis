@@ -7,7 +7,10 @@ namespace BpmnToDcrConverter.DCR
 {
     public abstract class DcrFlowElement
     {
-        public int Id;
+        public string Id;
+
+        public List<DcrFlowArrow> OutgoingArrows = new List<DcrFlowArrow>();
+        public List<DcrFlowArrow> IngoingArrows = new List<DcrFlowArrow>();
     }
 
     public class DcrActivity : DcrFlowElement
@@ -40,5 +43,26 @@ namespace BpmnToDcrConverter.DCR
             Name = name;
             Activities = activities.ToList();
         }
+    }
+
+    public class DcrFlowArrow
+    {
+        public DcrFlowArrowType Type;
+        public DcrFlowElement Element;
+
+        public DcrFlowArrow(DcrFlowArrowType type, DcrFlowElement element)
+        {
+            Type = type;
+            Element = element;
+        }
+    }
+
+    public enum DcrFlowArrowType
+    {
+        Condition,
+        Response,
+        Include,
+        Exclude,
+        Milestone
     }
 }

@@ -6,7 +6,7 @@ namespace BpmnToDcrConverter.BPMN
 {
     public abstract class BpmnFlowElement
     {
-        public int Id;
+        public string Id;
         public List<BpmnFlowArrow> OutgoingArrows = new List<BpmnFlowArrow>();
         public List<BpmnFlowArrow> IngoingArrows = new List<BpmnFlowArrow>();
 
@@ -17,7 +17,7 @@ namespace BpmnToDcrConverter.BPMN
     {
         public string Name;
 
-        public BpmnActivity(int id, string name)
+        public BpmnActivity(string id, string name)
         {
             Id = id;
             Name = name;
@@ -44,7 +44,7 @@ namespace BpmnToDcrConverter.BPMN
     {
         public BpmnEventType Type;
 
-        public BpmnEvent(int id, BpmnEventType type)
+        public BpmnEvent(string id, BpmnEventType type)
         {
             Id = id;
             Type = type;
@@ -87,7 +87,7 @@ namespace BpmnToDcrConverter.BPMN
     {
         public BpmnGatewayType Type;
 
-        public BpmnGateway(int id, BpmnGatewayType type)
+        public BpmnGateway(string id, BpmnGatewayType type)
         {
             Id = id;
             Type = type;
