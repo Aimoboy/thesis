@@ -7,7 +7,8 @@ using System.Xml.Linq;
 
 // TODO:
 // - Handle exclusive gateway condition expression
-// - Refactor
+// - Handle message arrows
+// - Refactor events
 
 namespace BpmnToDcrConverter
 {

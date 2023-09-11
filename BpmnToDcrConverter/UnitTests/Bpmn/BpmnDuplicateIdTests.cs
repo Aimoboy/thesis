@@ -1,10 +1,10 @@
 using BpmnToDcrConverter.BPMN;
 using BpmnToDcrConverter.BPMN.Exceptions;
 
-namespace UnitTests
+namespace UnitTests.Bpmn
 {
     [TestClass]
-    public class BpmnGraphCreationTests
+    public class BpmnDuplicateIdTests
     {
         [TestMethod]
         [ExpectedException(typeof(BpmnDuplicateIdException))]
