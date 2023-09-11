@@ -12,6 +12,9 @@ namespace BpmnToDcrConverter
     {
         static void Main(string[] args)
         {
+            args = new string[1];
+            args[0] = @"C:\Users\dn\Downloads\new-bpmn-diagram2.bpmn";
+
             if (args.Length != 1)
             {
                 throw new Exception("Need a single argument that is the location of the BPMN XML file.");

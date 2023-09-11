@@ -10,7 +10,7 @@ namespace BpmnToDcrConverter.DCR
         public string Id;
 
         public List<DcrFlowArrow> OutgoingArrows = new List<DcrFlowArrow>();
-        public List<DcrFlowArrow> IngoingArrows = new List<DcrFlowArrow>();
+        public List<DcrFlowArrow> IncomingArrows = new List<DcrFlowArrow>();
     }
 
     public class DcrActivity : DcrFlowElement

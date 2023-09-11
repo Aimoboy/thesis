@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace BpmnToDcrConverter.BPMN
@@ -8,9 +9,11 @@ namespace BpmnToDcrConverter.BPMN
     {
         public string Id;
         public List<BpmnFlowArrow> OutgoingArrows = new List<BpmnFlowArrow>();
-        public List<BpmnFlowArrow> IngoingArrows = new List<BpmnFlowArrow>();
+        public List<BpmnFlowArrow> IncomingArrows = new List<BpmnFlowArrow>();
 
         public abstract void TestArrowCountValidity();
+
+        public abstract List<string> GetIds();
     }
 
     public class BpmnActivity : BpmnFlowElement
@@ -26,17 +29,22 @@ namespace BpmnToDcrConverter.BPMN
         public override void TestArrowCountValidity()
         {
             int outgoingArrowCount = OutgoingArrows.Count;
-            int ingoingArrowCount = IngoingArrows.Count;
+            int incomingArrowCount = IncomingArrows.Count;
 
             if (outgoingArrowCount != 1)
             {
                 throw new Exception($"Activities must have exactly 1 outgoing arrow, the activity with name \"{Name}\" and id \"{Id}\" has {outgoingArrowCount} outgoing arrows.");
             }
 
-            if (ingoingArrowCount != 1)
+            if (incomingArrowCount != 1)
             {
-                throw new Exception($"Activities must have exactly 1 ingoing arrow, the activity with name \"{Name}\" and id \"{Id}\" has {ingoingArrowCount} ingoing arrows.");
+                throw new Exception($"Activities must have exactly 1 incoming arrow, the activity with name \"{Name}\" and id \"{Id}\" has {incomingArrowCount} incoming arrows.");
             }
+        }
+
+        public override List<string> GetIds()
+        {
+            return new List<string> { Id };
         }
     }
 
@@ -53,7 +61,7 @@ namespace BpmnToDcrConverter.BPMN
         public override void TestArrowCountValidity()
         {
             int outgoingArrowCount = OutgoingArrows.Count;
-            int ingoingArrowCount = IngoingArrows.Count;
+            int incomingArrowCount = IncomingArrows.Count;
 
             switch (Type)
             {
@@ -63,9 +71,9 @@ namespace BpmnToDcrConverter.BPMN
                         throw new Exception($"The START event with id \"{Id}\" has {outgoingArrowCount} outgoing arrows, but it has to have 1.");
                     }
 
-                    if (ingoingArrowCount != 0)
+                    if (incomingArrowCount != 0)
                     {
-                        throw new Exception($"The START event with id \"{Id}\" has {ingoingArrowCount} ingoing arrows, but it has to have 1.");
+                        throw new Exception($"The START event with id \"{Id}\" has {incomingArrowCount} incoming arrows, but it has to have 1.");
                     }
                     break;
                 case BpmnEventType.End:
@@ -74,12 +82,17 @@ namespace BpmnToDcrConverter.BPMN
                         throw new Exception($"The END event with id \"{Id}\" has {outgoingArrowCount} outgoing arrows, but it has to have 0.");
                     }
 
-                    if (ingoingArrowCount == 0)
+                    if (incomingArrowCount == 0)
                     {
-                        throw new Exception($"The END event with id \"{Id}\" has 0 ingoing arrows, but it has to have at least 1.");
+                        throw new Exception($"The END event with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
                     }
                     break;
             }
+        }
+
+        public override List<string> GetIds()
+        {
+            return new List<string> { Id };
         }
     }
 
@@ -96,7 +109,7 @@ namespace BpmnToDcrConverter.BPMN
         public override void TestArrowCountValidity()
         {
             int outgoingArrowCount = OutgoingArrows.Count;
-            int ingoingArrowCount = IngoingArrows.Count;
+            int incomingArrowCount = IncomingArrows.Count;
 
             string gatewayString = Type switch
             {
@@ -110,10 +123,63 @@ namespace BpmnToDcrConverter.BPMN
                 throw new Exception($"The {gatewayString} gateway with id \"{Id}\" has 0 outgoing arrows, but it has to have at least 1.");
             }
 
-            if (ingoingArrowCount == 0)
+            if (incomingArrowCount == 0)
             {
-                throw new Exception($"The {gatewayString} gateway with id \"{Id}\" has 0 ingoing arrows, but it has to have at least 1.");
+                throw new Exception($"The {gatewayString} gateway with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
             }
+        }
+
+        public override List<string> GetIds()
+        {
+            return new List<string> { Id };
+        }
+    }
+
+    public class BpmnSubProcess : BpmnFlowElement
+    {
+        public List<BpmnFlowElement> flowElements;
+
+        public BpmnSubProcess()
+        {
+            flowElements = new List<BpmnFlowElement>();
+        }
+
+        public BpmnSubProcess(IEnumerable<BpmnFlowElement> newFlowElements)
+        {
+            List<string> duplicateIds = newFlowElements.GroupBy(x => x.Id).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
+            if (duplicateIds.Any())
+            {
+                string exceptionString = string.Join(", ", duplicateIds);
+                throw new Exception($"Multiple flow elements with the ids \"{exceptionString}\" are given in the sub-process with id \"{Id}\".");
+            }
+
+            flowElements = newFlowElements.ToList();
+        }
+
+        public override void TestArrowCountValidity()
+        {
+            int outgoingArrowCount = OutgoingArrows.Count;
+            int incomingArrowCount = IncomingArrows.Count;
+
+            if (outgoingArrowCount != 1)
+            {
+                throw new Exception($"Sub-processes must have exactly 1 outgoing arrow, the sub-process with id \"{Id}\" has {outgoingArrowCount} outgoing arrows.");
+            }
+
+            if (incomingArrowCount != 1)
+            {
+                throw new Exception($"Sub-processes must have exactly 1 outgoing arrow, the sub-process with id \"{Id}\" has {incomingArrowCount} incoming arrows.");
+            }
+
+            foreach (BpmnFlowElement flowElement in flowElements)
+            {
+                flowElement.TestArrowCountValidity();
+            }
+        }
+
+        public override List<string> GetIds()
+        {
+            return flowElements.SelectMany(x => x.GetIds()).Concat(new[] { Id }).ToList();
         }
     }
 

@@ -16,7 +16,8 @@ namespace BpmnToDcrConverter.BPMN
 
         public BpmnGraph(IEnumerable<BpmnFlowElement> flowElements)
         {
-            List<string> duplicateIds = flowElements.GroupBy(x => x.Id).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
+            List<string> allIds = flowElements.SelectMany(x => x.GetIds()).ToList();
+            List<string> duplicateIds = allIds.GroupBy(x => x).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
             if (duplicateIds.Any())
             {
                 string exceptionString = string.Join(", ", duplicateIds);
@@ -26,11 +27,11 @@ namespace BpmnToDcrConverter.BPMN
             _flowElements = flowElements.ToList();
         }
 
-        public void AddFlowElements(IEnumerable<BpmnFlowElement> flowElements)
+        public void AddFlowElements(IEnumerable<BpmnFlowElement> newFlowElements)
         {
             HashSet<string> ids = _flowElements.Select(x => x.Id).ToHashSet();
 
-            foreach (BpmnFlowElement element in flowElements)
+            foreach (BpmnFlowElement element in newFlowElements)
             {
                 if (ids.Contains(element.Id))
                 {
@@ -38,7 +39,7 @@ namespace BpmnToDcrConverter.BPMN
                 }
             }
 
-            _flowElements = _flowElements.Concat(flowElements).ToList();
+            _flowElements = _flowElements.Concat(newFlowElements).ToList();
         }
 
         public List<BpmnFlowElement> GetFlowElements()
@@ -57,7 +58,7 @@ namespace BpmnToDcrConverter.BPMN
 
         private void TestValidArrowReferences(BpmnFlowElement element)
         {
-            IEnumerable<BpmnFlowArrow> allArrows = element.OutgoingArrows.Concat(element.IngoingArrows);
+            IEnumerable<BpmnFlowArrow> allArrows = element.OutgoingArrows.Concat(element.IncomingArrows);
 
             foreach (BpmnFlowArrow arrow in allArrows)
             {
@@ -71,7 +72,7 @@ namespace BpmnToDcrConverter.BPMN
         public void AddArrow(BpmnFlowArrowType type, BpmnFlowElement from, BpmnFlowElement to)
         {
             from.OutgoingArrows.Add(new BpmnFlowArrow(type, to));
-            to.IngoingArrows.Add(new BpmnFlowArrow(type, from));
+            to.IncomingArrows.Add(new BpmnFlowArrow(type, from));
         }
 
         public BpmnFlowElement GetFlowElementFromId(string id)
