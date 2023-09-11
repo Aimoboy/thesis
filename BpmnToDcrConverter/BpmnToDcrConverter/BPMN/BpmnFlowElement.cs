@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BpmnToDcrConverter.BPMN.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -33,12 +34,12 @@ namespace BpmnToDcrConverter.BPMN
 
             if (outgoingArrowCount != 1)
             {
-                throw new Exception($"Activities must have exactly 1 outgoing arrow, the activity with name \"{Name}\" and id \"{Id}\" has {outgoingArrowCount} outgoing arrows.");
+                throw new BpmnInvalidArrowException($"Activities must have exactly 1 outgoing arrow, the activity with name \"{Name}\" and id \"{Id}\" has {outgoingArrowCount} outgoing arrows.");
             }
 
             if (incomingArrowCount != 1)
             {
-                throw new Exception($"Activities must have exactly 1 incoming arrow, the activity with name \"{Name}\" and id \"{Id}\" has {incomingArrowCount} incoming arrows.");
+                throw new BpmnInvalidArrowException($"Activities must have exactly 1 incoming arrow, the activity with name \"{Name}\" and id \"{Id}\" has {incomingArrowCount} incoming arrows.");
             }
         }
 
@@ -68,23 +69,23 @@ namespace BpmnToDcrConverter.BPMN
                 case BpmnEventType.Start:
                     if (outgoingArrowCount != 1)
                     {
-                        throw new Exception($"The START event with id \"{Id}\" has {outgoingArrowCount} outgoing arrows, but it has to have 1.");
+                        throw new BpmnInvalidArrowException($"The START event with id \"{Id}\" has {outgoingArrowCount} outgoing arrows, but it has to have 1.");
                     }
 
                     if (incomingArrowCount != 0)
                     {
-                        throw new Exception($"The START event with id \"{Id}\" has {incomingArrowCount} incoming arrows, but it has to have 1.");
+                        throw new BpmnInvalidArrowException($"The START event with id \"{Id}\" has {incomingArrowCount} incoming arrows, but it has to have 1.");
                     }
                     break;
                 case BpmnEventType.End:
                     if (outgoingArrowCount != 0)
                     {
-                        throw new Exception($"The END event with id \"{Id}\" has {outgoingArrowCount} outgoing arrows, but it has to have 0.");
+                        throw new BpmnInvalidArrowException($"The END event with id \"{Id}\" has {outgoingArrowCount} outgoing arrows, but it has to have 0.");
                     }
 
                     if (incomingArrowCount == 0)
                     {
-                        throw new Exception($"The END event with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
+                        throw new BpmnInvalidArrowException($"The END event with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
                     }
                     break;
             }
@@ -120,12 +121,12 @@ namespace BpmnToDcrConverter.BPMN
 
             if (outgoingArrowCount == 0)
             {
-                throw new Exception($"The {gatewayString} gateway with id \"{Id}\" has 0 outgoing arrows, but it has to have at least 1.");
+                throw new BpmnInvalidArrowException($"The {gatewayString} gateway with id \"{Id}\" has 0 outgoing arrows, but it has to have at least 1.");
             }
 
             if (incomingArrowCount == 0)
             {
-                throw new Exception($"The {gatewayString} gateway with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
+                throw new BpmnInvalidArrowException($"The {gatewayString} gateway with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
             }
         }
 
@@ -150,7 +151,7 @@ namespace BpmnToDcrConverter.BPMN
             if (duplicateIds.Any())
             {
                 string exceptionString = string.Join(", ", duplicateIds);
-                throw new Exception($"Multiple flow elements with the ids \"{exceptionString}\" are given in the sub-process with id \"{Id}\".");
+                throw new BpmnDuplicateIdException($"Multiple flow elements with the ids \"{exceptionString}\" are given in the sub-process with id \"{Id}\".");
             }
 
             flowElements = newFlowElements.ToList();
@@ -163,12 +164,12 @@ namespace BpmnToDcrConverter.BPMN
 
             if (outgoingArrowCount != 1)
             {
-                throw new Exception($"Sub-processes must have exactly 1 outgoing arrow, the sub-process with id \"{Id}\" has {outgoingArrowCount} outgoing arrows.");
+                throw new BpmnInvalidArrowException($"Sub-processes must have exactly 1 outgoing arrow, the sub-process with id \"{Id}\" has {outgoingArrowCount} outgoing arrows.");
             }
 
             if (incomingArrowCount != 1)
             {
-                throw new Exception($"Sub-processes must have exactly 1 outgoing arrow, the sub-process with id \"{Id}\" has {incomingArrowCount} incoming arrows.");
+                throw new BpmnInvalidArrowException($"Sub-processes must have exactly 1 outgoing arrow, the sub-process with id \"{Id}\" has {incomingArrowCount} incoming arrows.");
             }
 
             foreach (BpmnFlowElement flowElement in flowElements)

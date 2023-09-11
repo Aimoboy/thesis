@@ -1,7 +1,7 @@
-﻿using System;
+﻿using BpmnToDcrConverter.BPMN.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace BpmnToDcrConverter.BPMN
 {
@@ -21,7 +21,7 @@ namespace BpmnToDcrConverter.BPMN
             if (duplicateIds.Any())
             {
                 string exceptionString = string.Join(", ", duplicateIds);
-                throw new Exception($"Multiple flow elements with the ids \"{exceptionString}\" are given.");
+                throw new BpmnDuplicateIdException($"Multiple flow elements with the ids \"{exceptionString}\" are given.");
             }
 
             _flowElements = flowElements.ToList();
@@ -35,7 +35,7 @@ namespace BpmnToDcrConverter.BPMN
             {
                 if (ids.Contains(element.Id))
                 {
-                    throw new Exception($"A flow element with id \"{element.Id}\" already exists.");
+                    throw new BpmnDuplicateIdException($"A flow element with id \"{element.Id}\" already exists.");
                 }
             }
 
@@ -64,7 +64,7 @@ namespace BpmnToDcrConverter.BPMN
             {
                 if (!_flowElements.Contains(arrow.Element))
                 {
-                    throw new Exception($"BPMN flow element with id \"{element.Id}\" has a reference to a flow element that isn't in the graph.");
+                    throw new BpmnInvalidArrowException($"BPMN flow element with id \"{element.Id}\" has a reference to a flow element that isn't in the graph.");
                 }
             }
         }
