@@ -29,13 +29,14 @@ namespace BpmnToDcrConverter.BPMN
 
         public void AddFlowElements(IEnumerable<BpmnFlowElement> newFlowElements)
         {
-            HashSet<string> ids = _flowElements.Select(x => x.Id).ToHashSet();
+            HashSet<string> allIds = _flowElements.SelectMany(x => x.GetIds()).ToHashSet();
+            IEnumerable<string> newFlowElementIds = newFlowElements.SelectMany(x => x.GetIds());
 
-            foreach (BpmnFlowElement element in newFlowElements)
+            foreach (string id in newFlowElementIds)
             {
-                if (ids.Contains(element.Id))
+                if (allIds.Contains(id))
                 {
-                    throw new BpmnDuplicateIdException($"A flow element with id \"{element.Id}\" already exists.");
+                    throw new BpmnDuplicateIdException($"A flow element with id \"{id}\" already exists.");
                 }
             }
 

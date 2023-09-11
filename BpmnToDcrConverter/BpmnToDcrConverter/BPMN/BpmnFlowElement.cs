@@ -140,13 +140,16 @@ namespace BpmnToDcrConverter.BPMN
     {
         public List<BpmnFlowElement> flowElements;
 
-        public BpmnSubProcess()
+        public BpmnSubProcess(string id)
         {
+            Id = id;
             flowElements = new List<BpmnFlowElement>();
         }
 
-        public BpmnSubProcess(IEnumerable<BpmnFlowElement> newFlowElements)
+        public BpmnSubProcess(string id, IEnumerable<BpmnFlowElement> newFlowElements)
         {
+            Id = id;
+
             List<string> duplicateIds = newFlowElements.GroupBy(x => x.Id).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
             if (duplicateIds.Any())
             {
