@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace BpmnToDcrConverter.DCR
+namespace BpmnToDcrConverter.Dcr
 {
     public abstract class DcrFlowElement
     {

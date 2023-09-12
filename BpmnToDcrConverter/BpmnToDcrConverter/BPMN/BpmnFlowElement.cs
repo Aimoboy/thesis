@@ -1,10 +1,10 @@
-﻿using BpmnToDcrConverter.BPMN.Exceptions;
+﻿using BpmnToDcrConverter.Bpmn.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace BpmnToDcrConverter.BPMN
+namespace BpmnToDcrConverter.Bpmn
 {
     public abstract class BpmnFlowElement
     {

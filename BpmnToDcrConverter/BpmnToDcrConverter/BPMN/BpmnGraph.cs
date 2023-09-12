@@ -1,9 +1,9 @@
-﻿using BpmnToDcrConverter.BPMN.Exceptions;
+﻿using BpmnToDcrConverter.Bpmn.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace BpmnToDcrConverter.BPMN
+namespace BpmnToDcrConverter.Bpmn
 {
     public class BpmnGraph
     {

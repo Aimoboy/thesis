@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BpmnToDcrConverter.BPMN.Exceptions
+namespace BpmnToDcrConverter.Bpmn.Exceptions
 {
     public class BpmnInvalidArrowException : Exception
     {

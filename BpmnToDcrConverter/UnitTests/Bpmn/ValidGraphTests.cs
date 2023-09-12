@@ -1,4 +1,4 @@
-﻿using BpmnToDcrConverter.BPMN;
+﻿using BpmnToDcrConverter.Bpmn;
 
 namespace UnitTests.Bpmn
 {

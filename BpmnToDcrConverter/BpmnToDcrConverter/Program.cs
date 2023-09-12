@@ -1,4 +1,4 @@
-﻿using BpmnToDcrConverter.BPMN;
+﻿using BpmnToDcrConverter.Bpmn;
 using System;
 using System.Collections.Generic;
 using System.Xml;

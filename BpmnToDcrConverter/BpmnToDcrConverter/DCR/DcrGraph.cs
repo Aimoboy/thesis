@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BpmnToDcrConverter.DCR
+namespace BpmnToDcrConverter.Dcr
 {
     public class DcrGraph
     {

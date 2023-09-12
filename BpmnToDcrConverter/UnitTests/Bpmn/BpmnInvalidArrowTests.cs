@@ -1,5 +1,5 @@
-﻿using BpmnToDcrConverter.BPMN;
-using BpmnToDcrConverter.BPMN.Exceptions;
+﻿using BpmnToDcrConverter.Bpmn;
+using BpmnToDcrConverter.Bpmn.Exceptions;
 
 namespace UnitTests.Bpmn
 {
