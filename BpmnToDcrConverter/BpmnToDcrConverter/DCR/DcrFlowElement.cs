@@ -11,6 +11,13 @@ namespace BpmnToDcrConverter.Dcr
 
         public List<DcrFlowArrow> OutgoingArrows = new List<DcrFlowArrow>();
         public List<DcrFlowArrow> IncomingArrows = new List<DcrFlowArrow>();
+
+        public List<string> GetIds()
+        {
+            return GetFlowElementsFlat().Select(x => x.Id).ToList();
+        }
+
+        public abstract List<DcrFlowElement> GetFlowElementsFlat();
     }
 
     public class DcrActivity : DcrFlowElement
@@ -31,6 +38,11 @@ namespace BpmnToDcrConverter.Dcr
         }
 
         public DcrActivity(string name) : this(name, true, false, false) { }
+
+        public override List<DcrFlowElement> GetFlowElementsFlat()
+        {
+            return new List<DcrFlowElement> { this };
+        }
     }
 
     public class DcrGroup : DcrFlowElement
@@ -42,6 +54,11 @@ namespace BpmnToDcrConverter.Dcr
         {
             Name = name;
             Activities = activities.ToList();
+        }
+
+        public override List<DcrFlowElement> GetFlowElementsFlat()
+        {
+            return Activities.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
         }
     }
 

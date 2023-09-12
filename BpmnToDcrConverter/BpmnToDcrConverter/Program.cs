@@ -22,6 +22,8 @@ namespace BpmnToDcrConverter
 
             BpmnGraph res = BpmnXmlParser.Parse(args[0]);
             res.TestGraphValidity();
+
+            Converter.ConvertBpmnToDcr(res);
         }
     }
 }
