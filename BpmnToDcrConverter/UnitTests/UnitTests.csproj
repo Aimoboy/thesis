@@ -24,7 +24,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="BpmnXmlFiles\BpmnExclusiveGateway.bpmn">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="BpmnXmlFiles\BpmnStartToActivityToEnd.bpmn">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="BpmnXmlFiles\BpmnStartToEnd.bpmn">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="BpmnXmlFiles\BpmnSubProcesses.bpmn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
