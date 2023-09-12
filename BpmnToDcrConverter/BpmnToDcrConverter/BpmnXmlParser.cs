@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 
@@ -31,7 +32,7 @@ namespace BpmnToDcrConverter
             }
             else
             {
-                throw new Exception("Could not find the specified file.");
+                throw new FileNotFoundException("Could not find the specified file.");
             }
 
             // XML name spaces
@@ -39,54 +40,97 @@ namespace BpmnToDcrConverter
             XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
             XElement process = doc.Element(bpmn + "definitions").Element(bpmn + "process");
 
-            BpmnGraph graph = new BpmnGraph();
+            // Get flow elements
+            List<BpmnFlowElement> flowElements = GetFlowElements(process, bpmn);
+            BpmnGraph graph = new BpmnGraph(flowElements);
+
+            // Get flow arrows
+            List<Tuple<BpmnFlowArrowType, string, string>> arrows = GetFlowArrows(process, bpmn);
+            foreach (var arrow in arrows)
+            {
+                BpmnFlowArrowType type = arrow.Item1;
+                BpmnFlowElement from = graph.GetFlowElementFromId(arrow.Item2);
+                BpmnFlowElement to = graph.GetFlowElementFromId(arrow.Item3);
+
+                graph.AddArrow(type, from, to);
+            }
+
+
+            return graph;
+        }
+
+        private static List<BpmnFlowElement> GetFlowElements(XElement xmlElement, XNamespace bpmn)
+        {
+            List<BpmnFlowElement> flowElements = new List<BpmnFlowElement>();
 
             // Find start events
-            IEnumerable<XElement> startEvents = process.Elements(bpmn + "startEvent");
+            IEnumerable<XElement> startEvents = xmlElement.Elements(bpmn + "startEvent");
             foreach (XElement item in startEvents)
             {
                 string id = item.Attribute("id").Value;
-                graph.AddFlowElements(new List<BpmnFlowElement>() { new BpmnEvent(id, BpmnEventType.Start) });
+                flowElements.Add(new BpmnEvent(id, BpmnEventType.Start));
             }
 
             // Find end events
-            IEnumerable<XElement> endEvents = process.Elements(bpmn + "endEvent");
+            IEnumerable<XElement> endEvents = xmlElement.Elements(bpmn + "endEvent");
             foreach (XElement item in endEvents)
             {
                 string id = item.Attribute("id").Value;
-                graph.AddFlowElements(new List<BpmnFlowElement>() { new BpmnEvent(id, BpmnEventType.End) });
+                flowElements.Add(new BpmnEvent(id, BpmnEventType.End));
             }
 
             // Find activities
-            IEnumerable<XElement> tasks = process.Elements(bpmn + "task");
+            IEnumerable<XElement> tasks = xmlElement.Elements(bpmn + "task");
             foreach (XElement item in tasks)
             {
                 string id = item.Attribute("id").Value;
                 string name = item.Attribute("name") != null ? item.Attribute("name").Value : "";
-                graph.AddFlowElements(new List<BpmnFlowElement>() { new BpmnActivity(id, name) });
+                flowElements.Add(new BpmnActivity(id, name));
             }
 
             // Find exclusive gateways
-            IEnumerable<XElement> exclusiveGateways = process.Elements(bpmn + "exclusiveGateway");
+            IEnumerable<XElement> exclusiveGateways = xmlElement.Elements(bpmn + "exclusiveGateway");
             foreach (XElement item in exclusiveGateways)
             {
                 string id = item.Attribute("id").Value;
-                graph.AddFlowElements(new List<BpmnFlowElement>() { new BpmnGateway(id, BpmnGatewayType.Or) });
+                flowElements.Add(new BpmnGateway(id, BpmnGatewayType.Or));
             }
 
-            // Find arrows
-            IEnumerable<XElement> sequenceFlows = process.Elements(bpmn + "sequenceFlow");
+            // Find sub processes
+            IEnumerable<XElement> subProcesses = xmlElement.Elements(bpmn + "subProcess");
+            foreach (XElement item in subProcesses)
+            {
+                string id = item.Attribute("id").Value;
+                List<BpmnFlowElement> nestedElements = GetFlowElements(item, bpmn);
+                flowElements.Add(new BpmnSubProcess(id, nestedElements));
+            }
+
+            return flowElements;
+        }
+
+        private static List<Tuple<BpmnFlowArrowType, string, string>> GetFlowArrows(XElement xmlElement, XNamespace bpmn)
+        {
+            List<Tuple<BpmnFlowArrowType, string, string>> arrows = new List<Tuple<BpmnFlowArrowType, string, string>>();
+
+            // Sequence flows
+            IEnumerable<XElement> sequenceFlows = xmlElement.Elements(bpmn + "sequenceFlow");
             foreach (XElement item in sequenceFlows)
             {
                 string fromId = item.Attribute("sourceRef").Value;
                 string toId = item.Attribute("targetRef").Value;
 
-                BpmnFlowElement from = graph.GetFlowElementFromId(fromId);
-                BpmnFlowElement to = graph.GetFlowElementFromId(toId);
-                graph.AddArrow(BpmnFlowArrowType.Sequence, from, to);
+                arrows.Add(new Tuple<BpmnFlowArrowType, string, string>(BpmnFlowArrowType.Sequence, fromId, toId));
             }
 
-            return graph;
+            // Add sub process arrows
+            IEnumerable<XElement> subProcesses = xmlElement.Elements(bpmn + "subProcess");
+            foreach (XElement item in subProcesses)
+            {
+                List<Tuple<BpmnFlowArrowType, string, string>> subProcessArrows = GetFlowArrows(item, bpmn);
+                arrows = arrows.Concat(subProcessArrows).ToList();
+            }
+
+            return arrows;
         }
     }
 }
