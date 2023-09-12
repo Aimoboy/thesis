@@ -14,7 +14,12 @@ namespace BpmnToDcrConverter.BPMN
 
         public abstract void TestArrowCountValidity();
 
-        public abstract List<string> GetIds();
+        public List<string> GetIds()
+        {
+            return GetFlowElementsFlat().Select(x => x.Id).ToList();
+        }
+
+        public abstract List<BpmnFlowElement> GetFlowElementsFlat();
     }
 
     public class BpmnActivity : BpmnFlowElement
@@ -43,9 +48,9 @@ namespace BpmnToDcrConverter.BPMN
             }
         }
 
-        public override List<string> GetIds()
+        public override List<BpmnFlowElement> GetFlowElementsFlat()
         {
-            return new List<string> { Id };
+            return new List<BpmnFlowElement> { this };
         }
     }
 
@@ -91,9 +96,9 @@ namespace BpmnToDcrConverter.BPMN
             }
         }
 
-        public override List<string> GetIds()
+        public override List<BpmnFlowElement> GetFlowElementsFlat()
         {
-            return new List<string> { Id };
+            return new List<BpmnFlowElement> { this };
         }
     }
 
@@ -130,9 +135,9 @@ namespace BpmnToDcrConverter.BPMN
             }
         }
 
-        public override List<string> GetIds()
+        public override List<BpmnFlowElement> GetFlowElementsFlat()
         {
-            return new List<string> { Id };
+            return new List<BpmnFlowElement> { this };
         }
     }
 
@@ -181,9 +186,9 @@ namespace BpmnToDcrConverter.BPMN
             }
         }
 
-        public override List<string> GetIds()
+        public override List<BpmnFlowElement> GetFlowElementsFlat()
         {
-            return flowElements.SelectMany(x => x.GetIds()).Concat(new[] { Id }).ToList();
+            return flowElements.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
         }
     }
 

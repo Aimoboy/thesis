@@ -48,6 +48,11 @@ namespace BpmnToDcrConverter.BPMN
             return _flowElements;
         }
 
+        public List<BpmnFlowElement> GetFlowElementsFlat()
+        {
+            return _flowElements.SelectMany(x => x.GetFlowElementsFlat()).ToList();
+        }
+
         public void TestGraphValidity()
         {
             foreach (BpmnFlowElement element in _flowElements)
@@ -78,7 +83,8 @@ namespace BpmnToDcrConverter.BPMN
 
         public BpmnFlowElement GetFlowElementFromId(string id)
         {
-            return _flowElements.Where(x => x.Id == id).FirstOrDefault();
+            IEnumerable<BpmnFlowElement> allFlowElements = GetFlowElementsFlat();
+            return allFlowElements.Where(x => x.Id == id).FirstOrDefault();
         }
     }
 }

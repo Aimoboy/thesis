@@ -8,7 +8,6 @@ using System.Xml.Linq;
 
 // TODO:
 // - Handle exclusive gateway condition expression
-// - Handle sub process
 // - Handle message arrows
 // - Refactor events
 
@@ -35,7 +34,7 @@ namespace BpmnToDcrConverter
                 throw new FileNotFoundException("Could not find the specified file.");
             }
 
-            // XML name spaces
+            // XML parsing setup
             XDocument doc = XDocument.Load(filePath);
             XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
             XElement process = doc.Element(bpmn + "definitions").Element(bpmn + "process");
@@ -54,7 +53,6 @@ namespace BpmnToDcrConverter
 
                 graph.AddArrow(type, from, to);
             }
-
 
             return graph;
         }
