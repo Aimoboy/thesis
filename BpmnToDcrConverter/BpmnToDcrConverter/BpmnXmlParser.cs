@@ -7,6 +7,7 @@ using System.Xml.Linq;
 
 // TODO:
 // - Handle exclusive gateway condition expression
+// - Handle sub process
 // - Handle message arrows
 // - Refactor events
 

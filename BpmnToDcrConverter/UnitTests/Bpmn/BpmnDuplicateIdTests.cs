@@ -70,5 +70,30 @@ namespace UnitTests.Bpmn
             BpmnGraph graph = new BpmnGraph(new[] { activity1 });
             graph.AddFlowElements(new[] { subProcess });
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(BpmnDuplicateIdException))]
+        public void DuplicateIdsSubProcessInSubProcess()
+        {
+            BpmnEvent start = new BpmnEvent("1", BpmnEventType.Start);
+            BpmnEvent end = new BpmnEvent("2", BpmnEventType.End);
+
+            BpmnGraph graph = new BpmnGraph(new[] { start, end });
+
+            BpmnActivity activity1 = new BpmnActivity("3", "Activity!");
+            BpmnActivity activity2 = new BpmnActivity("1", "Activity!");
+
+            BpmnSubProcess subProcess1 = new BpmnSubProcess("4", new[] { activity1, activity2 });
+
+            BpmnActivity activity3 = new BpmnActivity("5", "Activity!");
+            BpmnActivity activity4 = new BpmnActivity("6", "Activity!");
+
+            BpmnSubProcess subProcess2 = new BpmnSubProcess("7", new BpmnFlowElement[] { subProcess1, activity3, activity4 });
+
+            BpmnActivity activity5 = new BpmnActivity("8", "Activity!");
+            BpmnActivity activity6 = new BpmnActivity("9", "Activity!");
+
+            graph.AddFlowElements(new BpmnFlowElement[] { subProcess2, activity5, activity6 });
+        }
     }
 }
