@@ -20,7 +20,10 @@ namespace BpmnToDcrConverter.Bpmn
             return GetFlowElementsFlat().Select(x => x.Id).ToList();
         }
 
-        public abstract List<BpmnFlowElement> GetFlowElementsFlat();
+        public virtual List<BpmnFlowElement> GetFlowElementsFlat()
+        {
+            return new List<BpmnFlowElement> { this };
+        }
 
         public abstract Tuple<List<DcrFlowElement>, DcrFlowElement> Convert();
     }
@@ -49,11 +52,6 @@ namespace BpmnToDcrConverter.Bpmn
             {
                 throw new BpmnInvalidArrowException($"Activities must have exactly 1 incoming arrow, the activity with name \"{Name}\" and id \"{Id}\" has {incomingArrowCount} incoming arrows.");
             }
-        }
-
-        public override List<BpmnFlowElement> GetFlowElementsFlat()
-        {
-            return new List<BpmnFlowElement> { this };
         }
 
         public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
@@ -117,11 +115,6 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public override List<BpmnFlowElement> GetFlowElementsFlat()
-        {
-            return new List<BpmnFlowElement> { this };
-        }
-
         public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
         {
             switch (Type)
@@ -167,11 +160,6 @@ namespace BpmnToDcrConverter.Bpmn
             {
                 throw new BpmnInvalidArrowException($"The {gatewayString} gateway with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
             }
-        }
-
-        public override List<BpmnFlowElement> GetFlowElementsFlat()
-        {
-            return new List<BpmnFlowElement> { this };
         }
 
         public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
