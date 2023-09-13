@@ -65,7 +65,7 @@ namespace BpmnToDcrConverter
             foreach (XElement item in startEvents)
             {
                 string id = item.Attribute("id").Value;
-                flowElements.Add(new BpmnEvent(id, BpmnEventType.Start));
+                flowElements.Add(new BpmnStartEvent(id));
             }
 
             // Find end events
@@ -73,7 +73,7 @@ namespace BpmnToDcrConverter
             foreach (XElement item in endEvents)
             {
                 string id = item.Attribute("id").Value;
-                flowElements.Add(new BpmnEvent(id, BpmnEventType.End));
+                flowElements.Add(new BpmnEndEvent(id));
             }
 
             // Find activities

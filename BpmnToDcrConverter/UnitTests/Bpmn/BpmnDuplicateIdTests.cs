@@ -75,10 +75,10 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnDuplicateIdException))]
         public void DuplicateIdsSubProcessInSubProcess()
         {
-            BpmnEvent start = new BpmnEvent("1", BpmnEventType.Start);
-            BpmnEvent end = new BpmnEvent("2", BpmnEventType.End);
+            BpmnStartEvent start = new BpmnStartEvent("1");
+            BpmnEndEvent end = new BpmnEndEvent("2");
 
-            BpmnGraph graph = new BpmnGraph(new[] { start, end });
+            BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { start, end });
 
             BpmnActivity activity1 = new BpmnActivity("3", "Activity!");
             BpmnActivity activity2 = new BpmnActivity("1", "Activity!");

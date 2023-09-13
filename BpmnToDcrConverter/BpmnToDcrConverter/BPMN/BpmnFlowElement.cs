@@ -13,6 +13,11 @@ namespace BpmnToDcrConverter.Bpmn
         public List<BpmnFlowArrow> OutgoingArrows = new List<BpmnFlowArrow>();
         public List<BpmnFlowArrow> IncomingArrows = new List<BpmnFlowArrow>();
 
+        public BpmnFlowElement(string id)
+        {
+            Id = id;
+        }
+
         public abstract void TestArrowCountValidity();
 
         public List<string> GetIds()
@@ -32,9 +37,8 @@ namespace BpmnToDcrConverter.Bpmn
     {
         public string Name;
 
-        public BpmnActivity(string id, string name)
+        public BpmnActivity(string id, string name) : base(id)
         {
-            Id = id;
             Name = name;
         }
 
@@ -73,59 +77,55 @@ namespace BpmnToDcrConverter.Bpmn
         }
     }
 
-    public class BpmnEvent : BpmnFlowElement
+    public class BpmnStartEvent : BpmnFlowElement
     {
-        public BpmnEventType Type;
-
-        public BpmnEvent(string id, BpmnEventType type)
-        {
-            Id = id;
-            Type = type;
-        }
+        public BpmnStartEvent(string id) : base(id) { }
 
         public override void TestArrowCountValidity()
         {
             int outgoingArrowCount = OutgoingArrows.Count;
             int incomingArrowCount = IncomingArrows.Count;
 
-            switch (Type)
+            if (outgoingArrowCount != 1)
             {
-                case BpmnEventType.Start:
-                    if (outgoingArrowCount != 1)
-                    {
-                        throw new BpmnInvalidArrowException($"The START event with id \"{Id}\" has {outgoingArrowCount} outgoing arrows, but it has to have 1.");
-                    }
+                throw new BpmnInvalidArrowException($"The START event with id \"{Id}\" has {outgoingArrowCount} outgoing arrows, but it has to have 1.");
+            }
 
-                    if (incomingArrowCount != 0)
-                    {
-                        throw new BpmnInvalidArrowException($"The START event with id \"{Id}\" has {incomingArrowCount} incoming arrows, but it has to have 1.");
-                    }
-                    break;
-                case BpmnEventType.End:
-                    if (outgoingArrowCount != 0)
-                    {
-                        throw new BpmnInvalidArrowException($"The END event with id \"{Id}\" has {outgoingArrowCount} outgoing arrows, but it has to have 0.");
-                    }
-
-                    if (incomingArrowCount == 0)
-                    {
-                        throw new BpmnInvalidArrowException($"The END event with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
-                    }
-                    break;
+            if (incomingArrowCount != 0)
+            {
+                throw new BpmnInvalidArrowException($"The START event with id \"{Id}\" has {incomingArrowCount} incoming arrows, but it has to have 1.");
             }
         }
 
         public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
         {
-            switch (Type)
+            return OutgoingArrows.FirstOrDefault().Element.Convert();
+        }
+    }
+
+    public class BpmnEndEvent : BpmnFlowElement
+    {
+        public BpmnEndEvent(string id) : base(id) { }
+
+        public override void TestArrowCountValidity()
+        {
+            int outgoingArrowCount = OutgoingArrows.Count;
+            int incomingArrowCount = IncomingArrows.Count;
+
+            if (outgoingArrowCount != 0)
             {
-                case BpmnEventType.End:
-                    return new Tuple<List<DcrFlowElement>, DcrFlowElement>(new List<DcrFlowElement>(), null);
-                case BpmnEventType.Start:
-                    return OutgoingArrows.FirstOrDefault().Element.Convert();
-                default:
-                    throw new Exception("Unhandled enum case.");
+                throw new BpmnInvalidArrowException($"The END event with id \"{Id}\" has {outgoingArrowCount} outgoing arrows, but it has to have 0.");
             }
+
+            if (incomingArrowCount == 0)
+            {
+                throw new BpmnInvalidArrowException($"The END event with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
+            }
+        }
+
+        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        {
+            return new Tuple<List<DcrFlowElement>, DcrFlowElement>(new List<DcrFlowElement>(), null);
         }
     }
 
@@ -133,9 +133,8 @@ namespace BpmnToDcrConverter.Bpmn
     {
         public BpmnGatewayType Type;
 
-        public BpmnGateway(string id, BpmnGatewayType type)
+        public BpmnGateway(string id, BpmnGatewayType type) : base(id)
         {
-            Id = id;
             Type = type;
         }
 
@@ -172,16 +171,13 @@ namespace BpmnToDcrConverter.Bpmn
     {
         public List<BpmnFlowElement> flowElements;
 
-        public BpmnSubProcess(string id)
+        public BpmnSubProcess(string id) : base(id)
         {
-            Id = id;
             flowElements = new List<BpmnFlowElement>();
         }
 
-        public BpmnSubProcess(string id, IEnumerable<BpmnFlowElement> newFlowElements)
+        public BpmnSubProcess(string id, IEnumerable<BpmnFlowElement> newFlowElements) : base(id)
         {
-            Id = id;
-
             List<string> duplicateIds = newFlowElements.GroupBy(x => x.Id).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
             if (duplicateIds.Any())
             {
@@ -222,12 +218,6 @@ namespace BpmnToDcrConverter.Bpmn
         {
             throw new NotImplementedException();
         }
-    }
-
-    public enum BpmnEventType
-    {
-        Start,
-        End
     }
 
     public enum BpmnGatewayType

@@ -8,10 +8,10 @@ namespace UnitTests.Bpmn
         [TestMethod]
         public void StartEventToEndEvent()
         {
-            BpmnEvent start = new BpmnEvent("1", BpmnEventType.Start);
-            BpmnEvent end = new BpmnEvent("2", BpmnEventType.End);
+            BpmnStartEvent start = new BpmnStartEvent("1");
+            BpmnEndEvent end = new BpmnEndEvent("2");
 
-            BpmnGraph graph = new BpmnGraph(new[] { start, end });
+            BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { start, end });
             graph.AddArrow(BpmnFlowArrowType.Sequence, start, end);
             graph.TestGraphValidity();
         }
@@ -19,8 +19,8 @@ namespace UnitTests.Bpmn
         [TestMethod]
         public void StartToActivityToEnd()
         {
-            BpmnEvent start = new BpmnEvent("1", BpmnEventType.Start);
-            BpmnEvent end = new BpmnEvent("2", BpmnEventType.End);
+            BpmnStartEvent start = new BpmnStartEvent("1");
+            BpmnEndEvent end = new BpmnEndEvent("2");
             BpmnActivity activity = new BpmnActivity("3", "Activity");
 
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { start, end, activity });
@@ -32,8 +32,8 @@ namespace UnitTests.Bpmn
         [TestMethod]
         public void ExclusiveGateway()
         {
-            BpmnEvent start = new BpmnEvent("1", BpmnEventType.Start);
-            BpmnEvent end = new BpmnEvent("2", BpmnEventType.End);
+            BpmnStartEvent start = new BpmnStartEvent("1");
+            BpmnEndEvent end = new BpmnEndEvent("2");
 
             BpmnGateway startGateway = new BpmnGateway("3", BpmnGatewayType.Or);
             BpmnGateway endGateway = new BpmnGateway("4", BpmnGatewayType.Or);
@@ -57,11 +57,11 @@ namespace UnitTests.Bpmn
         [TestMethod]
         public void StartToSubProcessToEnd()
         {
-            BpmnEvent start = new BpmnEvent("1", BpmnEventType.Start);
-            BpmnEvent end = new BpmnEvent("2", BpmnEventType.End);
+            BpmnStartEvent start = new BpmnStartEvent("1");
+            BpmnEndEvent end = new BpmnEndEvent("2");
 
-            BpmnEvent startInner = new BpmnEvent("3", BpmnEventType.Start);
-            BpmnEvent endInner = new BpmnEvent("4", BpmnEventType.End);
+            BpmnStartEvent startInner = new BpmnStartEvent("3");
+            BpmnEndEvent endInner = new BpmnEndEvent("4");
 
             BpmnSubProcess subProcess = new BpmnSubProcess("5", new BpmnFlowElement[] { startInner, endInner });
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { start, end, subProcess });
@@ -74,11 +74,11 @@ namespace UnitTests.Bpmn
         [TestMethod]
         public void ExclusiveGatewayInSubProcess()
         {
-            BpmnEvent start = new BpmnEvent("1", BpmnEventType.Start);
-            BpmnEvent end = new BpmnEvent("2", BpmnEventType.End);
+            BpmnStartEvent start = new BpmnStartEvent("1");
+            BpmnEndEvent end = new BpmnEndEvent("2");
 
-            BpmnEvent startInner = new BpmnEvent("3", BpmnEventType.Start);
-            BpmnEvent endInner = new BpmnEvent("4", BpmnEventType.End);
+            BpmnStartEvent startInner = new BpmnStartEvent("3");
+            BpmnEndEvent endInner = new BpmnEndEvent("4");
 
             BpmnGateway startGateWayInner = new BpmnGateway("5", BpmnGatewayType.Or);
             BpmnGateway endGateWayInner = new BpmnGateway("6", BpmnGatewayType.Or);

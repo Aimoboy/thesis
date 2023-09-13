@@ -11,10 +11,9 @@ namespace BpmnToDcrConverter
     {
         public static DcrGraph ConvertBpmnToDcr(BpmnGraph bpmnGraph)
         {
-            BpmnEvent start = bpmnGraph.GetFlowElements()
-                                       .Where(x => x is BpmnEvent)
-                                       .Select(x => (BpmnEvent)x)
-                                       .Where(x => x.Type == BpmnEventType.Start)
+            BpmnStartEvent start = bpmnGraph.GetFlowElements()
+                                       .Where(x => x is BpmnStartEvent)
+                                       .Select(x => (BpmnStartEvent)x)
                                        .FirstOrDefault();
 
             List<DcrFlowElement> flowElements = start.Convert().Item1;

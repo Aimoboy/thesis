@@ -10,7 +10,7 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnInvalidArrowException))]
         public void InvalidArrowActivityTooFewOutgoing()
         {
-            BpmnEvent start = new BpmnEvent("1", BpmnEventType.Start);
+            BpmnStartEvent start = new BpmnStartEvent("1");
             BpmnActivity activity = new BpmnActivity("2", "Activity1");
 
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { start, activity });
@@ -22,7 +22,7 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnInvalidArrowException))]
         public void InvalidArrowActivityTooManyOutgoing()
         {
-            BpmnEvent start = new BpmnEvent("1", BpmnEventType.Start);
+            BpmnStartEvent start = new BpmnStartEvent("1");
 
             BpmnActivity activity1 = new BpmnActivity("2", "Activity1");
             BpmnActivity activity2 = new BpmnActivity("3", "Activity2");
@@ -40,7 +40,7 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnInvalidArrowException))]
         public void InvalidArrowActivityTooFewIncoming()
         {
-            BpmnEvent end = new BpmnEvent("1", BpmnEventType.End);
+            BpmnEndEvent end = new BpmnEndEvent("1");
             BpmnActivity activity = new BpmnActivity("2", "Activity!");
 
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { end, activity });
@@ -52,7 +52,7 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnInvalidArrowException))]
         public void InvalidArrowActivityTooManyIncoming()
         {
-            BpmnEvent end = new BpmnEvent("1", BpmnEventType.End);
+            BpmnEndEvent end = new BpmnEndEvent("1");
 
             BpmnActivity activity1 = new BpmnActivity("2", "Activity1");
             BpmnActivity activity2 = new BpmnActivity("3", "Activity2");
@@ -71,7 +71,7 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnInvalidArrowException))]
         public void InvalidArrowStartEventAnyIncoming()
         {
-            BpmnEvent start = new BpmnEvent("1", BpmnEventType.Start);
+            BpmnStartEvent start = new BpmnStartEvent("1");
             BpmnActivity activity = new BpmnActivity("2", "Activity!");
 
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { start, activity });
@@ -84,7 +84,7 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnInvalidArrowException))]
         public void InvalidArrowStartEventTooManyOutgoing()
         {
-            BpmnEvent start = new BpmnEvent("1", BpmnEventType.Start);
+            BpmnStartEvent start = new BpmnStartEvent("1");
             BpmnActivity activity1 = new BpmnActivity("2", "Activity!");
             BpmnActivity activity2 = new BpmnActivity("3", "Activity!");
 
@@ -99,7 +99,7 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnInvalidArrowException))]
         public void InvalidArrowEndEventAnyOutgoing()
         {
-            BpmnEvent end = new BpmnEvent("1", BpmnEventType.End);
+            BpmnEndEvent end = new BpmnEndEvent("1");
             BpmnActivity activity = new BpmnActivity("2", "Activity!");
 
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { end, activity });
@@ -112,7 +112,7 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnInvalidArrowException))]
         public void InvalidArrowEndEventNoIncoming()
         {
-            BpmnEvent end = new BpmnEvent("1", BpmnEventType.End);
+            BpmnEndEvent end = new BpmnEndEvent("1");
             end.TestArrowCountValidity();
         }
 
