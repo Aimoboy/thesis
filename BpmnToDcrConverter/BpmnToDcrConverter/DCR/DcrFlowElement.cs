@@ -28,8 +28,9 @@ namespace BpmnToDcrConverter.Dcr
         public bool Executed;
         public bool Pending;
 
-        public DcrActivity(string name, bool included, bool executed, bool pending)
+        public DcrActivity(string id, string name, bool included, bool executed, bool pending)
         {
+            Id = id;
             Name = name;
 
             Included = included;
@@ -37,7 +38,7 @@ namespace BpmnToDcrConverter.Dcr
             Pending = pending;
         }
 
-        public DcrActivity(string name) : this(name, true, false, false) { }
+        public DcrActivity(string id, string name) : this(id, name, true, false, false) { }
 
         public override List<DcrFlowElement> GetFlowElementsFlat()
         {
@@ -50,11 +51,14 @@ namespace BpmnToDcrConverter.Dcr
         public string Name;
         public List<DcrFlowElement> Activities;
 
-        public DcrGroup(string name, IEnumerable<DcrFlowElement> activities)
+        public DcrGroup(string id, string name, IEnumerable<DcrFlowElement> activities)
         {
+            Id = id;
             Name = name;
             Activities = activities.ToList();
         }
+
+        public DcrGroup(string id, IEnumerable<DcrFlowElement> activities) : this(id, "", activities) { }
 
         public override List<DcrFlowElement> GetFlowElementsFlat()
         {

@@ -17,13 +17,10 @@ namespace BpmnToDcrConverter.Dcr
 
         public DcrGraph(IEnumerable<DcrFlowElement> flowElements)
         {
-            List<string> duplicateIds = _flowElements.SelectMany(x => x.GetFlowElementsFlat())
-                                                     .GroupBy(x => x.Id)
-                                                     .Where(x => x.Count() > 1)
-                                                     .Select(x => x.Key)
-                                                     .ToList();
+            IEnumerable<string> allIds = flowElements.SelectMany(x => x.GetIds());
+            List<string> duplicateIds = allIds.GroupBy(x => x).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
 
-            foreach (string duplicateId in duplicateIds)
+            if (duplicateIds.Any())
             {
                 string exceptionString = string.Join(", ", duplicateIds);
                 throw new DcrDuplicateIdException($"Multiple flow elements with the ids \"{exceptionString}\" are given.");
