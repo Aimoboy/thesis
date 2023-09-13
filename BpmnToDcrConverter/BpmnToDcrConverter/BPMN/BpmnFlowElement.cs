@@ -1,4 +1,5 @@
 ﻿using BpmnToDcrConverter.Bpmn.Exceptions;
+using BpmnToDcrConverter.Dcr;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,8 @@ namespace BpmnToDcrConverter.Bpmn
         }
 
         public abstract List<BpmnFlowElement> GetFlowElementsFlat();
+
+        public abstract Tuple<List<DcrFlowElement>, DcrFlowElement> Convert();
     }
 
     public class BpmnActivity : BpmnFlowElement
@@ -51,6 +54,24 @@ namespace BpmnToDcrConverter.Bpmn
         public override List<BpmnFlowElement> GetFlowElementsFlat()
         {
             return new List<BpmnFlowElement> { this };
+        }
+
+        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        {
+            BpmnFlowElement nextElement = OutgoingArrows.FirstOrDefault().Element;
+            (List<DcrFlowElement> collection, DcrFlowElement nextElementConverted) = nextElement.Convert();
+
+            DcrActivity activity = new DcrActivity(Id, Name, true, false, true);
+            activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, activity));
+
+            if (nextElementConverted != null)
+            {
+                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Condition, nextElementConverted));
+                nextElementConverted.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Condition, activity));
+            }
+
+            List<DcrFlowElement> newCollection = collection.Concat(new[] { activity }).ToList();
+            return new Tuple<List<DcrFlowElement>, DcrFlowElement>(newCollection, activity);
         }
     }
 
@@ -100,6 +121,19 @@ namespace BpmnToDcrConverter.Bpmn
         {
             return new List<BpmnFlowElement> { this };
         }
+
+        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        {
+            switch (Type)
+            {
+                case BpmnEventType.End:
+                    return new Tuple<List<DcrFlowElement>, DcrFlowElement>(new List<DcrFlowElement>(), null);
+                case BpmnEventType.Start:
+                    return OutgoingArrows.FirstOrDefault().Element.Convert();
+                default:
+                    throw new Exception("Unhandled enum case.");
+            }
+        }
     }
 
     public class BpmnGateway : BpmnFlowElement
@@ -138,6 +172,11 @@ namespace BpmnToDcrConverter.Bpmn
         public override List<BpmnFlowElement> GetFlowElementsFlat()
         {
             return new List<BpmnFlowElement> { this };
+        }
+
+        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -189,6 +228,11 @@ namespace BpmnToDcrConverter.Bpmn
         public override List<BpmnFlowElement> GetFlowElementsFlat()
         {
             return flowElements.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
+        }
+
+        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        {
+            throw new NotImplementedException();
         }
     }
 

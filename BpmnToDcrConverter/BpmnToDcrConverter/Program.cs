@@ -13,7 +13,7 @@ namespace BpmnToDcrConverter
         static void Main(string[] args)
         {
             args = new string[1];
-            args[0] = @"C:\Users\dn\Downloads\new-bpmn-diagram3.bpmn";
+            args[0] = @"C:\Users\dn\Downloads\new-bpmn-diagram4.bpmn";
 
             if (args.Length != 1)
             {

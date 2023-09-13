@@ -17,9 +17,10 @@ namespace BpmnToDcrConverter
                                        .Where(x => x.Type == BpmnEventType.Start)
                                        .FirstOrDefault();
 
-            BpmnFlowElement firstElement = start.OutgoingArrows.FirstOrDefault().Element;
+            List<DcrFlowElement> flowElements = start.Convert().Item1;
+            DcrGraph dcrGraph = new DcrGraph(flowElements);
 
-            throw new NotImplementedException();
+            return dcrGraph;
         }
     }
 }
