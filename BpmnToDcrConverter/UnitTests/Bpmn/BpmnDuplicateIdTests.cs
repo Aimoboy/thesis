@@ -20,8 +20,8 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnDuplicateIdException))]
         public void DuplicateIdsOrGateways()
         {
-            BpmnGateway gateway1 = new BpmnGateway("123", BpmnGatewayType.Or);
-            BpmnGateway gateway2 = new BpmnGateway("123", BpmnGatewayType.Or);
+            BpmnExclusiveGateway gateway1 = new BpmnExclusiveGateway("123");
+            BpmnExclusiveGateway gateway2 = new BpmnExclusiveGateway("123");
 
             new BpmnGraph(new[] { gateway1, gateway2 });
         }
@@ -30,8 +30,8 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnDuplicateIdException))]
         public void DuplicateIdsAndGateways()
         {
-            BpmnGateway gateway1 = new BpmnGateway("123", BpmnGatewayType.And);
-            BpmnGateway gateway2 = new BpmnGateway("123", BpmnGatewayType.And);
+            BpmnParallelGateway gateway1 = new BpmnParallelGateway("123");
+            BpmnParallelGateway gateway2 = new BpmnParallelGateway("123");
 
             new BpmnGraph(new[] { gateway1, gateway2 });
         }
@@ -40,10 +40,10 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnDuplicateIdException))]
         public void DuplicateIdsMixedGateways()
         {
-            BpmnGateway gateway1 = new BpmnGateway("123", BpmnGatewayType.Or);
-            BpmnGateway gateway2 = new BpmnGateway("123", BpmnGatewayType.And);
+            BpmnExclusiveGateway gateway1 = new BpmnExclusiveGateway("123");
+            BpmnParallelGateway gateway2 = new BpmnParallelGateway("123");
 
-            new BpmnGraph(new[] { gateway1, gateway2 });
+            new BpmnGraph(new BpmnFlowElement[] { gateway1, gateway2 });
         }
 
         [TestMethod]

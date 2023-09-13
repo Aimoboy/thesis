@@ -129,35 +129,49 @@ namespace BpmnToDcrConverter.Bpmn
         }
     }
 
-    public class BpmnGateway : BpmnFlowElement
+    public class BpmnExclusiveGateway : BpmnFlowElement
     {
-        public BpmnGatewayType Type;
-
-        public BpmnGateway(string id, BpmnGatewayType type) : base(id)
-        {
-            Type = type;
-        }
+        public BpmnExclusiveGateway(string id) : base(id) { }
 
         public override void TestArrowCountValidity()
         {
             int outgoingArrowCount = OutgoingArrows.Count;
             int incomingArrowCount = IncomingArrows.Count;
 
-            string gatewayString = Type switch
-            {
-                BpmnGatewayType.Or => "OR",
-                BpmnGatewayType.And => "AND",
-                _ => throw new Exception($"Missing case for enum {Type}.")
-            };
-
             if (outgoingArrowCount == 0)
             {
-                throw new BpmnInvalidArrowException($"The {gatewayString} gateway with id \"{Id}\" has 0 outgoing arrows, but it has to have at least 1.");
+                throw new BpmnInvalidArrowException($"The OR gateway with id \"{Id}\" has 0 outgoing arrows, but it has to have at least 1.");
             }
 
             if (incomingArrowCount == 0)
             {
-                throw new BpmnInvalidArrowException($"The {gatewayString} gateway with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
+                throw new BpmnInvalidArrowException($"The OR gateway with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
+            }
+        }
+
+        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class BpmnParallelGateway : BpmnFlowElement
+    {
+        public BpmnParallelGateway(string id) : base(id) { }
+
+        public override void TestArrowCountValidity()
+        {
+            int outgoingArrowCount = OutgoingArrows.Count;
+            int incomingArrowCount = IncomingArrows.Count;
+
+            if (outgoingArrowCount == 0)
+            {
+                throw new BpmnInvalidArrowException($"The AND gateway with id \"{Id}\" has 0 outgoing arrows, but it has to have at least 1.");
+            }
+
+            if (incomingArrowCount == 0)
+            {
+                throw new BpmnInvalidArrowException($"The AND gateway with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
             }
         }
 
@@ -218,12 +232,6 @@ namespace BpmnToDcrConverter.Bpmn
         {
             throw new NotImplementedException();
         }
-    }
-
-    public enum BpmnGatewayType
-    {
-        Or,
-        And
     }
 
     public class BpmnFlowArrow

@@ -90,7 +90,7 @@ namespace BpmnToDcrConverter
             foreach (XElement item in exclusiveGateways)
             {
                 string id = item.Attribute("id").Value;
-                flowElements.Add(new BpmnGateway(id, BpmnGatewayType.Or));
+                flowElements.Add(new BpmnExclusiveGateway(id));
             }
 
             // Find sub processes

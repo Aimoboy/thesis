@@ -120,7 +120,7 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnInvalidArrowException))]
         public void InvalidArrowGatewayNoOutgoing()
         {
-            BpmnGateway gateway = new BpmnGateway("1", BpmnGatewayType.Or);
+            BpmnExclusiveGateway gateway = new BpmnExclusiveGateway("1");
             BpmnActivity activity = new BpmnActivity("2", "Activity!");
 
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { gateway, activity });
@@ -133,7 +133,7 @@ namespace UnitTests.Bpmn
         [ExpectedException(typeof(BpmnInvalidArrowException))]
         public void InvalidArrowGatewayNoIncoming()
         {
-            BpmnGateway gateway = new BpmnGateway("1", BpmnGatewayType.Or);
+            BpmnExclusiveGateway gateway = new BpmnExclusiveGateway("1");
             BpmnActivity activity = new BpmnActivity("2", "Activity!");
 
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { gateway, activity });

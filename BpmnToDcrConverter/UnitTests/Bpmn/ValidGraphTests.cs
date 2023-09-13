@@ -35,8 +35,8 @@ namespace UnitTests.Bpmn
             BpmnStartEvent start = new BpmnStartEvent("1");
             BpmnEndEvent end = new BpmnEndEvent("2");
 
-            BpmnGateway startGateway = new BpmnGateway("3", BpmnGatewayType.Or);
-            BpmnGateway endGateway = new BpmnGateway("4", BpmnGatewayType.Or);
+            BpmnExclusiveGateway startGateway = new BpmnExclusiveGateway("3");
+            BpmnExclusiveGateway endGateway = new BpmnExclusiveGateway("4");
 
             BpmnActivity activity1 = new BpmnActivity("5", "Activity1");
             BpmnActivity activity2 = new BpmnActivity("6", "Activity2");
@@ -80,8 +80,8 @@ namespace UnitTests.Bpmn
             BpmnStartEvent startInner = new BpmnStartEvent("3");
             BpmnEndEvent endInner = new BpmnEndEvent("4");
 
-            BpmnGateway startGateWayInner = new BpmnGateway("5", BpmnGatewayType.Or);
-            BpmnGateway endGateWayInner = new BpmnGateway("6", BpmnGatewayType.Or);
+            BpmnExclusiveGateway startGateWayInner = new BpmnExclusiveGateway("5");
+            BpmnExclusiveGateway endGateWayInner = new BpmnExclusiveGateway("6");
 
             BpmnActivity activityInner1 = new BpmnActivity("7", "Inner!");
             BpmnActivity activityInner2 = new BpmnActivity("8", "Inner!");
