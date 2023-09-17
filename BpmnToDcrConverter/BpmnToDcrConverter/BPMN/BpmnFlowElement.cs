@@ -3,6 +3,7 @@ using BpmnToDcrConverter.Dcr;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace BpmnToDcrConverter.Bpmn
@@ -13,9 +14,12 @@ namespace BpmnToDcrConverter.Bpmn
         public List<BpmnFlowArrow> OutgoingArrows = new List<BpmnFlowArrow>();
         public List<BpmnFlowArrow> IncomingArrows = new List<BpmnFlowArrow>();
 
+        public ConversionResult ConversionResult;
+
         public BpmnFlowElement(string id)
         {
             Id = id;
+            ConversionResult = null;
         }
 
         public abstract void TestArrowCountValidity();
@@ -30,7 +34,7 @@ namespace BpmnToDcrConverter.Bpmn
             return new List<BpmnFlowElement> { this };
         }
 
-        public abstract Tuple<List<DcrFlowElement>, DcrFlowElement> Convert();
+        public abstract void ConvertToDcr();
     }
 
     public class BpmnActivity : BpmnFlowElement
@@ -58,22 +62,31 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        public override void ConvertToDcr()
         {
-            BpmnFlowElement nextElement = OutgoingArrows.FirstOrDefault().Element;
-            (List<DcrFlowElement> collection, DcrFlowElement nextElementConverted) = nextElement.Convert();
-
-            DcrActivity activity = new DcrActivity(Id, Name, true, false, true);
-            activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, activity));
-
-            if (nextElementConverted != null)
+            if (ConversionResult != null)
             {
-                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Condition, nextElementConverted));
-                nextElementConverted.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Condition, activity));
+                return;
             }
 
-            List<DcrFlowElement> newCollection = collection.Concat(new[] { activity }).ToList();
-            return new Tuple<List<DcrFlowElement>, DcrFlowElement>(newCollection, activity);
+            BpmnFlowElement nextElement = OutgoingArrows.FirstOrDefault().Element;
+            nextElement.ConvertToDcr();
+
+            DcrActivity activity = new DcrActivity(Id, Name);
+            foreach (DcrFlowElement element in nextElement.ConversionResult.StartElements)
+            {
+                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Condition, element));
+                element.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Condition, activity));
+            }
+
+            activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, activity));
+            activity.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, activity));
+
+            ConversionResult = new ConversionResult
+            {
+                ReachableFlowElements = nextElement.ConversionResult.ReachableFlowElements.Concat(new[] { activity }).ToList(),
+                StartElements = new List<DcrFlowElement> { activity }
+            };
         }
     }
 
@@ -97,9 +110,12 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        public override void ConvertToDcr()
         {
-            return OutgoingArrows.FirstOrDefault().Element.Convert();
+            BpmnFlowElement nextElement = OutgoingArrows.FirstOrDefault().Element;
+            nextElement.ConvertToDcr();
+
+            ConversionResult = nextElement.ConversionResult;
         }
     }
 
@@ -123,9 +139,13 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        public override void ConvertToDcr()
         {
-            return new Tuple<List<DcrFlowElement>, DcrFlowElement>(new List<DcrFlowElement>(), null);
+            ConversionResult = new ConversionResult
+            {
+                ReachableFlowElements = new List<DcrFlowElement>(),
+                StartElements = new List<DcrFlowElement>()
+            };
         }
     }
 
@@ -149,9 +169,44 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        public override void ConvertToDcr()
         {
-            throw new NotImplementedException();
+            if (ConversionResult != null)
+            {
+                return;
+            }
+
+            // Convert each path
+            List<BpmnFlowElement> nextElements = OutgoingArrows.ConvertAll(x => x.Element);
+            foreach (BpmnFlowElement element in nextElements)
+            {
+                element.ConvertToDcr();
+            }
+
+            // Add exclusive arrows
+            foreach (BpmnFlowElement element in nextElements)
+            {
+                List<DcrFlowElement> reachableElements = element.ConversionResult.ReachableFlowElements;
+                foreach (DcrFlowElement newDcrElement in element.ConversionResult.StartElements)
+                {
+                    List<BpmnFlowElement> otherElements = nextElements.Except(new[] { element }).ToList();
+                    foreach (BpmnFlowElement otherElement in otherElements)
+                    {
+                        List<DcrFlowElement> elementsToExclude = otherElement.ConversionResult.ReachableFlowElements.Except(reachableElements).ToList();
+                        foreach (DcrFlowElement elementToExclude in elementsToExclude)
+                        {
+                            newDcrElement.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, elementToExclude));
+                            elementToExclude.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, newDcrElement));
+                        }
+                    }
+                }
+            }
+
+            ConversionResult = new ConversionResult
+            {
+                ReachableFlowElements = nextElements.SelectMany(x => x.ConversionResult.ReachableFlowElements).Distinct().ToList(),
+                StartElements = nextElements.SelectMany(x => x.ConversionResult.StartElements).ToList()
+            };
         }
     }
 
@@ -175,7 +230,7 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        public override void ConvertToDcr()
         {
             throw new NotImplementedException();
         }
@@ -228,7 +283,7 @@ namespace BpmnToDcrConverter.Bpmn
             return flowElements.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
         }
 
-        public override Tuple<List<DcrFlowElement>, DcrFlowElement> Convert()
+        public override void ConvertToDcr()
         {
             throw new NotImplementedException();
         }
@@ -250,5 +305,11 @@ namespace BpmnToDcrConverter.Bpmn
     {
         Message,
         Sequence
+    }
+
+    public class ConversionResult
+    {
+        public List<DcrFlowElement> ReachableFlowElements;
+        public List<DcrFlowElement> StartElements;
     }
 }
