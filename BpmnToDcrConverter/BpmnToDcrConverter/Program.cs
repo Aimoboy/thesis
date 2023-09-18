@@ -13,10 +13,6 @@ namespace BpmnToDcrConverter
     {
         static void Main(string[] args)
         {
-            args = new string[2];
-            args[0] = @"C:\Users\dn\Downloads\new-bpmn-diagram4.bpmn";
-            args[1] = @"C:\Users\dn\Downloads\test-output.xml";
-
             if (args.Length != 2)
             {
                 throw new Exception("Need two arguments. The first should be the path to the BPMN XML file, and the second should be the output path.");
@@ -28,3 +24,8 @@ namespace BpmnToDcrConverter
         }
     }
 }
+
+// TODO:
+// - Handle exclusive gateway condition expression
+// - Handle message arrows
+// - Activities pointing to an end event should be pending

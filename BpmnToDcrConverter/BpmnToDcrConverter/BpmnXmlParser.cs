@@ -5,11 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
-// TODO:
-// - Handle exclusive gateway condition expression
-// - Handle message arrows
-// - Refactor events
-
 namespace BpmnToDcrConverter
 {
     public static class BpmnXmlParser
