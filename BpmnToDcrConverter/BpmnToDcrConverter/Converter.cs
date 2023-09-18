@@ -16,8 +16,8 @@ namespace BpmnToDcrConverter
                                             .Select(x => (BpmnStartEvent)x)
                                             .FirstOrDefault();
 
-            List<DcrFlowElement> flowElements = start.ConvertToDcr().Item1;
-            DcrGraph dcrGraph = new DcrGraph(flowElements);
+            start.ConvertToDcr();
+            DcrGraph dcrGraph = new DcrGraph(start.ConversionResult.ReachableFlowElements);
 
             return dcrGraph;
         }

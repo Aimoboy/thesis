@@ -27,6 +27,9 @@
     <None Update="BpmnXmlFiles\BpmnExclusiveGateway.bpmn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="BpmnXmlFiles\BpmnParallelGateway.bpmn">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="BpmnXmlFiles\BpmnStartToActivityToEnd.bpmn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

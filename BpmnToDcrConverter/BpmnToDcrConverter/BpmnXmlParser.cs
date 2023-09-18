@@ -93,6 +93,14 @@ namespace BpmnToDcrConverter
                 flowElements.Add(new BpmnExclusiveGateway(id));
             }
 
+            // Find parallel gateways
+            IEnumerable<XElement> parallelGateways = xmlElement.Elements(bpmn + "parallelGateway");
+            foreach (XElement item in parallelGateways)
+            {
+                string id = item.Attribute("id").Value;
+                flowElements.Add(new BpmnParallelGateway(id));
+            }
+
             // Find sub processes
             IEnumerable<XElement> subProcesses = xmlElement.Elements(bpmn + "subProcess");
             foreach (XElement item in subProcesses)
