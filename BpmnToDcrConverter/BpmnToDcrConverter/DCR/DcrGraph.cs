@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace BpmnToDcrConverter.Dcr
 {
@@ -63,7 +65,62 @@ namespace BpmnToDcrConverter.Dcr
 
         public void Export(string path)
         {
+            XNamespace dcr = "http://tk/schema/dcr";
+            XNamespace dcrDi = "http://tk/schema/dcrDi";
+            XNamespace dc = "http://www.omg.org/spec/DD/20100524/DC";
 
+            XmlDocument doc = new XmlDocument();
+
+            // Create XML Declaration
+            XmlDeclaration xmlDeclaration = doc.CreateXmlDeclaration("1.0", "UTF-8", null);
+            doc.AppendChild(xmlDeclaration);
+
+            // Create root element
+            XmlElement root = doc.CreateElement("dcr:definitions", dcr.NamespaceName);
+            root.SetAttribute("xmlns:dcrDi", "http://tk/schema/dcrDi");
+            root.SetAttribute("xmlns:dc", "http://www.omg.org/spec/DD/20100524/DC");
+            doc.AppendChild(root);
+
+            // Add dcrGraph
+            XmlElement dcrGraph = doc.CreateElement("dcr:dcrGraph", dcr.NamespaceName);
+            dcrGraph.SetAttribute("id", "Graph");
+            root.AppendChild(dcrGraph);
+
+            // Add dcrRootBoard and dcrPlane
+            XmlElement dcrRootBoard = doc.CreateElement("dcrDi:dcrRootBoard", dcrDi.NamespaceName);
+            dcrRootBoard.SetAttribute("id", "RootBoard");
+            root.AppendChild(dcrRootBoard);
+
+            XmlElement dcrPlane = doc.CreateElement("dcrDi:dcrPlane", dcrDi.NamespaceName);
+            dcrPlane.SetAttribute("id", "Plane");
+            dcrPlane.SetAttribute("boardElement", "Graph");
+            dcrRootBoard.AppendChild(dcrPlane);
+
+            // Add activities
+            foreach (DcrActivity flowElement in _flowElements.Where(x => x is DcrActivity).Select(x => (DcrActivity)x))
+            {
+                XmlElement activity = doc.CreateElement("dcr:event", dcr.NamespaceName);
+                activity.SetAttribute("id", flowElement.Id);
+                activity.SetAttribute("description", flowElement.Name);
+                activity.SetAttribute("included", flowElement.Included.ToString().ToLower());
+                activity.SetAttribute("executed", flowElement.Executed.ToString().ToLower());
+                activity.SetAttribute("pending", flowElement.Pending.ToString().ToLower());
+                dcrGraph.AppendChild(activity);
+
+                XmlElement activityPosition = doc.CreateElement("dcrDi:dcrShape", dcrDi.NamespaceName);
+                activityPosition.SetAttribute("id", flowElement.Id + "_di");
+                activityPosition.SetAttribute("boardElement", flowElement.Id);
+                dcrPlane.AppendChild(activityPosition);
+
+                XmlElement bounds = doc.CreateElement("dc:Bounds", dc.NamespaceName);
+                bounds.SetAttribute("x", flowElement.X.ToString());
+                bounds.SetAttribute("y", flowElement.Y.ToString());
+                bounds.SetAttribute("width", flowElement.Width.ToString());
+                bounds.SetAttribute("height", flowElement.Height.ToString());
+                activityPosition.AppendChild(bounds);
+            }
+
+            doc.Save(path);
         }
     }
 }

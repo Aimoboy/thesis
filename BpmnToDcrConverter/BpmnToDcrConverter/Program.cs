@@ -13,8 +13,9 @@ namespace BpmnToDcrConverter
     {
         static void Main(string[] args)
         {
-            args = new string[1];
+            args = new string[2];
             args[0] = @"C:\Users\dn\Downloads\new-bpmn-diagram4.bpmn";
+            args[1] = @"C:\Users\dn\Downloads\test-output.xml";
 
             if (args.Length != 2)
             {

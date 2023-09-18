@@ -14,22 +14,25 @@ namespace BpmnToDcrConverter.Bpmn
         public List<BpmnFlowArrow> OutgoingArrows = new List<BpmnFlowArrow>();
         public List<BpmnFlowArrow> IncomingArrows = new List<BpmnFlowArrow>();
 
-        public int X;
-        public int Y;
-        public int Width;
-        public int Height;
+        public int X = 0;
+        public int Y = 0;
+        public int Width = 0;
+        public int Height = 0;
 
         public ConversionResult ConversionResult;
 
         public BpmnFlowElement(string id)
         {
             Id = id;
-            X = 0;
-            Y = 0;
-            Width = 0;
-            Height = 0;
-
             ConversionResult = null;
+        }
+
+        public void SetSize(int x, int y, int width, int height)
+        {
+            X = x;
+            Y = y;
+            Width = width;
+            Height = height;
         }
 
         public abstract void TestArrowCountValidity();
@@ -83,6 +86,7 @@ namespace BpmnToDcrConverter.Bpmn
             nextElement.ConvertToDcr();
 
             DcrActivity activity = new DcrActivity(Id, Name);
+            activity.SetSize(X, Y, Width, Height);
             foreach (DcrFlowElement element in nextElement.ConversionResult.StartElements)
             {
                 activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Condition, element));

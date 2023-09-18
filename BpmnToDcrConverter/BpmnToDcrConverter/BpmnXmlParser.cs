@@ -40,13 +40,15 @@ namespace BpmnToDcrConverter
             XNamespace dc = "http://www.omg.org/spec/DD/20100524/DC";
             XElement process = doc.Element(bpmn + "definitions").Element(bpmn + "process");
             XElement diagram = doc.Element(bpmn + "definitions").Element(bpmndi + "BPMNDiagram");
+            XElement plane = diagram.Element(bpmndi + "BPMNPlane");
 
             // Get flow elements
             List<BpmnFlowElement> flowElements = GetFlowElements(process, bpmn);
             BpmnGraph graph = new BpmnGraph(flowElements);
 
             // Get flow element positions and size
-            foreach (XElement element in diagram.Elements(bpmndi + "BPMNShape"))
+            IEnumerable<XElement> shapes = plane.Elements(bpmndi + "BPMNShape");
+            foreach (XElement element in shapes)
             {
                 string bpmnElementId = element.Attribute("bpmnElement").Value;
                 BpmnFlowElement bpmnElement = graph.GetFlowElementFromId(bpmnElementId);
@@ -57,10 +59,7 @@ namespace BpmnToDcrConverter
                 string width = bounds.Attribute("width").Value;
                 string height = bounds.Attribute("height").Value;
 
-                bpmnElement.X = int.Parse(x);
-                bpmnElement.Y = int.Parse(y);
-                bpmnElement.Width = int.Parse(width);
-                bpmnElement.Height = int.Parse(height);
+                bpmnElement.SetSize(int.Parse(x), int.Parse(y), int.Parse(width), int.Parse(height));
             }
 
             // Get flow arrows

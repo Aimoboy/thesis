@@ -12,6 +12,24 @@ namespace BpmnToDcrConverter.Dcr
         public List<DcrFlowArrow> OutgoingArrows = new List<DcrFlowArrow>();
         public List<DcrFlowArrow> IncomingArrows = new List<DcrFlowArrow>();
 
+        public int X = 0;
+        public int Y = 0;
+        public int Width = 0;
+        public int Height = 0;
+
+        public DcrFlowElement(string id)
+        {
+            Id = id;
+        }
+
+        public void SetSize(int x, int y, int width, int height)
+        {
+            X = x;
+            Y = y;
+            Width = width;
+            Height = height;
+        }
+
         public List<string> GetIds()
         {
             return GetFlowElementsFlat().Select(x => x.Id).ToList();
@@ -28,9 +46,8 @@ namespace BpmnToDcrConverter.Dcr
         public bool Executed;
         public bool Pending;
 
-        public DcrActivity(string id, string name, bool included, bool executed, bool pending)
+        public DcrActivity(string id, string name, bool included, bool executed, bool pending) : base(id)
         {
-            Id = id;
             Name = name;
 
             Included = included;
@@ -51,9 +68,8 @@ namespace BpmnToDcrConverter.Dcr
         public string Name;
         public List<DcrFlowElement> Activities;
 
-        public DcrGroup(string id, string name, IEnumerable<DcrFlowElement> activities)
+        public DcrGroup(string id, string name, IEnumerable<DcrFlowElement> activities) : base(id)
         {
-            Id = id;
             Name = name;
             Activities = activities.ToList();
         }
