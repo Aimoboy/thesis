@@ -84,11 +84,13 @@ namespace BpmnToDcrConverter.Dcr
 
     public class DcrFlowArrow
     {
+        public string Id;
         public DcrFlowArrowType Type;
         public DcrFlowElement Element;
 
         public DcrFlowArrow(DcrFlowArrowType type, DcrFlowElement element)
         {
+            Id = "Relation_" + Guid.NewGuid().ToString("N");
             Type = type;
             Element = element;
         }

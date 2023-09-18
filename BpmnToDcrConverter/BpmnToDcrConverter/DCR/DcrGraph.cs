@@ -96,7 +96,7 @@ namespace BpmnToDcrConverter.Dcr
             dcrPlane.SetAttribute("boardElement", "Graph");
             dcrRootBoard.AppendChild(dcrPlane);
 
-            // Add activities
+            // Activities
             foreach (DcrActivity flowElement in _flowElements.Where(x => x is DcrActivity).Select(x => (DcrActivity)x))
             {
                 XmlElement activity = doc.CreateElement("dcr:event", dcr.NamespaceName);
@@ -120,7 +120,84 @@ namespace BpmnToDcrConverter.Dcr
                 activityPosition.AppendChild(bounds);
             }
 
+            // Arrows
+            foreach (DcrActivity flowElement in _flowElements)
+            {
+                foreach (DcrFlowArrow arrow in flowElement.OutgoingArrows)
+                {
+                    XmlElement dcrRelation = doc.CreateElement("dcr:relation", dcr.NamespaceName);
+                    dcrRelation.SetAttribute("id", arrow.Id);
+                    dcrRelation.SetAttribute("type", DcrArrowTypeToString(arrow.Type));
+                    dcrRelation.SetAttribute("sourceRef", flowElement.Id);
+                    dcrRelation.SetAttribute("targetRef", arrow.Element.Id);
+                    dcrGraph.AppendChild(dcrRelation);
+
+                    XmlElement dcrDiRelation = doc.CreateElement("dcrDi:relation", dcrDi.NamespaceName);
+                    dcrDiRelation.SetAttribute("id", arrow.Id + "_di");
+                    dcrDiRelation.SetAttribute("boardElement", arrow.Id);
+                    dcrPlane.AppendChild(dcrDiRelation);
+
+                    // Self referencing arrow
+                    if (flowElement == arrow.Element)
+                    {
+                        XmlElement waypoint1 = doc.CreateElement("dcrDi:waypoint", dcrDi.NamespaceName);
+                        int waypoint1X = flowElement.X + flowElement.Width - 10;
+                        int waypoint1Y = flowElement.Y;
+                        waypoint1.SetAttribute("x", waypoint1X.ToString());
+                        waypoint1.SetAttribute("y", waypoint1Y.ToString());
+                        dcrDiRelation.AppendChild(waypoint1);
+
+                        XmlElement waypoint2 = doc.CreateElement("dcrDi:waypoint", dcrDi.NamespaceName);
+                        int waypoint2X = waypoint1X;
+                        int waypoint2Y = waypoint1Y - 20;
+                        waypoint2.SetAttribute("x", waypoint2X.ToString());
+                        waypoint2.SetAttribute("y", waypoint2Y.ToString());
+                        dcrDiRelation.AppendChild(waypoint2);
+
+                        XmlElement waypoint3 = doc.CreateElement("dcrDi:waypoint", dcrDi.NamespaceName);
+                        int waypoint3X = waypoint2X + 30;
+                        int waypoint3Y = waypoint2Y;
+                        waypoint3.SetAttribute("x", waypoint3X.ToString());
+                        waypoint3.SetAttribute("y", waypoint3Y.ToString());
+                        dcrDiRelation.AppendChild(waypoint3);
+
+                        XmlElement waypoint4 = doc.CreateElement("dcrDi:waypoint", dcrDi.NamespaceName);
+                        int waypoint4X = waypoint3X;
+                        int waypoint4Y = waypoint3Y + 30;
+                        waypoint4.SetAttribute("x", waypoint4X.ToString());
+                        waypoint4.SetAttribute("y", waypoint4Y.ToString());
+                        dcrDiRelation.AppendChild(waypoint4);
+
+                        XmlElement waypoint5 = doc.CreateElement("dcrDi:waypoint", dcrDi.NamespaceName);
+                        int waypoint5X = waypoint4X - 20;
+                        int waypoint5Y = waypoint4Y;
+                        waypoint5.SetAttribute("x", waypoint5X.ToString());
+                        waypoint5.SetAttribute("y", waypoint5Y.ToString());
+                        dcrDiRelation.AppendChild(waypoint5);
+                    }
+                }
+            }
+            
             doc.Save(path);
+        }
+
+        private string DcrArrowTypeToString(DcrFlowArrowType type)
+        {
+            switch (type)
+            {
+                case DcrFlowArrowType.Condition:
+                    return "condition";
+                case DcrFlowArrowType.Response:
+                    return "response";
+                case DcrFlowArrowType.Include:
+                    return "include";
+                case DcrFlowArrowType.Exclude:
+                    return "exclude";
+                case DcrFlowArrowType.Milestone:
+                    return "milestone";
+                default:
+                    throw new Exception("Unhandled enum type.");
+            }
         }
     }
 }
