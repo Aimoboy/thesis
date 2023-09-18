@@ -53,6 +53,7 @@ namespace BpmnToDcrConverter
                 graph.AddArrow(type, from, to);
             }
 
+            graph.TestGraphValidity();
             return graph;
         }
 

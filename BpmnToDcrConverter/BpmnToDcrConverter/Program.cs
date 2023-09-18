@@ -5,6 +5,7 @@ using System.Xml;
 using System.IO;
 using System.Xml.Linq;
 using System.Linq;
+using BpmnToDcrConverter.Dcr;
 
 namespace BpmnToDcrConverter
 {
@@ -15,15 +16,14 @@ namespace BpmnToDcrConverter
             args = new string[1];
             args[0] = @"C:\Users\dn\Downloads\new-bpmn-diagram4.bpmn";
 
-            if (args.Length != 1)
+            if (args.Length != 2)
             {
-                throw new Exception("Need a single argument that is the location of the BPMN XML file.");
+                throw new Exception("Need two arguments. The first should be the path to the BPMN XML file, and the second should be the output path.");
             }
 
-            BpmnGraph res = BpmnXmlParser.Parse(args[0]);
-            res.TestGraphValidity();
-
-            Converter.ConvertBpmnToDcr(res);
+            BpmnGraph bpmnGraph = BpmnXmlParser.Parse(args[0]);
+            DcrGraph dcrGraph = Converter.ConvertBpmnToDcr(bpmnGraph);
+            dcrGraph.Export(args[1]);
         }
     }
 }

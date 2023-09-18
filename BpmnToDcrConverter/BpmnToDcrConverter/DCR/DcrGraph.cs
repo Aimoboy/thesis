@@ -60,5 +60,10 @@ namespace BpmnToDcrConverter.Dcr
             from.OutgoingArrows.Add(new DcrFlowArrow(type, to));
             to.IncomingArrows.Add(new DcrFlowArrow(type, from));
         }
+
+        public void Export(string path)
+        {
+
+        }
     }
 }
