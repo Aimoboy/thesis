@@ -14,11 +14,21 @@ namespace BpmnToDcrConverter.Bpmn
         public List<BpmnFlowArrow> OutgoingArrows = new List<BpmnFlowArrow>();
         public List<BpmnFlowArrow> IncomingArrows = new List<BpmnFlowArrow>();
 
+        public int X;
+        public int Y;
+        public int Width;
+        public int Height;
+
         public ConversionResult ConversionResult;
 
         public BpmnFlowElement(string id)
         {
             Id = id;
+            X = 0;
+            Y = 0;
+            Width = 0;
+            Height = 0;
+
             ConversionResult = null;
         }
 

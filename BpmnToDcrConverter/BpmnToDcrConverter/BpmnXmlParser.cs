@@ -36,11 +36,32 @@ namespace BpmnToDcrConverter
             // XML parsing setup
             XDocument doc = XDocument.Load(filePath);
             XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
+            XNamespace bpmndi = "http://www.omg.org/spec/BPMN/20100524/DI";
+            XNamespace dc = "http://www.omg.org/spec/DD/20100524/DC";
             XElement process = doc.Element(bpmn + "definitions").Element(bpmn + "process");
+            XElement diagram = doc.Element(bpmn + "definitions").Element(bpmndi + "BPMNDiagram");
 
             // Get flow elements
             List<BpmnFlowElement> flowElements = GetFlowElements(process, bpmn);
             BpmnGraph graph = new BpmnGraph(flowElements);
+
+            // Get flow element positions and size
+            foreach (XElement element in diagram.Elements(bpmndi + "BPMNShape"))
+            {
+                string bpmnElementId = element.Attribute("bpmnElement").Value;
+                BpmnFlowElement bpmnElement = graph.GetFlowElementFromId(bpmnElementId);
+
+                XElement bounds = element.Element(dc + "Bounds");
+                string x = bounds.Attribute("x").Value;
+                string y = bounds.Attribute("y").Value;
+                string width = bounds.Attribute("width").Value;
+                string height = bounds.Attribute("height").Value;
+
+                bpmnElement.X = int.Parse(x);
+                bpmnElement.Y = int.Parse(y);
+                bpmnElement.Width = int.Parse(width);
+                bpmnElement.Height = int.Parse(height);
+            }
 
             // Get flow arrows
             List<Tuple<BpmnFlowArrowType, string, string>> arrows = GetFlowArrows(process, bpmn);
