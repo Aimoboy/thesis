@@ -19,12 +19,11 @@ namespace BpmnToDcrConverter.Bpmn
         public int Width = 0;
         public int Height = 0;
 
-        public ConversionResult ConversionResult;
+        public ConversionResult ConversionResult = null;
 
         public BpmnFlowElement(string id)
         {
             Id = id;
-            ConversionResult = null;
         }
 
         public void SetSize(int x, int y, int width, int height)
