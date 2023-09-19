@@ -25,10 +25,10 @@ namespace UnitTests.Dcr
             DcrActivity activity3 = new DcrActivity("3", "Activity 3!");
             DcrActivity activity4 = new DcrActivity("1", "Activity 4!");
 
-            DcrGroup group1 = new DcrGroup("4", new[] { activity3, activity4 });
-            DcrGroup group2 = new DcrGroup("5", new[] { group1 });
+            DcrNesting nesting1 = new DcrNesting("4", new[] { activity3, activity4 });
+            DcrNesting nesting2 = new DcrNesting("5", new[] { nesting1 });
 
-            new DcrGraph(new DcrFlowElement[] { activity1, activity2, group2 });
+            new DcrGraph(new DcrFlowElement[] { activity1, activity2, nesting2 });
         }
     }
 }

@@ -63,18 +63,18 @@ namespace BpmnToDcrConverter.Dcr
         }
     }
 
-    public class DcrGroup : DcrFlowElement
+    public class DcrNesting : DcrFlowElement
     {
         public string Name;
         public List<DcrFlowElement> Activities;
 
-        public DcrGroup(string id, string name, IEnumerable<DcrFlowElement> activities) : base(id)
+        public DcrNesting(string id, string name, IEnumerable<DcrFlowElement> activities) : base(id)
         {
             Name = name;
             Activities = activities.ToList();
         }
 
-        public DcrGroup(string id, IEnumerable<DcrFlowElement> activities) : this(id, "", activities) { }
+        public DcrNesting(string id, IEnumerable<DcrFlowElement> activities) : this(id, "", activities) { }
 
         public override List<DcrFlowElement> GetFlowElementsFlat()
         {
