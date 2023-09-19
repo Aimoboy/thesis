@@ -49,12 +49,10 @@ namespace BpmnToDcrConverter.Bpmn
 
         public void ConvertToDcr()
         {
-            if (ConversionResult != null)
+            if (ConversionResult == null)
             {
-                return;
+                GenerateConversionResult();
             }
-
-            GenerateConversionResult();
         }
 
         protected abstract void GenerateConversionResult();
