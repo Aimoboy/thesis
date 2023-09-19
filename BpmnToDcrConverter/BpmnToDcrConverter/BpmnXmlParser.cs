@@ -145,7 +145,7 @@ namespace BpmnToDcrConverter
                 XElement conditionExpression = item.Element(bpmn + "conditionExpression");
                 if (conditionExpression != null)
                 {
-                    condition = conditionExpression.Value.Substring(1);
+                    condition = conditionExpression.Value[1..].Trim();
                 }
 
                 arrows.Add(new Tuple<BpmnFlowArrowType, string, string, string>(BpmnFlowArrowType.Sequence, fromId, toId, condition));
