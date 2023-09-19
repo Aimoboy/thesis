@@ -87,13 +87,17 @@ namespace BpmnToDcrConverter.Dcr
         public string Id;
         public DcrFlowArrowType Type;
         public DcrFlowElement Element;
+        public string Condition;
 
-        public DcrFlowArrow(DcrFlowArrowType type, DcrFlowElement element)
+        public DcrFlowArrow(DcrFlowArrowType type, DcrFlowElement element, string condition)
         {
             Id = "Relation_" + Guid.NewGuid().ToString("N");
             Type = type;
             Element = element;
+            Condition = condition;
         }
+
+        public DcrFlowArrow(DcrFlowArrowType type, DcrFlowElement element) : this(type, element, "") { }
     }
 
     public enum DcrFlowArrowType

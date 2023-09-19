@@ -315,11 +315,13 @@ namespace BpmnToDcrConverter.Bpmn
     {
         public BpmnFlowArrowType Type;
         public BpmnFlowElement Element;
+        public string Condition;
 
-        public BpmnFlowArrow(BpmnFlowArrowType type, BpmnFlowElement element)
+        public BpmnFlowArrow(BpmnFlowArrowType type, BpmnFlowElement element, string condition)
         {
             Type = type;
             Element = element;
+            Condition = condition;
         }
     }
 
