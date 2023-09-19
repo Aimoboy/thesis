@@ -87,14 +87,21 @@ namespace BpmnToDcrConverter.Bpmn
             BpmnFlowElement nextElement = OutgoingArrows.FirstOrDefault().Element;
             nextElement.ConvertToDcr();
 
-            DcrActivity activity = new DcrActivity(Id, Name);
+            // Make activity
+            DcrActivity activity = new DcrActivity(Id, Name, false, false, false);
             activity.SetSize(X, Y, Width, Height);
+
+            // Arrows to next element
             foreach (DcrFlowElement element in nextElement.ConversionResult.StartElements)
             {
-                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Condition, element));
-                element.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Condition, activity));
+                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Include, element));
+                element.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Include, activity));
+
+                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Response, element));
+                element.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Response, activity));
             }
 
+            // Exclude itself
             activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, activity));
             activity.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, activity));
 
@@ -130,6 +137,18 @@ namespace BpmnToDcrConverter.Bpmn
         {
             BpmnFlowElement nextElement = OutgoingArrows.FirstOrDefault().Element;
             nextElement.ConvertToDcr();
+            
+            // Not sure about this part, needs to be looked at more thoroughly
+            List<DcrFlowElement> nextElementDcrs = nextElement.ConversionResult.StartElements;
+            foreach (DcrFlowElement element in nextElementDcrs)
+            {
+                if (element is DcrActivity)
+                {
+                    DcrActivity activity = (DcrActivity)element;
+                    activity.Included = true;
+                    activity.Pending = true;
+                }
+            }
 
             ConversionResult = nextElement.ConversionResult;
         }
