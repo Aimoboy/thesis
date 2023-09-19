@@ -13,9 +13,30 @@ namespace BpmnToDcrConverter
     {
         static void Main(string[] args)
         {
-            if (args.Length != 2)
+            if (args.Length == 0 || args.Length > 2)
             {
-                throw new Exception("Need two arguments. The first should be the path to the BPMN XML file, and the second should be the output path.");
+                throw new ArgumentException("Need one or two arguments. The first should be the path to the BPMN XML file, and the second should be the output path. If only one is given it will save the output to the same location as the input file.");
+            }
+
+            if (args.Length == 1)
+            {
+                string arg = args[0];
+                args = new string[2];
+                args[0] = arg;
+
+                if (arg.Contains('\\'))
+                {
+                    string[] split = arg.Split('\\');
+                    string path = Path.Combine(split.Take(split.Count() - 1).ToArray());
+                    string fileName = split.Last();
+                    string fileNameWithoutExtension = fileName.Split('.')[0];
+                    args[1] = Path.Combine(path, fileNameWithoutExtension + ".xml");
+                }
+                else
+                {
+                    string fileNameWithoutExtension = arg.Split('.')[0];
+                    args[1] = fileNameWithoutExtension + ".xml";
+                }
             }
 
             BpmnGraph bpmnGraph = BpmnXmlParser.Parse(args[0]);
