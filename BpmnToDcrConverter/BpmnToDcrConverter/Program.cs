@@ -29,3 +29,5 @@ namespace BpmnToDcrConverter
 // - Handle exclusive gateway condition expression
 // - Handle message arrows
 // - Activities pointing to an end event should be pending
+// - Exclusive gateway into end event should conditionally exclude all others
+// - End event in parallel gateway path should exclude other paths

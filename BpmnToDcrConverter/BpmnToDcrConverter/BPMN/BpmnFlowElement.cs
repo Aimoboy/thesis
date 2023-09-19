@@ -246,7 +246,23 @@ namespace BpmnToDcrConverter.Bpmn
 
         public override void ConvertToDcr()
         {
-            throw new NotImplementedException();
+            if (ConversionResult != null)
+            {
+                return;
+            }
+
+            // Convert each path
+            List<BpmnFlowElement> nextElements = OutgoingArrows.ConvertAll(x => x.Element);
+            foreach (BpmnFlowElement element in nextElements)
+            {
+                element.ConvertToDcr();
+            }
+
+            ConversionResult = new ConversionResult
+            {
+                ReachableFlowElements = nextElements.SelectMany(x => x.ConversionResult.ReachableFlowElements).Distinct().ToList(),
+                StartElements = nextElements.SelectMany(x => x.ConversionResult.StartElements).ToList()
+            };
         }
     }
 
