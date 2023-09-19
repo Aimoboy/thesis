@@ -31,3 +31,4 @@ namespace BpmnToDcrConverter
 // - Activities pointing to an end event should be pending
 // - Exclusive gateway into end event should conditionally exclude all others
 // - End event in parallel gateway path should exclude other paths
+// - Start event directly into exclusive gateway
