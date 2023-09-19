@@ -47,7 +47,17 @@ namespace BpmnToDcrConverter.Bpmn
             return new List<BpmnFlowElement> { this };
         }
 
-        public abstract void ConvertToDcr();
+        public void ConvertToDcr()
+        {
+            if (ConversionResult != null)
+            {
+                return;
+            }
+
+            GenerateConversionResult();
+        }
+
+        protected abstract void GenerateConversionResult();
     }
 
     public class BpmnActivity : BpmnFlowElement
@@ -75,13 +85,8 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public override void ConvertToDcr()
+        protected override void GenerateConversionResult()
         {
-            if (ConversionResult != null)
-            {
-                return;
-            }
-
             BpmnFlowElement nextElement = OutgoingArrows.FirstOrDefault().Element;
             nextElement.ConvertToDcr();
 
@@ -124,7 +129,7 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public override void ConvertToDcr()
+        protected override void GenerateConversionResult()
         {
             BpmnFlowElement nextElement = OutgoingArrows.FirstOrDefault().Element;
             nextElement.ConvertToDcr();
@@ -153,7 +158,7 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public override void ConvertToDcr()
+        protected override void GenerateConversionResult()
         {
             ConversionResult = new ConversionResult
             {
@@ -183,13 +188,8 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public override void ConvertToDcr()
+        protected override void GenerateConversionResult()
         {
-            if (ConversionResult != null)
-            {
-                return;
-            }
-
             // Convert each path
             List<BpmnFlowElement> nextElements = OutgoingArrows.ConvertAll(x => x.Element);
             foreach (BpmnFlowElement element in nextElements)
@@ -244,13 +244,8 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public override void ConvertToDcr()
+        protected override void GenerateConversionResult()
         {
-            if (ConversionResult != null)
-            {
-                return;
-            }
-
             // Convert each path
             List<BpmnFlowElement> nextElements = OutgoingArrows.ConvertAll(x => x.Element);
             foreach (BpmnFlowElement element in nextElements)
@@ -313,7 +308,7 @@ namespace BpmnToDcrConverter.Bpmn
             return flowElements.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
         }
 
-        public override void ConvertToDcr()
+        protected override void GenerateConversionResult()
         {
             throw new NotImplementedException();
         }
