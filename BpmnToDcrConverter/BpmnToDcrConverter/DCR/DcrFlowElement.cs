@@ -66,19 +66,19 @@ namespace BpmnToDcrConverter.Dcr
     public class DcrNesting : DcrFlowElement
     {
         public string Name;
-        public List<DcrFlowElement> Activities;
+        public List<DcrFlowElement> Elements;
 
-        public DcrNesting(string id, string name, IEnumerable<DcrFlowElement> activities) : base(id)
+        public DcrNesting(string id, string name, IEnumerable<DcrFlowElement> elements) : base(id)
         {
             Name = name;
-            Activities = activities.ToList();
+            Elements = elements.ToList();
         }
 
-        public DcrNesting(string id, IEnumerable<DcrFlowElement> activities) : this(id, "", activities) { }
+        public DcrNesting(string id, IEnumerable<DcrFlowElement> elements) : this(id, "", elements) { }
 
         public override List<DcrFlowElement> GetFlowElementsFlat()
         {
-            return Activities.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
+            return Elements.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
         }
     }
 
