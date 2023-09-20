@@ -57,3 +57,4 @@ namespace BpmnToDcrConverter
 // - Set parents in JSON export
 // - Handle either outputting as XML or JSON
 // - JSON marking output
+// - Add excludes betweeen XOR gateway paths in case their cases overlap
