@@ -58,3 +58,4 @@ namespace BpmnToDcrConverter
 // - Handle either outputting as XML or JSON
 // - JSON marking output
 // - Add excludes betweeen XOR gateway paths in case their cases overlap
+// - Add inverse of other path conditions in case XOR gateway has a path with no condition
