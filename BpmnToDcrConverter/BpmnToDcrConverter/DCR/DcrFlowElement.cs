@@ -17,6 +17,8 @@ namespace BpmnToDcrConverter.Dcr
         public int Width = 0;
         public int Height = 0;
 
+        public string ArrowCondition = "";
+
         public DcrFlowElement(string id)
         {
             Id = id;

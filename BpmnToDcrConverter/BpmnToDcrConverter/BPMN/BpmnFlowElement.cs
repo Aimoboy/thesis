@@ -94,11 +94,13 @@ namespace BpmnToDcrConverter.Bpmn
             // Arrows to next element
             foreach (DcrFlowElement element in nextElement.ConversionResult.StartElements)
             {
-                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Include, element));
-                element.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Include, activity));
+                string condition = element.ArrowCondition;
 
-                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Response, element));
-                element.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Response, activity));
+                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Include, element, condition));
+                element.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Include, activity, condition));
+
+                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Response, element, condition));
+                element.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Response, activity, condition));
             }
 
             // Exclude itself
@@ -213,21 +215,22 @@ namespace BpmnToDcrConverter.Bpmn
                 element.ConvertToDcr();
             }
 
-            // Add exclusive arrows
-            foreach (BpmnFlowElement element in nextElements)
+            foreach (BpmnFlowArrow arrow in OutgoingArrows)
             {
-                List<DcrFlowElement> reachableElements = element.ConversionResult.ReachableFlowElements;
-                foreach (DcrFlowElement newDcrElement in element.ConversionResult.StartElements)
+                if (arrow.Condition == "")
                 {
-                    List<BpmnFlowElement> otherElements = nextElements.Except(new[] { element }).ToList();
-                    foreach (BpmnFlowElement otherElement in otherElements)
+                    continue;
+                }
+
+                foreach (DcrFlowElement dcrElement in arrow.Element.ConversionResult.StartElements)
+                {
+                    if (dcrElement.ArrowCondition == "")
                     {
-                        List<DcrFlowElement> elementsToExclude = otherElement.ConversionResult.ReachableFlowElements.Except(reachableElements).ToList();
-                        foreach (DcrFlowElement elementToExclude in elementsToExclude)
-                        {
-                            newDcrElement.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, elementToExclude));
-                            elementToExclude.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, newDcrElement));
-                        }
+                        dcrElement.ArrowCondition = arrow.Condition;
+                    }
+                    else
+                    {
+                        dcrElement.ArrowCondition = "(" + dcrElement.ArrowCondition + ") && (" + arrow.Condition + ")";
                     }
                 }
             }
