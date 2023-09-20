@@ -30,7 +30,7 @@ namespace BpmnToDcrConverter
                     string path = Path.Combine(split.Take(split.Count() - 1).ToArray());
                     string fileName = split.Last();
                     string fileNameWithoutExtension = fileName.Split('.')[0];
-                    args[1] = Path.Combine(path, fileNameWithoutExtension + ".xml");
+                    args[1] = Path.Combine(path, fileNameWithoutExtension + ".json");
                 }
                 else
                 {
@@ -41,7 +41,8 @@ namespace BpmnToDcrConverter
 
             BpmnGraph bpmnGraph = BpmnXmlParser.Parse(args[0]);
             DcrGraph dcrGraph = Converter.ConvertBpmnToDcr(bpmnGraph);
-            dcrGraph.Export(args[1]);
+            //dcrGraph.Export(args[1]);
+            JsonExporter.ExportToFile(dcrGraph, args[1]);
         }
     }
 }

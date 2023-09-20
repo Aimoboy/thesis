@@ -127,7 +127,7 @@ namespace BpmnToDcrConverter.Dcr
                 {
                     XmlElement dcrRelation = doc.CreateElement("dcr:relation", dcr.NamespaceName);
                     dcrRelation.SetAttribute("id", arrow.Id);
-                    dcrRelation.SetAttribute("type", DcrArrowTypeToString(arrow.Type));
+                    dcrRelation.SetAttribute("type", Utilities.DcrArrowTypeToString(arrow.Type));
                     dcrRelation.SetAttribute("sourceRef", flowElement.Id);
                     dcrRelation.SetAttribute("targetRef", arrow.Element.Id);
                     dcrGraph.AppendChild(dcrRelation);
@@ -179,25 +179,6 @@ namespace BpmnToDcrConverter.Dcr
             }
             
             doc.Save(path);
-        }
-
-        private string DcrArrowTypeToString(DcrFlowArrowType type)
-        {
-            switch (type)
-            {
-                case DcrFlowArrowType.Condition:
-                    return "condition";
-                case DcrFlowArrowType.Response:
-                    return "response";
-                case DcrFlowArrowType.Include:
-                    return "include";
-                case DcrFlowArrowType.Exclude:
-                    return "exclude";
-                case DcrFlowArrowType.Milestone:
-                    return "milestone";
-                default:
-                    throw new Exception("Unhandled enum type.");
-            }
         }
     }
 }
