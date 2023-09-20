@@ -36,7 +36,7 @@ namespace BpmnToDcrConverter.Bpmn
 
         public abstract void TestArrowCountValidity();
 
-        public List<string> GetIds()
+        public List<string> GetAllIds()
         {
             return GetFlowElementsFlat().Select(x => x.Id).ToList();
         }

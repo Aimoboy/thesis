@@ -7,55 +7,61 @@ namespace BpmnToDcrConverter.Bpmn
 {
     public class BpmnGraph
     {
-        List<BpmnFlowElement> _flowElements;
+        public string Id;
 
-        public BpmnGraph()
-        {
-            _flowElements = new List<BpmnFlowElement>();
+        List<BpmnPool> _pools = new List<BpmnPool>();
+
+        public BpmnGraph(string id) {
+            Id = id;
         }
 
-        public BpmnGraph(IEnumerable<BpmnFlowElement> flowElements)
+        public BpmnGraph(IEnumerable<BpmnFlowElement> newFlowElements) : this(Guid.NewGuid().ToString("N"), newFlowElements) { }
+
+        public BpmnGraph(string id, IEnumerable<BpmnFlowElement> newFlowElements) : this(id)
         {
-            List<string> allIds = flowElements.SelectMany(x => x.GetIds()).ToList();
+            BpmnPool pool = new BpmnPool(new BpmnPoolLane(newFlowElements));
+            AddPool(pool);
+        }
+
+        public BpmnGraph(string id, IEnumerable<BpmnPool> newPools) : this(id)
+        {
+            AddPools(newPools);
+        }
+
+        public void AddPools(IEnumerable<BpmnPool> newPools)
+        {
+            List<string> currentIds = GetAllIds();
+            List<string> newIds = newPools.SelectMany(x => x.GetAllIds()).ToList();
+            List<string> allIds = currentIds.Concat(newIds).ToList();
+
             List<string> duplicateIds = allIds.GroupBy(x => x).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
             if (duplicateIds.Any())
             {
                 string exceptionString = string.Join(", ", duplicateIds);
-                throw new BpmnDuplicateIdException($"Multiple flow elements with the ids \"{exceptionString}\" are given.");
+                throw new BpmnDuplicateIdException($"Multiple elements have the ids \"{exceptionString}\".");
             }
 
-            _flowElements = flowElements.ToList();
+            _pools = _pools.Concat(newPools).ToList();
         }
 
-        public void AddFlowElements(IEnumerable<BpmnFlowElement> newFlowElements)
+        public void AddPool(BpmnPool pool)
         {
-            HashSet<string> allIds = _flowElements.SelectMany(x => x.GetIds()).ToHashSet();
-            IEnumerable<string> newFlowElementIds = newFlowElements.SelectMany(x => x.GetIds());
-
-            foreach (string id in newFlowElementIds)
-            {
-                if (allIds.Contains(id))
-                {
-                    throw new BpmnDuplicateIdException($"A flow element with id \"{id}\" already exists.");
-                }
-            }
-
-            _flowElements = _flowElements.Concat(newFlowElements).ToList();
+            AddPools(new[] { pool });
         }
 
-        public List<BpmnFlowElement> GetFlowElements()
+        public List<BpmnFlowElement> GetAllFlowElements()
         {
-            return _flowElements;
+            return _pools.SelectMany(x => x.GetFlowElementsFlat()).ToList();
         }
 
-        public List<BpmnFlowElement> GetFlowElementsFlat()
+        public List<string> GetAllIds()
         {
-            return _flowElements.SelectMany(x => x.GetFlowElementsFlat()).ToList();
+            return _pools.SelectMany(x => x.GetAllIds()).Concat(new[] { Id }).ToList();
         }
 
         public void TestGraphValidity()
         {
-            foreach (BpmnFlowElement element in _flowElements)
+            foreach (BpmnFlowElement element in GetAllFlowElements())
             {
                 element.TestArrowCountValidity();
                 TestValidArrowReferences(element);
@@ -64,11 +70,12 @@ namespace BpmnToDcrConverter.Bpmn
 
         private void TestValidArrowReferences(BpmnFlowElement element)
         {
-            IEnumerable<BpmnFlowArrow> allArrows = element.OutgoingArrows.Concat(element.IncomingArrows);
+            List<BpmnFlowArrow> allArrows = element.OutgoingArrows.Concat(element.IncomingArrows).ToList();
+            HashSet<BpmnFlowElement> allElements = GetAllFlowElements().ToHashSet();
 
             foreach (BpmnFlowArrow arrow in allArrows)
             {
-                if (!_flowElements.Contains(arrow.Element))
+                if (!allElements.Contains(arrow.Element))
                 {
                     throw new BpmnInvalidArrowException($"BPMN flow element with id \"{element.Id}\" has a reference to a flow element that isn't in the graph.");
                 }
@@ -88,8 +95,75 @@ namespace BpmnToDcrConverter.Bpmn
 
         public BpmnFlowElement GetFlowElementFromId(string id)
         {
-            IEnumerable<BpmnFlowElement> allFlowElements = GetFlowElementsFlat();
+            List<BpmnFlowElement> allFlowElements = GetAllFlowElements();
             return allFlowElements.Where(x => x.Id == id).FirstOrDefault();
+        }
+    }
+
+    public class BpmnPool
+    {
+        public string Id;
+        public List<BpmnPoolLane> Lanes = new List<BpmnPoolLane>();
+
+        public BpmnPool(string id)
+        {
+            Id = id;
+        }
+
+        public BpmnPool() : this(Guid.NewGuid().ToString("N")) { }
+
+        public BpmnPool(string id, IEnumerable<BpmnPoolLane> lanes) : this(id)
+        {
+            Lanes = lanes.ToList();
+        }
+
+        public BpmnPool(IEnumerable<BpmnPoolLane> lanes) : this(Guid.NewGuid().ToString("N"))
+        {
+            Lanes = lanes.ToList();
+        }
+
+        public BpmnPool(BpmnPoolLane lane) : this(Guid.NewGuid().ToString("N"), new[] { lane }) { }
+
+        public List<BpmnFlowElement> GetFlowElementsFlat()
+        {
+            return Lanes.SelectMany(x => x.GetFlowElementsFlat()).ToList();
+        }
+
+        public List<string> GetAllIds()
+        {
+            return Lanes.SelectMany(x => x.GetAllIds()).Concat(new[] { Id }).ToList();
+        }
+    }
+
+    public class BpmnPoolLane
+    {
+        public string Id;
+        public List<BpmnFlowElement> Elements = new List<BpmnFlowElement>();
+
+        public BpmnPoolLane(string id)
+        {
+            Id = id;
+        }
+
+        public BpmnPoolLane() : this(Guid.NewGuid().ToString("N")) { }
+
+        public BpmnPoolLane(string id, IEnumerable<BpmnFlowElement> flowElements) : this(id) {
+            Elements = flowElements.ToList();
+        }
+
+        public BpmnPoolLane(IEnumerable<BpmnFlowElement> flowElements) : this(Guid.NewGuid().ToString("N"))
+        {
+            Elements = flowElements.ToList();
+        }
+
+        public List<BpmnFlowElement> GetFlowElementsFlat()
+        {
+            return Elements.SelectMany(x => x.GetFlowElementsFlat()).ToList();
+        }
+
+        public List<string> GetAllIds()
+        {
+            return Elements.SelectMany(x => x.GetAllIds()).Concat(new[] { Id }).ToList();
         }
     }
 }

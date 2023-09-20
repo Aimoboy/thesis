@@ -68,7 +68,9 @@ namespace UnitTests.Bpmn
             BpmnSubProcess subProcess = new BpmnSubProcess("456", new[] { activity2 });
 
             BpmnGraph graph = new BpmnGraph(new[] { activity1 });
-            graph.AddFlowElements(new[] { subProcess });
+
+            BpmnPool pool = new BpmnPool(new BpmnPoolLane(new[] { subProcess }));
+            graph.AddPool(pool);
         }
 
         [TestMethod]
@@ -93,7 +95,8 @@ namespace UnitTests.Bpmn
             BpmnActivity activity5 = new BpmnActivity("8", "Activity!");
             BpmnActivity activity6 = new BpmnActivity("9", "Activity!");
 
-            graph.AddFlowElements(new BpmnFlowElement[] { subProcess2, activity5, activity6 });
+            BpmnPool pool = new BpmnPool(new BpmnPoolLane(new BpmnFlowElement[] { subProcess2, activity5, activity6 }));
+            graph.AddPool(pool);
         }
     }
 }

@@ -33,13 +33,16 @@ namespace BpmnToDcrConverter
             XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
             XNamespace bpmndi = "http://www.omg.org/spec/BPMN/20100524/DI";
             XNamespace dc = "http://www.omg.org/spec/DD/20100524/DC";
-            XElement process = doc.Element(bpmn + "definitions").Element(bpmn + "process");
-            XElement diagram = doc.Element(bpmn + "definitions").Element(bpmndi + "BPMNDiagram");
+            XElement definitions = doc.Element(bpmn + "definitions");
+            XElement process = definitions.Element(bpmn + "process");
+            XElement diagram = definitions.Element(bpmndi + "BPMNDiagram");
             XElement plane = diagram.Element(bpmndi + "BPMNPlane");
+
+            string graphId = definitions.Attribute("id").Value;
 
             // Get flow elements
             List<BpmnFlowElement> flowElements = GetFlowElements(process, bpmn);
-            BpmnGraph graph = new BpmnGraph(flowElements);
+            BpmnGraph graph = new BpmnGraph(graphId, flowElements);
 
             // Get flow element positions and size
             IEnumerable<XElement> shapes = plane.Elements(bpmndi + "BPMNShape");

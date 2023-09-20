@@ -98,12 +98,7 @@ namespace UnitTests.Bpmn
                 activityInner3
             });
 
-            BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[]
-            {
-                start,
-                end,
-                subProcess
-            });
+            BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { start, end, subProcess });
 
             graph.AddArrow(BpmnFlowArrowType.Sequence, start, subProcess);
             graph.AddArrow(BpmnFlowArrowType.Sequence, subProcess, end);
