@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Net.Http;
+using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace BpmnToDcrConverter
 {
@@ -10,19 +12,17 @@ namespace BpmnToDcrConverter
     {
         private const string URL = @"https://repository.dcrgraphs.net/api/graphs";
 
-        public static async void Post(DcrGraph dcrGraph)
+        public static async Task Post(DcrGraph dcrGraph)
         {
             Console.WriteLine("You need a user at dcrgraphs.net to make the POST request.");
 
             Console.Write("Username: ");
-            //string username = Console.ReadLine();
-            string username = "Aimo";
+            string username = Console.ReadLine();
 
             Console.Write("Password: ");
-            //string password = Console.ReadLine();
-            string password = "P8s#H0nZmunB3o5qksE9";
+            string password = Console.ReadLine();
 
-            string json = "{ \"JSON\": \" \\\"id\\\": 123456, \\\"title\\\": \\\"TITLE!\\\" \" }";
+            string json = @"{""JSON"": ""{\""id\"": 123456, \""title\"": \""TITLE 5!\"", \""events\"": [{\""id\"": \""event\"", \""label\"": \""Text\"", \""pending\"": true}]}""}";
 
             using (HttpClient client = new HttpClient())
             {
