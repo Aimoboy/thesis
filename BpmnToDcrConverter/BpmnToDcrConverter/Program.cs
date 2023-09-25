@@ -13,6 +13,10 @@ namespace BpmnToDcrConverter
     {
         public static void Main(string[] args)
         {
+            args = new string[2];
+            args[0] = @"C:\Users\dn\Downloads\branching.bpmn";
+            args[1] = "--dcrsolutions";
+
             ArgumentParsingResults argumentParsingResults = HandleArguments(args);
 
             string inputPath = Path.Combine(argumentParsingResults.Folder, argumentParsingResults.File);
@@ -29,6 +33,7 @@ namespace BpmnToDcrConverter
                     dcrGraph.Export(outputPath);
                     break;
                 case OutputType.DcrSolutionsPost:
+                    DcrSolutionsPostRequestHandler.Post(dcrGraph);
                     break;
             }
         }
@@ -43,9 +48,9 @@ namespace BpmnToDcrConverter
             }
 
             // Handle flags
-            if (args.Length > 2)
+            if (args.Length >= 2)
             {
-                foreach (string arg in args[2..])
+                foreach (string arg in args[1..])
                 {
                     if (arg == "--dcrsolutions")
                     {
