@@ -55,6 +55,23 @@ namespace BpmnToDcrConverter.Bpmn
         }
 
         protected abstract void GenerateConversionResult();
+
+        protected abstract BpmnFlowElement CopyElement();
+
+        public BpmnFlowElement Copy()
+        {
+            BpmnFlowElement copiedElement = CopyElement();
+            copiedElement.Id = Id;
+            copiedElement.X = X;
+            copiedElement.Y = Y;
+            copiedElement.Width = Width;
+            copiedElement.Height = Height;
+
+            copiedElement.OutgoingArrows = OutgoingArrows.ConvertAll(x => x.Copy());
+            copiedElement.IncomingArrows = IncomingArrows.ConvertAll(x => x.Copy());
+
+            return copiedElement;
+        }
     }
 
     public class BpmnActivity : BpmnFlowElement
@@ -113,6 +130,12 @@ namespace BpmnToDcrConverter.Bpmn
                 StartElements = new List<DcrFlowElement> { activity }
             };
         }
+
+        protected override BpmnFlowElement CopyElement()
+        {
+            BpmnActivity copiedElement = new BpmnActivity(Id, Name);
+            return copiedElement;
+        }
     }
 
     public class BpmnStartEvent : BpmnFlowElement
@@ -154,6 +177,12 @@ namespace BpmnToDcrConverter.Bpmn
 
             ConversionResult = nextElement.ConversionResult;
         }
+
+        protected override BpmnFlowElement CopyElement()
+        {
+            BpmnStartEvent copiedElement = new BpmnStartEvent(Id);
+            return copiedElement;
+        }
     }
 
     public class BpmnEndEvent : BpmnFlowElement
@@ -183,6 +212,12 @@ namespace BpmnToDcrConverter.Bpmn
                 ReachableFlowElements = new List<DcrFlowElement>(),
                 StartElements = new List<DcrFlowElement>()
             };
+        }
+
+        protected override BpmnFlowElement CopyElement()
+        {
+            BpmnEndEvent copiedElement = new BpmnEndEvent(Id);
+            return copiedElement;
         }
     }
 
@@ -241,6 +276,12 @@ namespace BpmnToDcrConverter.Bpmn
                 StartElements = nextElements.SelectMany(x => x.ConversionResult.StartElements).ToList()
             };
         }
+
+        protected override BpmnFlowElement CopyElement()
+        {
+            BpmnExclusiveGateway copiedElement = new BpmnExclusiveGateway(Id);
+            return copiedElement;
+        }
     }
 
     public class BpmnParallelGateway : BpmnFlowElement
@@ -277,6 +318,12 @@ namespace BpmnToDcrConverter.Bpmn
                 ReachableFlowElements = nextElements.SelectMany(x => x.ConversionResult.ReachableFlowElements).Distinct().ToList(),
                 StartElements = nextElements.SelectMany(x => x.ConversionResult.StartElements).ToList()
             };
+        }
+
+        protected override BpmnFlowElement CopyElement()
+        {
+            BpmnParallelGateway copiedElement = new BpmnParallelGateway(Id);
+            return copiedElement;
         }
     }
 
@@ -331,6 +378,13 @@ namespace BpmnToDcrConverter.Bpmn
         {
             throw new NotImplementedException();
         }
+
+        protected override BpmnFlowElement CopyElement()
+        {
+            BpmnSubProcess copiedElement = new BpmnSubProcess(Id);
+            copiedElement.flowElements = flowElements.ConvertAll(x => x.Copy());
+            return copiedElement;
+        }
     }
 
     public class BpmnFlowArrow
@@ -344,6 +398,12 @@ namespace BpmnToDcrConverter.Bpmn
             Type = type;
             Element = element;
             Condition = condition;
+        }
+
+        public BpmnFlowArrow Copy()
+        {
+            BpmnFlowArrow newArrow = new BpmnFlowArrow(Type, Element, Condition);
+            return newArrow;
         }
     }
 
