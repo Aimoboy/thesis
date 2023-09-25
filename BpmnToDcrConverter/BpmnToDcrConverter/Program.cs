@@ -9,41 +9,86 @@ using BpmnToDcrConverter.Dcr;
 
 namespace BpmnToDcrConverter
 {
-    internal class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            if (args.Length == 0 || args.Length > 2)
-            {
-                throw new ArgumentException("Need one or two arguments. The first should be the path to the BPMN XML file, and the second should be the output path. If only one is given it will save the output to the same location as the input file.");
-            }
+            ArgumentParsingResults argumentParsingResults = HandleArguments(args);
 
-            if (args.Length == 1)
-            {
-                string arg = args[0];
-                args = new string[2];
-                args[0] = arg;
-
-                if (arg.Contains('\\'))
-                {
-                    string[] split = arg.Split('\\');
-                    string path = Path.Combine(split.Take(split.Count() - 1).ToArray());
-                    string fileName = split.Last();
-                    string fileNameWithoutExtension = fileName.Split('.')[0];
-                    args[1] = Path.Combine(path, fileNameWithoutExtension + ".json");
-                }
-                else
-                {
-                    string fileNameWithoutExtension = arg.Split('.')[0];
-                    args[1] = fileNameWithoutExtension + ".xml";
-                }
-            }
-
-            BpmnGraph bpmnGraph = BpmnXmlParser.Parse(args[0]);
+            string inputPath = Path.Combine(argumentParsingResults.Folder, argumentParsingResults.File);
+            BpmnGraph bpmnGraph = BpmnXmlParser.Parse(inputPath);
             DcrGraph dcrGraph = Converter.ConvertBpmnToDcr(bpmnGraph);
-            //dcrGraph.Export(args[1]);
-            JsonExporter.ExportToFile(dcrGraph, args[1]);
+
+            switch (argumentParsingResults.OutputType)
+            {
+                case OutputType.XML:
+                    string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(argumentParsingResults.File);
+                    string fileName = fileNameWithoutExtension + ".xml";
+
+                    string outputPath = Path.Combine(argumentParsingResults.Folder, fileName);
+                    dcrGraph.Export(outputPath);
+                    break;
+                case OutputType.DcrSolutionsPost:
+                    break;
+            }
         }
+
+        private static ArgumentParsingResults HandleArguments(string[] args)
+        {
+            OutputType outputType = OutputType.XML;
+
+            if (args.Length == 0)
+            {
+                throw new ArgumentException("Too few arguments. Please specify the path to the file you want to convert.");
+            }
+
+            // Handle flags
+            if (args.Length > 2)
+            {
+                foreach (string arg in args[2..])
+                {
+                    if (arg == "--dcrsolutions")
+                    {
+                        outputType = OutputType.DcrSolutionsPost;
+                    }
+                    else if (arg == "--xml")
+                    {
+                        outputType = OutputType.XML;
+                    }
+                    else
+                    {
+                        throw new ArgumentException($"Argument \"{arg}\" not recognized.");
+                    }
+                }
+            }
+
+            string path = args[0];
+            if (!File.Exists(path))
+            {
+                throw new ArgumentException($"The given path \"{path}\" is not valid");
+            }
+
+            return new ArgumentParsingResults
+            {
+                Folder = Path.GetDirectoryName(path),
+                File = Path.GetFileName(path),
+                OutputType = outputType
+            };
+        }
+    }
+
+    public class ArgumentParsingResults
+    {
+        public string Folder;
+        public string File;
+        public OutputType OutputType;
+    }
+
+
+    public enum OutputType
+    {
+        XML,
+        DcrSolutionsPost
     }
 }
 
