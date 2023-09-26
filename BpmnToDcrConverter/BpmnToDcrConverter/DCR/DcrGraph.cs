@@ -10,6 +10,8 @@ namespace BpmnToDcrConverter.Dcr
 {
     public class DcrGraph
     {
+        public string Name = "DcrGraph";
+
         private List<DcrFlowElement> _flowElements;
 
         public DcrGraph()

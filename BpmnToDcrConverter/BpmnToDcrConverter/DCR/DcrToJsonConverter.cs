@@ -7,17 +7,15 @@ using System.Text.Json;
 
 namespace BpmnToDcrConverter.Dcr
 {
-    public static class JsonExporter
+    public static class DcrToJsonConverter
     {
-        public static void ExportToFile(DcrGraph dcrGraph, string path)
+        public static string GetJsonString(DcrGraph dcrGraph)
         {
-            Root jsonRoot = DcrGraphToJsonTypes(dcrGraph);
-            string jsonString = JsonSerializer.Serialize(jsonRoot, new JsonSerializerOptions { WriteIndented = true, IgnoreNullValues = true });
-
-            File.WriteAllText(path, jsonString);
+            DcrJsonModel jsonModel = DcrGraphToJsonTypes(dcrGraph);
+            return JsonSerializer.Serialize(jsonModel, new JsonSerializerOptions { IgnoreNullValues = true });
         }
 
-        private static Root DcrGraphToJsonTypes(DcrGraph dcrGraph)
+        private static DcrJsonModel DcrGraphToJsonTypes(DcrGraph dcrGraph)
         {
             List<DcrFlowElement> allFlowElements = dcrGraph.GetFlowElementsFlat();
 
@@ -29,6 +27,9 @@ namespace BpmnToDcrConverter.Dcr
             {
                 id = x.Id,
                 label = x.Name,
+                included = x.Included,
+                pending = x.Pending,
+                executed = x.Executed
             }).ToList();
 
             List<Event> convertedNestings = nestings.Select(x => new Event
@@ -57,16 +58,12 @@ namespace BpmnToDcrConverter.Dcr
                 }
             }
 
-            DCRModel dcrModel = new DCRModel
+            return new DcrJsonModel
             {
+                title = dcrGraph.Name,
                 events = events,
                 rules = rules,
                 roles = new List<Role>()
-            };
-
-            return new Root
-            {
-                DCRModel = new List<DCRModel> { dcrModel }
             };
         }
     }
@@ -89,6 +86,9 @@ namespace BpmnToDcrConverter.Dcr
         public string roles { get; set; }
         public string datatype { get; set; }
         public string parent { get; set; }
+        public bool included { get; set; }
+        public bool pending { get; set; }
+        public bool executed { get; set; }
     }
 
     public class Rule
@@ -101,7 +101,7 @@ namespace BpmnToDcrConverter.Dcr
         public string guard { get; set; }
     }
 
-    public class DCRModel
+    public class DcrJsonModel
     {
         public int id { get; set; }
         public string title { get; set; }
@@ -111,10 +111,4 @@ namespace BpmnToDcrConverter.Dcr
         public List<Event> events { get; set; }
         public List<Rule> rules { get; set; }
     }
-
-    public class Root
-    {
-        public List<DCRModel> DCRModel { get; set; }
-    }
-
 }

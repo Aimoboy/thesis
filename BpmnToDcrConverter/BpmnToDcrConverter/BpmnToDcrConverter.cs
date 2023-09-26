@@ -7,7 +7,7 @@ using System.Text;
 
 namespace BpmnToDcrConverter
 {
-    public static class Converter
+    public static class BpmnToDcrConverter
     {
         public static DcrGraph ConvertBpmnToDcr(BpmnGraph bpmnGraph)
         {

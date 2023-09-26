@@ -16,16 +16,17 @@ namespace BpmnToDcrConverter
             ArgumentParsingResults argumentParsingResults = HandleArguments(args);
 
             string inputPath = Path.Combine(argumentParsingResults.Folder, argumentParsingResults.File);
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(argumentParsingResults.File);
+
             BpmnGraph bpmnGraph = BpmnXmlParser.Parse(inputPath);
-            DcrGraph dcrGraph = Converter.ConvertBpmnToDcr(bpmnGraph);
+            DcrGraph dcrGraph = BpmnToDcrConverter.ConvertBpmnToDcr(bpmnGraph);
+            dcrGraph.Name = fileNameWithoutExtension;
 
             switch (argumentParsingResults.OutputType)
             {
                 case OutputType.XML:
-                    string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(argumentParsingResults.File);
-                    string fileName = fileNameWithoutExtension + ".xml";
-
-                    string outputPath = Path.Combine(argumentParsingResults.Folder, fileName);
+                    string xmlFileName = fileNameWithoutExtension + ".xml";
+                    string outputPath = Path.Combine(argumentParsingResults.Folder, xmlFileName);
                     dcrGraph.Export(outputPath);
                     break;
                 case OutputType.DcrSolutionsPost:
