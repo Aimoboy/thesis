@@ -20,6 +20,8 @@ namespace BpmnToDcrConverter.Bpmn
         public int Height = 0;
 
         public ConversionResult ConversionResult = null;
+        public bool Visited = false;
+        public List<BpmnFlowArrow> DelayedConversion = new List<BpmnFlowArrow>();
 
         public BpmnFlowElement(string id)
         {
