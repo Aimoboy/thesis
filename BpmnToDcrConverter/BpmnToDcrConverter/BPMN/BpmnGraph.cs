@@ -99,78 +99,18 @@ namespace BpmnToDcrConverter.Bpmn
             return allFlowElements.Where(x => x.Id == id).FirstOrDefault();
         }
 
-        public BpmnGraph Copy()
+        public List<BpmnFlowElement> GetElementCollectionFromId(string id)
         {
-            BpmnGraph newGraph = new BpmnGraph(Id);
-
-            // Copy all elements
-            newGraph.AddPools(_pools.Select(x => x.Copy()));
-
-            // Update arrow references
-            List<BpmnFlowElement> allElements = newGraph.GetAllFlowElements();
-            Dictionary<string, BpmnFlowElement> idToElementDict = allElements.ToDictionary(x => x.Id);
-            foreach (BpmnFlowElement flowElement in allElements)
+            List<List<BpmnFlowElement>> results = _pools.ConvertAll(x => x.GetElementCollectionFromId(id));
+            foreach (List<BpmnFlowElement> lst in results)
             {
-                foreach (BpmnFlowArrow arrow in flowElement.OutgoingArrows)
+                if (lst != null)
                 {
-                    string elementId = arrow.Element.Id;
-                    arrow.Element = idToElementDict[elementId];
-                }
-
-                foreach (BpmnFlowArrow arrow in flowElement.IncomingArrows)
-                {
-                    string elementId = arrow.Element.Id;
-                    arrow.Element = idToElementDict[elementId];
+                    return lst;
                 }
             }
 
-
-            return newGraph;
-        }
-
-        public List<string> FindCycles()
-        {
-            BpmnGraph graphCopy = Copy();
-            graphCopy.IsolateCycles();
-            return graphCopy.GetAllFlowElements().Where(x => x.IncomingArrows.Count > 0 || x.OutgoingArrows.Count > 0).Select(x => x.Id).ToList();
-        }
-
-        private void IsolateCycles()
-        {
-            List<BpmnFlowElement> leaves = GetLeaves();
-            while (leaves.Any())
-            {
-                // Remove incoming arrows from pointed to elements
-                foreach (BpmnFlowElement flowElement in leaves)
-                {
-                    foreach (BpmnFlowArrow arrow in flowElement.OutgoingArrows)
-                    {
-                        BpmnFlowElement element = arrow.Element;
-                        BpmnFlowArrow correspondingArrow = element.IncomingArrows.Where(x => x.Element.Id == flowElement.Id).FirstOrDefault();
-
-                        element.IncomingArrows = element.IncomingArrows.Where(x => x != correspondingArrow).ToList();
-                    }
-
-                    foreach (BpmnFlowArrow arrow in flowElement.IncomingArrows)
-                    {
-                        BpmnFlowElement element = arrow.Element;
-                        BpmnFlowArrow correspondingArrow = element.OutgoingArrows.Where(x => x.Element.Id == flowElement.Id).FirstOrDefault();
-
-                        element.OutgoingArrows = element.OutgoingArrows.Where(x => x != correspondingArrow).ToList();
-                    }
-
-                    flowElement.OutgoingArrows.Clear();
-                    flowElement.IncomingArrows.Clear();
-                }
-
-                leaves = GetLeaves();
-            }
-        }
-
-        private List<BpmnFlowElement> GetLeaves()
-        {
-            List<BpmnFlowElement> leaves = GetAllFlowElements().Where(x => (x.OutgoingArrows.Count == 0 && x.IncomingArrows.Count > 0) || (x.IncomingArrows.Count == 0 && x.OutgoingArrows.Count > 0)).ToList();
-            return leaves;
+            return null;
         }
     }
 
@@ -214,6 +154,20 @@ namespace BpmnToDcrConverter.Bpmn
             newPool.Lanes = Lanes.ConvertAll(x => x.Copy());
             return newPool;
         }
+
+        public List<BpmnFlowElement> GetElementCollectionFromId(string id)
+        {
+            List<List<BpmnFlowElement>> results = Lanes.ConvertAll(x => x.GetElementCollectionFromId(id));
+            foreach (List<BpmnFlowElement> lst in results)
+            {
+                if (lst != null)
+                {
+                    return lst;
+                }
+            }
+
+            return null;
+        }
     }
 
     public class BpmnPoolLane
@@ -252,6 +206,16 @@ namespace BpmnToDcrConverter.Bpmn
             BpmnPoolLane newPoolLane = new BpmnPoolLane(Id);
             newPoolLane.Elements = Elements.ConvertAll(x => x.Copy());
             return newPoolLane;
+        }
+
+        public List<BpmnFlowElement> GetElementCollectionFromId(string id)
+        {
+            if (Elements.Select(x => x.Id).Contains(id))
+            {
+                return Elements;
+            }
+
+            return null;
         }
     }
 }
