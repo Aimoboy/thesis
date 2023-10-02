@@ -18,28 +18,7 @@ namespace BpmnToDcrConverter.Dcr
         private static DcrJsonModel DcrGraphToJsonTypes(DcrGraph dcrGraph)
         {
             List<DcrFlowElement> allFlowElements = dcrGraph.GetFlowElementsFlat();
-
-            List<DcrActivity> activities = allFlowElements.Where(x => x is DcrActivity).Select(x => (DcrActivity)x).ToList();
-            List<DcrNesting> nestings = allFlowElements.Where(x => x is DcrNesting).Select(x => (DcrNesting)x).ToList();
-
-            // TODO: set parents
-            List<Event> convertedActivities = activities.Select(x => new Event
-            {
-                id = x.Id,
-                label = x.Name,
-                included = x.Included,
-                pending = x.Pending,
-                executed = x.Executed
-            }).ToList();
-
-            List<Event> convertedNestings = nestings.Select(x => new Event
-            {
-                id = x.Id,
-                label = x.Name,
-                type = "nesting"
-            }).ToList();
-
-            List<Event> events = convertedActivities.Concat(convertedNestings).ToList();
+            List<Event> events = GetEventsFromDcrGraph(dcrGraph);
 
             List<Rule> rules = new List<Rule>();
             foreach (DcrFlowElement element in allFlowElements)
@@ -65,6 +44,65 @@ namespace BpmnToDcrConverter.Dcr
                 rules = rules,
                 roles = new List<Role>()
             };
+        }
+
+        private static List<Event> GetEventsFromDcrGraph(DcrGraph dcrGraph)
+        {
+            List<Event> events = new List<Event>();
+
+            List<DcrFlowElement> dcrElements = dcrGraph.GetFlowElements();
+            foreach (DcrFlowElement dcrElement in dcrElements)
+            {
+                events = events.Concat(GetEventsFromDcrFlowElement(dcrElement, null)).ToList();
+            }
+
+            return events;
+        }
+
+        private static List<Event> GetEventsFromDcrFlowElement(DcrFlowElement dcrElement, string parent)
+        {
+            if (dcrElement is DcrActivity)
+            {
+                DcrActivity activity = (DcrActivity)dcrElement;
+                Event @event = new Event
+                {
+                    id = activity.Id,
+                    label = activity.Name,
+                    included = activity.Included,
+                    pending = activity.Pending,
+                    executed = activity.Executed
+                };
+
+                if (parent != null)
+                {
+                    @event.parent = parent;
+                }
+
+                return new List<Event>() { @event };
+            }
+
+            if (dcrElement is DcrNesting)
+            {
+                DcrNesting nesting = (DcrNesting)dcrElement;
+                Event @event = new Event
+                {
+                    id = nesting.Id,
+                    label = nesting.Name,
+                    type = "nesting"
+                };
+
+                if (parent != null)
+                {
+                    @event.parent = parent;
+                }
+                
+                List<Event> events = nesting.Elements.SelectMany(x => GetEventsFromDcrFlowElement(x, nesting.Id)).ToList();
+                events.Add(@event);
+
+                return events;
+            }
+
+            throw new Exception($"Missing case for {typeof(DcrFlowElement)}.");
         }
     }
 
