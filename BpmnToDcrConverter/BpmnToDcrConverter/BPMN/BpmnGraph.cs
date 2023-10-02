@@ -63,7 +63,7 @@ namespace BpmnToDcrConverter.Bpmn
         {
             foreach (BpmnFlowElement element in GetAllFlowElements())
             {
-                element.TestArrowCountValidity();
+                element.TestValidity();
                 TestValidArrowReferences(element);
             }
         }

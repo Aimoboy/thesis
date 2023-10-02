@@ -15,7 +15,7 @@ namespace UnitTests.Bpmn
 
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { start, activity });
             graph.AddArrow(BpmnFlowArrowType.Sequence, start, activity);
-            activity.TestArrowCountValidity();
+            activity.TestValidity();
         }
 
         [TestMethod]
@@ -33,7 +33,7 @@ namespace UnitTests.Bpmn
             graph.AddArrow(BpmnFlowArrowType.Sequence, activity1, activity2);
             graph.AddArrow(BpmnFlowArrowType.Sequence, activity1, activity3);
 
-            activity1.TestArrowCountValidity();
+            activity1.TestValidity();
         }
 
         [TestMethod]
@@ -45,7 +45,7 @@ namespace UnitTests.Bpmn
 
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { end, activity });
             graph.AddArrow(BpmnFlowArrowType.Sequence, activity, end);
-            activity.TestArrowCountValidity();
+            activity.TestValidity();
         }
 
         [TestMethod]
@@ -64,7 +64,7 @@ namespace UnitTests.Bpmn
             graph.AddArrow(BpmnFlowArrowType.Sequence, activity2, activity3);
             graph.AddArrow(BpmnFlowArrowType.Sequence, activity3, end);
 
-            activity3.TestArrowCountValidity();
+            activity3.TestValidity();
         }
 
         [TestMethod]
@@ -77,7 +77,7 @@ namespace UnitTests.Bpmn
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { start, activity });
             graph.AddArrow(BpmnFlowArrowType.Sequence, activity, start);
 
-            start.TestArrowCountValidity();
+            start.TestValidity();
         }
 
         [TestMethod]
@@ -92,7 +92,7 @@ namespace UnitTests.Bpmn
             graph.AddArrow(BpmnFlowArrowType.Sequence, start, activity1);
             graph.AddArrow(BpmnFlowArrowType.Sequence, start, activity2);
 
-            start.TestArrowCountValidity();
+            start.TestValidity();
         }
 
         [TestMethod]
@@ -105,7 +105,7 @@ namespace UnitTests.Bpmn
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { end, activity });
             graph.AddArrow(BpmnFlowArrowType.Sequence, end, activity);
 
-            end.TestArrowCountValidity();
+            end.TestValidity();
         }
 
         [TestMethod]
@@ -113,7 +113,7 @@ namespace UnitTests.Bpmn
         public void InvalidArrowEndEventNoIncoming()
         {
             BpmnEndEvent end = new BpmnEndEvent("1");
-            end.TestArrowCountValidity();
+            end.TestValidity();
         }
 
         [TestMethod]
@@ -126,7 +126,7 @@ namespace UnitTests.Bpmn
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { gateway, activity });
             graph.AddArrow(BpmnFlowArrowType.Sequence, activity, gateway);
 
-            gateway.TestArrowCountValidity();
+            gateway.TestValidity();
         }
 
         [TestMethod]
@@ -139,7 +139,7 @@ namespace UnitTests.Bpmn
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { gateway, activity });
             graph.AddArrow(BpmnFlowArrowType.Sequence, gateway, activity);
 
-            gateway.TestArrowCountValidity();
+            gateway.TestValidity();
         }
     }
 }

@@ -44,9 +44,9 @@ namespace UnitTests.Bpmn
 
             BpmnGraph graph = new BpmnGraph(new BpmnFlowElement[] { start, end, startGateway, endGateway, activity1, activity2, activity3 });
             graph.AddArrow(BpmnFlowArrowType.Sequence, start, startGateway);
-            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateway, activity1);
-            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateway, activity2);
-            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateway, activity3);
+            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateway, activity1, "cond");
+            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateway, activity2, "cond");
+            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateway, activity3, "cond");
             graph.AddArrow(BpmnFlowArrowType.Sequence, activity1, endGateway);
             graph.AddArrow(BpmnFlowArrowType.Sequence, activity2, endGateway);
             graph.AddArrow(BpmnFlowArrowType.Sequence, activity3, endGateway);
@@ -104,9 +104,9 @@ namespace UnitTests.Bpmn
             graph.AddArrow(BpmnFlowArrowType.Sequence, subProcess, end);
 
             graph.AddArrow(BpmnFlowArrowType.Sequence, startInner, startGateWayInner);
-            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateWayInner, activityInner1);
-            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateWayInner, activityInner2);
-            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateWayInner, activityInner3);
+            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateWayInner, activityInner1, "cond");
+            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateWayInner, activityInner2, "cond");
+            graph.AddArrow(BpmnFlowArrowType.Sequence, startGateWayInner, activityInner3, "cond");
             graph.AddArrow(BpmnFlowArrowType.Sequence, activityInner1, endGateWayInner);
             graph.AddArrow(BpmnFlowArrowType.Sequence, activityInner2, endGateWayInner);
             graph.AddArrow(BpmnFlowArrowType.Sequence, activityInner3, endGateWayInner);

@@ -36,7 +36,7 @@ namespace BpmnToDcrConverter.Bpmn
             Height = height;
         }
 
-        public abstract void TestArrowCountValidity();
+        public abstract void TestValidity();
 
         public List<string> GetAllIds()
         {
@@ -85,7 +85,7 @@ namespace BpmnToDcrConverter.Bpmn
             Name = name;
         }
 
-        public override void TestArrowCountValidity()
+        public override void TestValidity()
         {
             int outgoingArrowCount = OutgoingArrows.Count;
             int incomingArrowCount = IncomingArrows.Count;
@@ -144,7 +144,7 @@ namespace BpmnToDcrConverter.Bpmn
     {
         public BpmnStartEvent(string id) : base(id) { }
 
-        public override void TestArrowCountValidity()
+        public override void TestValidity()
         {
             int outgoingArrowCount = OutgoingArrows.Count;
             int incomingArrowCount = IncomingArrows.Count;
@@ -191,7 +191,7 @@ namespace BpmnToDcrConverter.Bpmn
     {
         public BpmnEndEvent(string id) : base(id) { }
 
-        public override void TestArrowCountValidity()
+        public override void TestValidity()
         {
             int outgoingArrowCount = OutgoingArrows.Count;
             int incomingArrowCount = IncomingArrows.Count;
@@ -227,7 +227,7 @@ namespace BpmnToDcrConverter.Bpmn
     {
         public BpmnExclusiveGateway(string id) : base(id) { }
 
-        public override void TestArrowCountValidity()
+        public override void TestValidity()
         {
             int outgoingArrowCount = OutgoingArrows.Count;
             int incomingArrowCount = IncomingArrows.Count;
@@ -240,6 +240,12 @@ namespace BpmnToDcrConverter.Bpmn
             if (incomingArrowCount == 0)
             {
                 throw new BpmnInvalidArrowException($"The OR gateway with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
+            }
+
+            int outgoingArrowsWithoutConditionCount = OutgoingArrows.Where(x => x.Condition == "").Count();
+            if (outgoingArrowsWithoutConditionCount > 1)
+            {
+                throw new BpmnInvalidArrowException($"The OR gateway with id \"{Id}\" has {outgoingArrowsWithoutConditionCount} outgoing arrows without a condition, but it can have a maximum of 1");
             }
         }
 
@@ -290,7 +296,7 @@ namespace BpmnToDcrConverter.Bpmn
     {
         public BpmnParallelGateway(string id) : base(id) { }
 
-        public override void TestArrowCountValidity()
+        public override void TestValidity()
         {
             int outgoingArrowCount = OutgoingArrows.Count;
             int incomingArrowCount = IncomingArrows.Count;
@@ -350,7 +356,7 @@ namespace BpmnToDcrConverter.Bpmn
             flowElements = newFlowElements.ToList();
         }
 
-        public override void TestArrowCountValidity()
+        public override void TestValidity()
         {
             int outgoingArrowCount = OutgoingArrows.Count;
             int incomingArrowCount = IncomingArrows.Count;
@@ -367,7 +373,7 @@ namespace BpmnToDcrConverter.Bpmn
 
             foreach (BpmnFlowElement flowElement in flowElements)
             {
-                flowElement.TestArrowCountValidity();
+                flowElement.TestValidity();
             }
         }
 
