@@ -108,7 +108,7 @@ namespace BpmnToDcrConverter.Dcr
         public override List<DcrFlowElement> GetFlowElementsFlat()
         {
             return Elements.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
-        }s
+        }
     }
 
     public class DcrFlowArrow
