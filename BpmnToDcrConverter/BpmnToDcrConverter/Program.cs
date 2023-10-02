@@ -95,16 +95,7 @@ namespace BpmnToDcrConverter
 }
 
 // TODO:
-// - Handle exclusive gateway condition expression
 // - Handle message arrows
-// - Activities pointing to an end event should be pending
-// - Exclusive gateway into end event should conditionally exclude all others
-// - End event in parallel gateway path should exclude other paths
-// - Start event directly into exclusive gateway
-// - Set parents in JSON export
-// - Handle either outputting as XML or JSON
-// - JSON marking output
 // - Add excludes betweeen XOR gateway paths in case their cases overlap
-// - Add inverse of other path conditions in case XOR gateway has a path with no condition
 // - Add pool parsing
-// - Add pool handlilng in conversion
+// - Add pool handling in conversion
