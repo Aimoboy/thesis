@@ -102,7 +102,31 @@ namespace BpmnToDcrConverter.Dcr
                 return events;
             }
 
-            throw new Exception($"Missing case for {typeof(DcrFlowElement)}.");
+            if (dcrElement is DcrSubProcess)
+            {
+                DcrSubProcess subProcess = (DcrSubProcess)dcrElement;
+                Event @event = new Event
+                {
+                    id = subProcess.Id,
+                    label = subProcess.Name,
+                    included = subProcess.Included,
+                    executed = subProcess.Executed,
+                    pending = subProcess.Pending,
+                    type = "subprocess"
+                };
+
+                if (parent != null)
+                {
+                    @event.parent = parent;
+                }
+
+                List<Event> events = subProcess.Elements.SelectMany(x => GetEventsFromDcrFlowElement(x, subProcess.Id)).ToList();
+                events.Add(@event);
+
+                return events;
+            }
+
+            throw new Exception($"Missing case for {dcrElement.GetType()}.");
         }
     }
 

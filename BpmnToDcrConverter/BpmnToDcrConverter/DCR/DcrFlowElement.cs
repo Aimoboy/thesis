@@ -84,6 +84,33 @@ namespace BpmnToDcrConverter.Dcr
         }
     }
 
+    public class DcrSubProcess : DcrFlowElement
+    {
+        public string Name;
+        public List<DcrFlowElement> Elements;
+
+        public bool Included;
+        public bool Executed;
+        public bool Pending;
+
+        public DcrSubProcess(string id, string name, IEnumerable<DcrFlowElement> elements, bool included, bool executed, bool pending) : base(id)
+        {
+            Name = name;
+            Elements = elements.ToList();
+
+            Included = included;
+            Executed = executed;
+            Pending = pending;
+        }
+
+        public DcrSubProcess(string id, IEnumerable<DcrFlowElement> elements) : this(id, "", elements, true, false, false) { }
+
+        public override List<DcrFlowElement> GetFlowElementsFlat()
+        {
+            return Elements.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
+        }s
+    }
+
     public class DcrFlowArrow
     {
         public string Id;
