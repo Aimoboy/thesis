@@ -34,21 +34,100 @@ namespace BpmnToDcrConverter
             XNamespace bpmndi = "http://www.omg.org/spec/BPMN/20100524/DI";
             XNamespace dc = "http://www.omg.org/spec/DD/20100524/DC";
             XElement definitions = doc.Element(bpmn + "definitions");
-            XElement process = definitions.Element(bpmn + "process");
+            XElement collaboration = definitions.Element(bpmn + "collaboration");
+            List<XElement> processes = definitions.Elements(bpmn + "process").ToList();
             XElement diagram = definitions.Element(bpmndi + "BPMNDiagram");
             XElement plane = diagram.Element(bpmndi + "BPMNPlane");
 
             string graphId = definitions.Attribute("id").Value;
 
-            // Get flow elements
-            List<BpmnFlowElement> flowElements = GetFlowElements(process, bpmn);
-            BpmnGraph graph = new BpmnGraph(graphId, flowElements);
+            List<Tuple<BpmnPool, string>> emptyPools;
+            if (collaboration == null)
+            {
+                emptyPools = processes.ConvertAll(x =>
+                {
+                    string processId = x.Attribute("id").Value;
+
+                    return new Tuple<BpmnPool, string>(new BpmnPool(), processId);
+                });
+            }
+            else
+            {
+                emptyPools = collaboration.Elements(bpmn + "participant").Select(x =>
+                {
+                    string id = x.Attribute("id").Value;
+                    string processId = x.Attribute("processRef").Value;
+
+                    return new Tuple<BpmnPool, string>(new BpmnPool(id), processId);
+                }).ToList();
+            }
+
+            List<BpmnPool> pools = new List<BpmnPool>();
+            foreach (var emptyPool in emptyPools)
+            {
+                BpmnPool pool = emptyPool.Item1;
+                string processId = emptyPool.Item2;
+                XElement process = processes.Where(x => x.Attribute("id").Value == processId).FirstOrDefault();
+
+                List<BpmnFlowElement> flowElements = GetFlowElements(process, bpmn);
+
+                XElement laneSet = process.Element(bpmn + "laneSet");
+                List<Tuple<BpmnPoolLane, List<string>>> lanes;
+                if (laneSet == null)
+                {
+                    lanes = new List<Tuple<BpmnPoolLane, List<string>>>();
+
+                    BpmnPoolLane lane = new BpmnPoolLane();
+                    List<string> elementIds = new List<string>();
+                    Tuple<BpmnPoolLane, List<string>> tuple = new Tuple<BpmnPoolLane, List<string>>(lane, elementIds);
+
+                    lanes.Add(tuple);
+                }
+                else
+                {
+                    lanes = laneSet.Elements(bpmn + "lane").Select(x =>
+                    {
+                        string id = x.Attribute("id").Value;
+                        List<string> elementIds = x.Elements(bpmn + "flowNodeRef").Select(x => x.Value).ToList();
+
+                        return new Tuple<BpmnPoolLane, List<string>>(new BpmnPoolLane(id), elementIds);
+                    }).ToList();
+                }
+
+                foreach (var tuple in lanes)
+                {
+                    BpmnPoolLane lane = tuple.Item1;
+                    List<string> elementIds = tuple.Item2;
+
+                    if (elementIds.Count == 0)
+                    {
+                        lane.Elements = flowElements;
+                    }
+                    else
+                    {
+                        lane.Elements = flowElements.Where(x => elementIds.Contains(x.Id)).ToList();
+                    }
+                }
+
+
+                pool.Lanes = lanes.ConvertAll(x => x.Item1);
+
+                pools.Add(pool);
+            }
+
+            BpmnGraph graph = new BpmnGraph(graphId, pools);
 
             // Get flow element positions and size
             IEnumerable<XElement> shapes = plane.Elements(bpmndi + "BPMNShape");
             foreach (XElement element in shapes)
             {
                 string bpmnElementId = element.Attribute("bpmnElement").Value;
+
+                if (bpmnElementId.Contains("Participant") || bpmnElementId.Contains("Lane"))
+                {
+                    continue;
+                }
+
                 BpmnFlowElement bpmnElement = graph.GetFlowElementFromId(bpmnElementId);
 
                 XElement bounds = element.Element(dc + "Bounds");
@@ -61,7 +140,7 @@ namespace BpmnToDcrConverter
             }
 
             // Get flow arrows
-            List<Tuple<BpmnFlowArrowType, string, string, string>> arrows = GetFlowArrows(process, bpmn);
+            List<Tuple<BpmnFlowArrowType, string, string, string>> arrows = processes.SelectMany(x => GetFlowArrows(x, bpmn)).ToList();
             foreach (var arrow in arrows)
             {
                 BpmnFlowArrowType type = arrow.Item1;
