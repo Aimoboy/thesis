@@ -70,7 +70,8 @@ namespace BpmnToDcrConverter.Dcr
                     label = activity.Name,
                     included = activity.Included,
                     pending = activity.Pending,
-                    executed = activity.Executed
+                    executed = activity.Executed,
+                    roles = activity.Role
                 };
 
                 if (parent != null)

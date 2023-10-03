@@ -56,9 +56,10 @@ namespace BpmnToDcrConverter
                 emptyPools = collaboration.Elements(bpmn + "participant").Select(x =>
                 {
                     string id = x.Attribute("id").Value;
+                    string name = x.Attribute("name").Value;
                     string processId = x.Attribute("processRef").Value;
 
-                    return new Tuple<BpmnPool, string>(new BpmnPool(id), processId);
+                    return new Tuple<BpmnPool, string>(new BpmnPool(id, name), processId);
                 }).ToList();
             }
 
@@ -88,9 +89,10 @@ namespace BpmnToDcrConverter
                     lanes = laneSet.Elements(bpmn + "lane").Select(x =>
                     {
                         string id = x.Attribute("id").Value;
+                        string name = x.Attribute("name").Value;
                         List<string> elementIds = x.Elements(bpmn + "flowNodeRef").Select(x => x.Value).ToList();
 
-                        return new Tuple<BpmnPoolLane, List<string>>(new BpmnPoolLane(id), elementIds);
+                        return new Tuple<BpmnPoolLane, List<string>>(new BpmnPoolLane(id, name), elementIds);
                     }).ToList();
                 }
 

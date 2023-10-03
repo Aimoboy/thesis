@@ -49,6 +49,11 @@ namespace BpmnToDcrConverter.Bpmn
             AddPools(new[] { pool });
         }
 
+        public List<BpmnPool> GetPools()
+        {
+            return _pools;
+        }
+
         public List<BpmnFlowElement> GetAllFlowElements()
         {
             return _pools.SelectMany(x => x.GetFlowElementsFlat()).ToList();
@@ -117,26 +122,27 @@ namespace BpmnToDcrConverter.Bpmn
     public class BpmnPool
     {
         public string Id;
+        public string Name;
         public List<BpmnPoolLane> Lanes = new List<BpmnPoolLane>();
 
-        public BpmnPool(string id)
+        public BpmnPool(string id, string name, IEnumerable<BpmnPoolLane> lanes)
         {
             Id = id;
-        }
-
-        public BpmnPool() : this(Guid.NewGuid().ToString("N")) { }
-
-        public BpmnPool(string id, IEnumerable<BpmnPoolLane> lanes) : this(id)
-        {
+            Name = name;
             Lanes = lanes.ToList();
         }
 
-        public BpmnPool(IEnumerable<BpmnPoolLane> lanes) : this(Guid.NewGuid().ToString("N"))
-        {
-            Lanes = lanes.ToList();
-        }
+        public BpmnPool(string id) : this (id, "", new List<BpmnPoolLane>()) { }
 
-        public BpmnPool(BpmnPoolLane lane) : this(Guid.NewGuid().ToString("N"), new[] { lane }) { }
+        public BpmnPool(string id, string name) : this(id, name, new List<BpmnPoolLane>()) { }
+
+        public BpmnPool() : this(Guid.NewGuid().ToString("N"), "", new List<BpmnPoolLane>()) { }
+
+        public BpmnPool(string id, IEnumerable<BpmnPoolLane> lanes) : this(id, "", lanes) { }
+
+        public BpmnPool(IEnumerable<BpmnPoolLane> lanes) : this(Guid.NewGuid().ToString("N"), "", lanes) { }
+
+        public BpmnPool(BpmnPoolLane lane) : this(Guid.NewGuid().ToString("N"), "", new[] { lane }) { }
 
         public List<BpmnFlowElement> GetFlowElementsFlat()
         {
@@ -173,23 +179,25 @@ namespace BpmnToDcrConverter.Bpmn
     public class BpmnPoolLane
     {
         public string Id;
+        public string Role;
         public List<BpmnFlowElement> Elements = new List<BpmnFlowElement>();
 
-        public BpmnPoolLane(string id)
+        public BpmnPoolLane(string id, string role, IEnumerable<BpmnFlowElement> flowElements)
         {
             Id = id;
-        }
-
-        public BpmnPoolLane() : this(Guid.NewGuid().ToString("N")) { }
-
-        public BpmnPoolLane(string id, IEnumerable<BpmnFlowElement> flowElements) : this(id) {
+            Role = role;
             Elements = flowElements.ToList();
         }
 
-        public BpmnPoolLane(IEnumerable<BpmnFlowElement> flowElements) : this(Guid.NewGuid().ToString("N"))
-        {
-            Elements = flowElements.ToList();
-        }
+        public BpmnPoolLane(string id) : this(id, "", new List<BpmnFlowElement>()) { }
+
+        public BpmnPoolLane(string id, string role) : this(id, role, new List<BpmnFlowElement>()) { }
+
+        public BpmnPoolLane() : this(Guid.NewGuid().ToString("N"), "", new List<BpmnFlowElement>()) { }
+
+        public BpmnPoolLane(string id, IEnumerable<BpmnFlowElement> flowElements) : this(id, "", flowElements) { }
+
+        public BpmnPoolLane(IEnumerable<BpmnFlowElement> flowElements) : this(Guid.NewGuid().ToString("N"), "", flowElements) { }
 
         public List<BpmnFlowElement> GetFlowElementsFlat()
         {

@@ -96,6 +96,5 @@ namespace BpmnToDcrConverter
 
 // TODO:
 // - Handle message arrows
-// - Add excludes betweeen XOR gateway paths in case their cases overlap
-// - Add pool parsing
+// - Add excludes betweeen XOR gateway paths in case their conditions overlap
 // - Add pool handling in conversion

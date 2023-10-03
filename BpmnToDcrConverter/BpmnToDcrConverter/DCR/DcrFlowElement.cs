@@ -43,21 +43,23 @@ namespace BpmnToDcrConverter.Dcr
     public class DcrActivity : DcrFlowElement
     {
         public string Name;
+        public string Role;
 
         public bool Included;
         public bool Executed;
         public bool Pending;
 
-        public DcrActivity(string id, string name, bool included, bool executed, bool pending) : base(id)
+        public DcrActivity(string id, string name, string role, bool included, bool executed, bool pending) : base(id)
         {
             Name = name;
+            Role = role;
 
             Included = included;
             Executed = executed;
             Pending = pending;
         }
 
-        public DcrActivity(string id, string name) : this(id, name, true, false, false) { }
+        public DcrActivity(string id, string name) : this(id, name, "", true, false, false) { }
 
         public override List<DcrFlowElement> GetFlowElementsFlat()
         {

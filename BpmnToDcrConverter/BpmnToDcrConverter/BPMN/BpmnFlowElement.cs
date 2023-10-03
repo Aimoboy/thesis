@@ -107,7 +107,7 @@ namespace BpmnToDcrConverter.Bpmn
             nextElement.ConvertToDcr();
 
             // Make activity
-            DcrActivity activity = new DcrActivity(Id, Name, false, false, false);
+            DcrActivity activity = new DcrActivity(Id, Name, "", false, false, false);
             activity.SetSize(X, Y, Width, Height);
 
             // Arrows to next element

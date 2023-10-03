@@ -108,7 +108,23 @@ namespace BpmnToDcrConverter
                                             .Select(x => (BpmnActivity)x)
                                             .ToList();
 
-            List<DcrActivity> dcrActivities = bpmnActivities.ConvertAll(x => new DcrActivity(x.Id, x.Name, false, false, false));
+            // Add roles
+            Dictionary<string, string> idToRoleDict = new Dictionary<string, string>();
+            foreach (BpmnPool pool in bpmnGraph.GetPools())
+            {
+                foreach (BpmnPoolLane lane in pool.Lanes)
+                {
+                    string role = lane.Role;
+
+                    List<string> laneElementIds = lane.GetFlowElementsFlat().ConvertAll(x => x.Id);
+                    foreach (string id in laneElementIds)
+                    {
+                        idToRoleDict[id] = role;
+                    }
+                }
+            }
+
+            List<DcrActivity> dcrActivities = bpmnActivities.ConvertAll(x => new DcrActivity(x.Id, x.Name, idToRoleDict[x.Id], false, false, false));
             Dictionary<string, DcrActivity> idToDcrActivityDict = dcrActivities.ToDictionary(x => x.Id);
 
             foreach (BpmnFlowElement element in bpmnActivities)
