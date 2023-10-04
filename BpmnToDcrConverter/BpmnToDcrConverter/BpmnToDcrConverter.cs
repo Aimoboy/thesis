@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Sprache;
 
 namespace BpmnToDcrConverter
 {
@@ -21,6 +22,16 @@ namespace BpmnToDcrConverter
                                                                  .Select(x => (BpmnExclusiveGateway)x)
                                                                  .ToList();
 
+            List<string> allArrowConditions = allBpmnElements.SelectMany(x => x.OutgoingArrows).Select(x => x.Condition).Where(x => x != "").ToList();
+            List<BinaryOperation> allArrowExpressions = allArrowConditions.Select(x => LogicParser.LogicalExpressionParser.Parse(x)).ToList();
+            List<BinaryOperation> allRelationalExpressions = allArrowExpressions.SelectMany(x => GetRelationalExpressionsFromExpression(x)).ToList();
+            List<string> allVariables = allRelationalExpressions.SelectMany(x => new[] { x.Left, x.Right })
+                                                                .Where(x => x is Variable)
+                                                                .Select(x => ((Variable)x).Name)
+                                                                .ToList();
+
+
+
             // Give conditions to arrows from XOR without one (inverted of all the other conditions)
             foreach (BpmnExclusiveGateway bpmnXor in bpmnXors)
             {
@@ -30,7 +41,7 @@ namespace BpmnToDcrConverter
                 if (arrowWithoutCondition != null)
                 {
                     List<string> otherConditions = otherArrows.ConvertAll(x => x.Condition);
-                    List<string> otherConditionsPrep = otherConditions.ConvertAll(x => "!(" + x + ")");
+                    List<string> otherConditionsPrep = otherConditions.ConvertAll(x => $"!({x})");
                     string newCondition = string.Join(" && ", otherConditionsPrep);
 
                     arrowWithoutCondition.Condition = newCondition;
@@ -190,6 +201,47 @@ namespace BpmnToDcrConverter
 
                 Utilities.RemoveBpmnArrow(bpmnExclusiveGateway, arrow);
             }
+        }
+
+        private static List<BinaryOperation> GetRelationalExpressionsFromExpression(Expression expression)
+        {
+            if (expression is BinaryOperation)
+            {
+                BinaryOperation binaryOperation = (BinaryOperation)expression;
+
+                List<Operator> RelationalOperators = new List<Operator>()
+                {
+                    Operator.Equal,
+                    Operator.NotEqual,
+                    Operator.LessThan,
+                    Operator.GreaterThan,
+                    Operator.LessThanOrEqual,
+                    Operator.GreaterThanOrEqual
+                };
+
+                List<Operator> LogicalOperators = new List<Operator>()
+                {
+                    Operator.And,
+                    Operator.Or
+                };
+
+                if (RelationalOperators.Contains(binaryOperation.Operator))
+                {
+                    return new List<BinaryOperation> { binaryOperation };
+                }
+
+                if (LogicalOperators.Contains(binaryOperation.Operator))
+                {
+                    List<BinaryOperation> leftResult = GetRelationalExpressionsFromExpression(binaryOperation.Left);
+                    List<BinaryOperation> rightResult = GetRelationalExpressionsFromExpression(binaryOperation.Right);
+
+                    return leftResult.Concat(rightResult).ToList();
+                }
+
+                throw new Exception("Unhandled enum.");
+            }
+
+            throw new Exception("Cannot find relational expressions from this expression.");
         }
     }
 }
