@@ -90,7 +90,7 @@ namespace BpmnToDcrConverter
             from front in Parse.Digit.Many().Text()
             from dot in Parse.Char('.')
             from back in Parse.Digit.AtLeastOnce().Text()
-            select new DecimalConstant(decimal.Parse(minus + front + dot + back, CultureInfo.InvariantCulture));
+            select new DecimalConstant(decimal.Parse(minus.GetOrElse("") + front + dot + back, CultureInfo.InvariantCulture));
 
         private static readonly Parser<Expression> Constant =
             Decimal.Or(Integer).Token();

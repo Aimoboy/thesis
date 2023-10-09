@@ -308,25 +308,30 @@ namespace BpmnToDcrConverter
                 relationsWithUnknown = relations.Where(x => BinaryExpressionContainsKnownAndUnknownVariableDataTypes(x, variableDataTypeDict)).ToList();
             }
 
-            foreach (BinaryOperation relation in relationsWithoutConstants)
-            {
-                Variable leftVariable = (Variable)relation.Left;
-                Variable rightVariable = (Variable)relation.Right;
-
-                DataType leftVariableDataType = variableDataTypeDict[leftVariable.Name];
-                DataType rightVariableDataType = variableDataTypeDict[rightVariable.Name];
-
-                if (leftVariableDataType != rightVariableDataType)
-                {
-                    throw new Exception($"Data type of {leftVariable.Name} should be the same as {rightVariable.Name}, but they are different. They have types {leftVariableDataType} and {rightVariableDataType} respectively.");
-                }
-            }
-
             foreach (string variable in allVariables)
             {
                 if (variableDataTypeDict[variable] == DataType.Unknown)
                 {
-                    Console.WriteLine($"Could not determine the datat type of variable {variable}.");
+                    Console.WriteLine($"Could not determine the data type of variable {variable}.");
+                }
+            }
+
+            foreach (BinaryOperation relation in relations)
+            {
+                DataType left = GetExpressionDataType(relation.Left, variableDataTypeDict);
+                DataType right = GetExpressionDataType(relation.Right, variableDataTypeDict);
+
+                if (left == DataType.Unknown || right == DataType.Unknown)
+                {
+                    continue;
+                }
+
+                if (left != right)
+                {
+                    string leftName = GetExpressionString(relation.Left);
+                    string rightName = GetExpressionString(relation.Right);
+
+                    throw new Exception($"Type mismatch between \"{leftName}\" and \"{rightName}\". They have types \"{left}\" and \"{right}\" respectively.");
                 }
             }
 
@@ -369,6 +374,43 @@ namespace BpmnToDcrConverter
             }
 
             throw new Exception("Expression given is not a constant.");
+        }
+
+        private static string ConstantToString(Expression constant)
+        {
+            if (constant is IntegerConstant)
+            {
+                return ((IntegerConstant)constant).Value.ToString();
+            }
+
+            if (constant is DecimalConstant)
+            {
+                return ((DecimalConstant)constant).Value.ToString();
+            }
+
+            throw new Exception("Expression given is not a constant.");
+        }
+
+        private static DataType GetExpressionDataType(Expression expression, Dictionary<string, DataType> variableToDataTypeDict)
+        {
+            if (ExpressionIsConstant(expression))
+            {
+                return ConstantToDataType(expression);
+            }
+
+            Variable variable = (Variable)expression;
+            return variableToDataTypeDict[variable.Name];
+        }
+
+        private static string GetExpressionString(Expression expression)
+        {
+            if (ExpressionIsConstant(expression))
+            {
+                return ConstantToString(expression);
+            }
+
+            Variable variable = (Variable)expression;
+            return variable.Name;
         }
     }
 }
