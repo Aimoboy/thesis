@@ -19,7 +19,6 @@ namespace BpmnToDcrConverter.Bpmn
         public int Width = 0;
         public int Height = 0;
 
-        public ConversionResult ConversionResult = null;
         public bool Visited = false;
         public List<BpmnFlowArrow> DelayedConversion = new List<BpmnFlowArrow>();
 
@@ -47,16 +46,6 @@ namespace BpmnToDcrConverter.Bpmn
         {
             return new List<BpmnFlowElement> { this };
         }
-
-        public void ConvertToDcr()
-        {
-            if (ConversionResult == null)
-            {
-                GenerateConversionResult();
-            }
-        }
-
-        protected abstract void GenerateConversionResult();
 
         protected abstract BpmnFlowElement CopyElement();
 
@@ -101,38 +90,6 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        protected override void GenerateConversionResult()
-        {
-            BpmnFlowElement nextElement = OutgoingArrows.FirstOrDefault().Element;
-            nextElement.ConvertToDcr();
-
-            // Make activity
-            DcrActivity activity = new DcrActivity(Id, Name, "", false, false, false, DataType.Unknown);
-            activity.SetSize(X, Y, Width, Height);
-
-            // Arrows to next element
-            foreach (DcrFlowElement element in nextElement.ConversionResult.StartElements)
-            {
-                string condition = element.ArrowCondition;
-
-                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Include, element, condition));
-                element.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Include, activity, condition));
-
-                activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Response, element, condition));
-                element.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Response, activity, condition));
-            }
-
-            // Exclude itself
-            activity.OutgoingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, activity));
-            activity.IncomingArrows.Add(new DcrFlowArrow(DcrFlowArrowType.Exclude, activity));
-
-            ConversionResult = new ConversionResult
-            {
-                ReachableFlowElements = nextElement.ConversionResult.ReachableFlowElements.Concat(new[] { activity }).ToList(),
-                StartElements = new List<DcrFlowElement> { activity }
-            };
-        }
-
         protected override BpmnFlowElement CopyElement()
         {
             BpmnActivity copiedElement = new BpmnActivity(Id, Name);
@@ -160,26 +117,6 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        protected override void GenerateConversionResult()
-        {
-            BpmnFlowElement nextElement = OutgoingArrows.FirstOrDefault().Element;
-            nextElement.ConvertToDcr();
-            
-            // Not sure about this part, needs to be looked at more thoroughly
-            List<DcrFlowElement> nextElementDcrs = nextElement.ConversionResult.StartElements;
-            foreach (DcrFlowElement element in nextElementDcrs)
-            {
-                if (element is DcrActivity)
-                {
-                    DcrActivity activity = (DcrActivity)element;
-                    activity.Included = true;
-                    activity.Pending = true;
-                }
-            }
-
-            ConversionResult = nextElement.ConversionResult;
-        }
-
         protected override BpmnFlowElement CopyElement()
         {
             BpmnStartEvent copiedElement = new BpmnStartEvent(Id);
@@ -205,15 +142,6 @@ namespace BpmnToDcrConverter.Bpmn
             {
                 throw new BpmnInvalidArrowException($"The END event with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
             }
-        }
-
-        protected override void GenerateConversionResult()
-        {
-            ConversionResult = new ConversionResult
-            {
-                ReachableFlowElements = new List<DcrFlowElement>(),
-                StartElements = new List<DcrFlowElement>()
-            };
         }
 
         protected override BpmnFlowElement CopyElement()
@@ -249,42 +177,6 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        protected override void GenerateConversionResult()
-        {
-            // Convert each path
-            List<BpmnFlowElement> nextElements = OutgoingArrows.ConvertAll(x => x.Element);
-            foreach (BpmnFlowElement element in nextElements)
-            {
-                element.ConvertToDcr();
-            }
-
-            foreach (BpmnFlowArrow arrow in OutgoingArrows)
-            {
-                if (arrow.Condition == "")
-                {
-                    continue;
-                }
-
-                foreach (DcrFlowElement dcrElement in arrow.Element.ConversionResult.StartElements)
-                {
-                    if (dcrElement.ArrowCondition == "")
-                    {
-                        dcrElement.ArrowCondition = arrow.Condition;
-                    }
-                    else
-                    {
-                        dcrElement.ArrowCondition = "(" + dcrElement.ArrowCondition + ") && (" + arrow.Condition + ")";
-                    }
-                }
-            }
-
-            ConversionResult = new ConversionResult
-            {
-                ReachableFlowElements = nextElements.SelectMany(x => x.ConversionResult.ReachableFlowElements).Distinct().ToList(),
-                StartElements = nextElements.SelectMany(x => x.ConversionResult.StartElements).ToList()
-            };
-        }
-
         protected override BpmnFlowElement CopyElement()
         {
             BpmnExclusiveGateway copiedElement = new BpmnExclusiveGateway(Id);
@@ -310,22 +202,6 @@ namespace BpmnToDcrConverter.Bpmn
             {
                 throw new BpmnInvalidArrowException($"The AND gateway with id \"{Id}\" has 0 incoming arrows, but it has to have at least 1.");
             }
-        }
-
-        protected override void GenerateConversionResult()
-        {
-            // Convert each path
-            List<BpmnFlowElement> nextElements = OutgoingArrows.ConvertAll(x => x.Element);
-            foreach (BpmnFlowElement element in nextElements)
-            {
-                element.ConvertToDcr();
-            }
-
-            ConversionResult = new ConversionResult
-            {
-                ReachableFlowElements = nextElements.SelectMany(x => x.ConversionResult.ReachableFlowElements).Distinct().ToList(),
-                StartElements = nextElements.SelectMany(x => x.ConversionResult.StartElements).ToList()
-            };
         }
 
         protected override BpmnFlowElement CopyElement()
@@ -382,11 +258,6 @@ namespace BpmnToDcrConverter.Bpmn
             return flowElements.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
         }
 
-        protected override void GenerateConversionResult()
-        {
-            throw new NotImplementedException();
-        }
-
         protected override BpmnFlowElement CopyElement()
         {
             BpmnSubProcess copiedElement = new BpmnSubProcess(Id);
@@ -419,11 +290,5 @@ namespace BpmnToDcrConverter.Bpmn
     {
         Message,
         Sequence
-    }
-
-    public class ConversionResult
-    {
-        public List<DcrFlowElement> ReachableFlowElements;
-        public List<DcrFlowElement> StartElements;
     }
 }
