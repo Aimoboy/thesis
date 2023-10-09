@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using Sprache;
 
@@ -45,11 +46,21 @@ namespace BpmnToDcrConverter
         GreaterThanOrEqual
     }
 
-    public class Constant : Expression
+    public class IntegerConstant : Expression
     {
         public int Value { get; }
 
-        public Constant(int value)
+        public IntegerConstant(int value)
+        {
+            Value = value;
+        }
+    }
+
+    public class DecimalConstant : Expression
+    {
+        public decimal Value { get; }
+
+        public DecimalConstant(decimal value)
         {
             Value = value;
         }
@@ -69,11 +80,17 @@ namespace BpmnToDcrConverter
                  .Or(Parse.String(">=").Token().Return(Operator.GreaterThanOrEqual))
                  .Or(Parse.String("!=").Token().Return(Operator.NotEqual));
 
-        private static readonly Parser<Expression> Constant =
-            Parse.Digit.AtLeastOnce().Text().Select(n => new Constant(int.Parse(n)));
+        private static readonly Parser<Expression> Integer =
+            Parse.Digit.AtLeastOnce().Text().Select(n => new IntegerConstant(int.Parse(n)));
 
-        private static readonly Parser<char> LetterOrDigit =
-            Parse.Letter.Or(Parse.Digit);
+        public static readonly Parser<Expression> Decimal =
+            from front in Parse.Digit.Many().Text()
+            from dot in Parse.Char('.')
+            from back in Parse.Digit.AtLeastOnce().Text()
+            select new DecimalConstant(decimal.Parse(front + dot + back, CultureInfo.InvariantCulture));
+
+        private static readonly Parser<Expression> Constant =
+            Decimal.Or(Integer).Token();
 
         private static readonly Parser<Expression> Variable =
             from letter in Parse.Letter
