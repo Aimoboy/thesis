@@ -22,6 +22,7 @@ namespace BpmnToDcrConverter
                                                                  .Select(x => (BpmnExclusiveGateway)x)
                                                                  .ToList();
 
+            // Get variables and their types
             List<string> allArrowConditions = allBpmnElements.SelectMany(x => x.OutgoingArrows).Select(x => x.Condition).Where(x => x != "").ToList();
             List<BinaryOperation> allArrowExpressions = allArrowConditions.Select(x => LogicParser.LogicalExpressionParser.Parse(x)).ToList();
             List<BinaryOperation> allRelationalExpressions = allArrowExpressions.SelectMany(x => GetRelationalExpressionsFromExpression(x)).ToList();
@@ -30,6 +31,7 @@ namespace BpmnToDcrConverter
                                                                 .Select(x => ((Variable)x).Name)
                                                                 .ToList();
 
+            Dictionary<string, DataType> variableToDataTypeDict = GetVariableDataTypesDict(allVariables, allRelationalExpressions);
 
 
             // Give conditions to arrows from XOR without one (inverted of all the other conditions)
@@ -135,7 +137,17 @@ namespace BpmnToDcrConverter
                 }
             }
 
-            List<DcrActivity> dcrActivities = bpmnActivities.ConvertAll(x => new DcrActivity(x.Id, x.Name, idToRoleDict[x.Id], false, false, false));
+            Dictionary<string, DataType> activityIdToDataType = bpmnActivities.Select(x => x.Id).ToDictionary(x => x, x =>
+            {
+                if (variableToDataTypeDict.ContainsKey(x))
+                {
+                    return variableToDataTypeDict[x];
+                }
+
+                return DataType.Unknown;
+            });
+
+            List<DcrActivity> dcrActivities = bpmnActivities.ConvertAll(x => new DcrActivity(x.Id, x.Name, idToRoleDict[x.Id], false, false, false, activityIdToDataType[x.Id]));
             Dictionary<string, DcrActivity> idToDcrActivityDict = dcrActivities.ToDictionary(x => x.Id);
 
             foreach (BpmnFlowElement element in bpmnActivities)
@@ -242,6 +254,121 @@ namespace BpmnToDcrConverter
             }
 
             throw new Exception("Cannot find relational expressions from this expression.");
+        }
+
+        private static Dictionary<string, DataType> GetVariableDataTypesDict(List<string> allVariables, List<BinaryOperation> relations)
+        {
+            Dictionary<string, DataType> variableDataTypeDict = allVariables.Distinct().ToDictionary(x => x, x => DataType.Unknown);
+
+            List<BinaryOperation> relationsWithConstants = relations.Where(x => BinaryExpressionContainsConstant(x)).ToList();
+            List<BinaryOperation> relationsWithoutConstants = relations.Where(x => !relationsWithConstants.Contains(x)).ToList();
+
+            foreach (BinaryOperation relation in relationsWithConstants)
+            {
+                if (ExpressionIsConstant(relation.Left) && ExpressionIsConstant(relation.Right))
+                {
+                    continue;
+                }
+
+                Variable var;
+                Expression constant;
+
+                if (ExpressionIsConstant(relation.Left))
+                {
+                    constant = relation.Left;
+                    var = (Variable)relation.Right;
+                }
+                else
+                {
+                    constant = relation.Right;
+                    var = (Variable)relation.Left;
+                }
+
+                variableDataTypeDict[var.Name] = ConstantToDataType(constant);
+            }
+
+            List<BinaryOperation> relationsWithUnknown = relations.Where(x => BinaryExpressionContainsKnownAndUnknownVariableDataTypes(x, variableDataTypeDict)).ToList();
+            while (relationsWithUnknown.Any())
+            {
+                foreach (BinaryOperation relation in relationsWithUnknown)
+                {
+                    Variable leftVariable = (Variable)relation.Left;
+                    Variable rightVariable = (Variable)relation.Right;
+
+                    if (variableDataTypeDict[leftVariable.Name] == DataType.Unknown)
+                    {
+                        variableDataTypeDict[leftVariable.Name] = variableDataTypeDict[rightVariable.Name];
+                    }
+                    else
+                    {
+                        variableDataTypeDict[rightVariable.Name] = variableDataTypeDict[leftVariable.Name];
+                    }
+                }
+
+                relationsWithUnknown = relations.Where(x => BinaryExpressionContainsKnownAndUnknownVariableDataTypes(x, variableDataTypeDict)).ToList();
+            }
+
+            foreach (BinaryOperation relation in relationsWithoutConstants)
+            {
+                Variable leftVariable = (Variable)relation.Left;
+                Variable rightVariable = (Variable)relation.Right;
+
+                DataType leftVariableDataType = variableDataTypeDict[leftVariable.Name];
+                DataType rightVariableDataType = variableDataTypeDict[rightVariable.Name];
+
+                if (leftVariableDataType != rightVariableDataType)
+                {
+                    throw new Exception($"Data type of {leftVariable.Name} should be the same as {rightVariable.Name}, but they are different. They have types {leftVariableDataType} and {rightVariableDataType} respectively.");
+                }
+            }
+
+            foreach (string variable in allVariables)
+            {
+                if (variableDataTypeDict[variable] == DataType.Unknown)
+                {
+                    Console.WriteLine($"Could not determine the datat type of variable {variable}.");
+                }
+            }
+
+            return variableDataTypeDict;
+        }
+
+        private static bool BinaryExpressionContainsKnownAndUnknownVariableDataTypes(BinaryOperation operation, Dictionary<string, DataType> variableDataTypeDict)
+        {
+            if (BinaryExpressionContainsConstant(operation))
+            {
+                return false;
+            }
+
+            Variable leftVariable = (Variable)operation.Left;
+            Variable rightVariable = (Variable)operation.Right;
+
+            return variableDataTypeDict[leftVariable.Name] == DataType.Unknown && variableDataTypeDict[rightVariable.Name] != DataType.Unknown || variableDataTypeDict[leftVariable.Name] != DataType.Unknown && variableDataTypeDict[rightVariable.Name] == DataType.Unknown;
+        }
+
+        private static bool BinaryExpressionContainsConstant(BinaryOperation operation)
+        {
+            return ExpressionIsConstant(operation.Left) || ExpressionIsConstant(operation.Right);
+        }
+
+        private static bool ExpressionIsConstant(Expression expression)
+        {
+            return expression is IntegerConstant || expression is DecimalConstant;
+        }
+
+        private static DataType ConstantToDataType(Expression constant)
+        {
+            if (constant is IntegerConstant)
+            {
+                return DataType.Integer;
+            }
+
+            if (constant is DecimalConstant)
+            {
+                return DataType.Float;
+            }
+
+            throw new Exception("Expression given is not a constant.");
         }
     }
 }

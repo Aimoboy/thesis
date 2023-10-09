@@ -73,21 +73,24 @@ namespace BpmnToDcrConverter
                  .Or(Parse.String("||").Token().Return(Operator.Or));
 
         private static readonly Parser<Operator> RelationalOperator =
-            Parse.String(">").Token().Return(Operator.GreaterThan)
-                 .Or(Parse.String("<").Token().Return(Operator.LessThan))
-                 .Or(Parse.String("==").Token().Return(Operator.Equal))
+            Parse.String(">=").Token().Return(Operator.GreaterThanOrEqual)
                  .Or(Parse.String("<=").Token().Return(Operator.LessThanOrEqual))
-                 .Or(Parse.String(">=").Token().Return(Operator.GreaterThanOrEqual))
+                 .Or(Parse.String("=").Token().Return(Operator.Equal))
+                 .Or(Parse.String("<").Token().Return(Operator.LessThan))
+                 .Or(Parse.String(">").Token().Return(Operator.GreaterThan))
                  .Or(Parse.String("!=").Token().Return(Operator.NotEqual));
 
         private static readonly Parser<Expression> Integer =
-            Parse.Digit.AtLeastOnce().Text().Select(n => new IntegerConstant(int.Parse(n)));
+            from minus in Parse.String("-").Text().Optional()
+            from number in Parse.Digit.AtLeastOnce().Text()
+            select new IntegerConstant(int.Parse(minus.GetOrElse("") + number));
 
         public static readonly Parser<Expression> Decimal =
+            from minus in Parse.String("-").Text().Optional()
             from front in Parse.Digit.Many().Text()
             from dot in Parse.Char('.')
             from back in Parse.Digit.AtLeastOnce().Text()
-            select new DecimalConstant(decimal.Parse(front + dot + back, CultureInfo.InvariantCulture));
+            select new DecimalConstant(decimal.Parse(minus + front + dot + back, CultureInfo.InvariantCulture));
 
         private static readonly Parser<Expression> Constant =
             Decimal.Or(Integer).Token();
@@ -118,5 +121,12 @@ namespace BpmnToDcrConverter
 
         public static readonly Parser<BinaryOperation> LogicalExpressionParser =
             RelationalExpression.Or(LogicalExpression).End();
+    }
+
+    public enum DataType
+    {
+        Unknown,
+        Integer,
+        Float
     }
 }

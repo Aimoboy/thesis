@@ -71,7 +71,8 @@ namespace BpmnToDcrConverter.Dcr
                     included = activity.Included,
                     pending = activity.Pending,
                     executed = activity.Executed,
-                    roles = activity.Role
+                    roles = activity.Role,
+                    datatype = GetDataTypeString(activity.DataType)
                 };
 
                 if (parent != null)
@@ -128,6 +129,21 @@ namespace BpmnToDcrConverter.Dcr
             }
 
             throw new Exception($"Missing case for {dcrElement.GetType()}.");
+        }
+
+        private static string GetDataTypeString(DataType type)
+        {
+            switch (type)
+            {
+                case DataType.Unknown:
+                    return null;
+                case DataType.Integer:
+                    return "int";
+                case DataType.Float:
+                    return "float";
+                default:
+                    throw new Exception("Type is missing a case");
+            }
         }
     }
 

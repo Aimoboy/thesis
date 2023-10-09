@@ -49,7 +49,9 @@ namespace BpmnToDcrConverter.Dcr
         public bool Executed;
         public bool Pending;
 
-        public DcrActivity(string id, string name, string role, bool included, bool executed, bool pending) : base(id)
+        public DataType DataType;
+
+        public DcrActivity(string id, string name, string role, bool included, bool executed, bool pending, DataType dataType) : base(id)
         {
             Name = name;
             Role = role;
@@ -57,9 +59,10 @@ namespace BpmnToDcrConverter.Dcr
             Included = included;
             Executed = executed;
             Pending = pending;
+            DataType = dataType;
         }
 
-        public DcrActivity(string id, string name) : this(id, name, "", true, false, false) { }
+        public DcrActivity(string id, string name) : this(id, name, "", true, false, false, DataType.Unknown) { }
 
         public override List<DcrFlowElement> GetFlowElementsFlat()
         {
