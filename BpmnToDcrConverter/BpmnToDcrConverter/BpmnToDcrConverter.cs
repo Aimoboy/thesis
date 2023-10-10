@@ -25,7 +25,7 @@ namespace BpmnToDcrConverter
             // Get variables and their types
             List<string> allArrowConditions = allBpmnElements.SelectMany(x => x.OutgoingArrows).Select(x => x.Condition).Where(x => x != "").ToList();
             List<BinaryOperation> allArrowExpressions = allArrowConditions.Select(x => LogicParser.LogicalExpressionParser.Parse(x)).ToList();
-            List<BinaryOperation> allRelationalExpressions = allArrowExpressions.SelectMany(x => GetRelationalExpressionsFromExpression(x)).ToList();
+            List<RelationalOperation> allRelationalExpressions = allArrowExpressions.SelectMany(x => GetRelationalExpressionsFromExpression(x)).ToList();
             List<string> allVariables = allRelationalExpressions.SelectMany(x => new[] { x.Left, x.Right })
                                                                 .Where(x => x is Variable)
                                                                 .Select(x => ((Variable)x).Name)
@@ -215,55 +215,36 @@ namespace BpmnToDcrConverter
             }
         }
 
-        private static List<BinaryOperation> GetRelationalExpressionsFromExpression(Expression expression)
+        private static List<RelationalOperation> GetRelationalExpressionsFromExpression(Expression expression)
         {
-            if (expression is BinaryOperation)
+            if (expression is Unit)
             {
-                BinaryOperation binaryOperation = (BinaryOperation)expression;
-
-                List<Operator> RelationalOperators = new List<Operator>()
-                {
-                    Operator.Equal,
-                    Operator.NotEqual,
-                    Operator.LessThan,
-                    Operator.GreaterThan,
-                    Operator.LessThanOrEqual,
-                    Operator.GreaterThanOrEqual
-                };
-
-                List<Operator> LogicalOperators = new List<Operator>()
-                {
-                    Operator.And,
-                    Operator.Or
-                };
-
-                if (RelationalOperators.Contains(binaryOperation.Operator))
-                {
-                    return new List<BinaryOperation> { binaryOperation };
-                }
-
-                if (LogicalOperators.Contains(binaryOperation.Operator))
-                {
-                    List<BinaryOperation> leftResult = GetRelationalExpressionsFromExpression(binaryOperation.Left);
-                    List<BinaryOperation> rightResult = GetRelationalExpressionsFromExpression(binaryOperation.Right);
-
-                    return leftResult.Concat(rightResult).ToList();
-                }
-
-                throw new Exception("Unhandled enum.");
+                return new List<RelationalOperation>();
             }
 
-            throw new Exception("Cannot find relational expressions from this expression.");
+            if (expression is RelationalOperation)
+            {
+                return new List<RelationalOperation> { (RelationalOperation)expression };
+            }
+
+            if (expression is LogicalOperation)
+            {
+                LogicalOperation operation = (LogicalOperation)expression;
+
+                return GetRelationalExpressionsFromExpression(operation.Left).Concat(GetRelationalExpressionsFromExpression(operation.Right)).ToList();
+            }
+
+            throw new Exception("Unhandled case.");
         }
 
-        private static Dictionary<string, DataType> GetVariableDataTypesDict(List<string> allVariables, List<BinaryOperation> relations)
+        private static Dictionary<string, DataType> GetVariableDataTypesDict(List<string> allVariables, List<RelationalOperation> relations)
         {
             Dictionary<string, DataType> variableDataTypeDict = allVariables.Distinct().ToDictionary(x => x, x => DataType.Unknown);
 
-            List<BinaryOperation> relationsWithConstants = relations.Where(x => BinaryExpressionContainsConstant(x)).ToList();
-            List<BinaryOperation> relationsWithoutConstants = relations.Where(x => !relationsWithConstants.Contains(x)).ToList();
+            List<RelationalOperation> relationsWithConstants = relations.Where(x => RelationalOperationContainsConstant(x)).ToList();
+            List<RelationalOperation> relationsWithoutConstants = relations.Except(relationsWithConstants).ToList();
 
-            foreach (BinaryOperation relation in relationsWithConstants)
+            foreach (RelationalOperation relation in relationsWithConstants)
             {
                 if (ExpressionIsConstant(relation.Left) && ExpressionIsConstant(relation.Right))
                 {
@@ -271,26 +252,26 @@ namespace BpmnToDcrConverter
                 }
 
                 Variable var;
-                Expression constant;
+                Constant constant;
 
                 if (ExpressionIsConstant(relation.Left))
                 {
-                    constant = relation.Left;
+                    constant = (Constant)relation.Left;
                     var = (Variable)relation.Right;
                 }
                 else
                 {
-                    constant = relation.Right;
+                    constant = (Constant)relation.Right;
                     var = (Variable)relation.Left;
                 }
 
                 variableDataTypeDict[var.Name] = ConstantToDataType(constant);
             }
 
-            List<BinaryOperation> relationsWithUnknown = relations.Where(x => BinaryExpressionContainsKnownAndUnknownVariableDataTypes(x, variableDataTypeDict)).ToList();
+            List<RelationalOperation> relationsWithUnknown = relations.Where(x => RelationalOperationContainsKnownAndUnknownVariableDataTypes(x, variableDataTypeDict)).ToList();
             while (relationsWithUnknown.Any())
             {
-                foreach (BinaryOperation relation in relationsWithUnknown)
+                foreach (RelationalOperation relation in relationsWithUnknown)
                 {
                     Variable leftVariable = (Variable)relation.Left;
                     Variable rightVariable = (Variable)relation.Right;
@@ -305,7 +286,7 @@ namespace BpmnToDcrConverter
                     }
                 }
 
-                relationsWithUnknown = relations.Where(x => BinaryExpressionContainsKnownAndUnknownVariableDataTypes(x, variableDataTypeDict)).ToList();
+                relationsWithUnknown = relations.Where(x => RelationalOperationContainsKnownAndUnknownVariableDataTypes(x, variableDataTypeDict)).ToList();
             }
 
             foreach (string variable in allVariables)
@@ -316,13 +297,13 @@ namespace BpmnToDcrConverter
                 }
             }
 
-            foreach (BinaryOperation relation in relations)
+            foreach (RelationalOperation relation in relations)
             {
-                string leftName = GetExpressionString(relation.Left);
-                string rightName = GetExpressionString(relation.Right);
+                string leftName = GetUnitString(relation.Left);
+                string rightName = GetUnitString(relation.Right);
 
-                DataType left = GetExpressionDataType(relation.Left, variableDataTypeDict);
-                DataType right = GetExpressionDataType(relation.Right, variableDataTypeDict);
+                DataType left = GetUnitDataType(relation.Left, variableDataTypeDict);
+                DataType right = GetUnitDataType(relation.Right, variableDataTypeDict);
 
                 if (left != right)
                 {
@@ -333,9 +314,9 @@ namespace BpmnToDcrConverter
             return variableDataTypeDict;
         }
 
-        private static bool BinaryExpressionContainsKnownAndUnknownVariableDataTypes(BinaryOperation operation, Dictionary<string, DataType> variableDataTypeDict)
+        private static bool RelationalOperationContainsKnownAndUnknownVariableDataTypes(RelationalOperation operation, Dictionary<string, DataType> variableDataTypeDict)
         {
-            if (BinaryExpressionContainsConstant(operation))
+            if (RelationalOperationContainsConstant(operation))
             {
                 return false;
             }
@@ -346,17 +327,17 @@ namespace BpmnToDcrConverter
             return variableDataTypeDict[leftVariable.Name] == DataType.Unknown && variableDataTypeDict[rightVariable.Name] != DataType.Unknown || variableDataTypeDict[leftVariable.Name] != DataType.Unknown && variableDataTypeDict[rightVariable.Name] == DataType.Unknown;
         }
 
-        private static bool BinaryExpressionContainsConstant(BinaryOperation operation)
+        private static bool RelationalOperationContainsConstant(RelationalOperation operation)
         {
             return ExpressionIsConstant(operation.Left) || ExpressionIsConstant(operation.Right);
         }
 
         private static bool ExpressionIsConstant(Expression expression)
         {
-            return expression is IntegerConstant || expression is DecimalConstant;
+            return expression is Constant;
         }
 
-        private static DataType ConstantToDataType(Expression constant)
+        private static DataType ConstantToDataType(Constant constant)
         {
             if (constant is IntegerConstant)
             {
@@ -368,10 +349,10 @@ namespace BpmnToDcrConverter
                 return DataType.Float;
             }
 
-            throw new Exception("Expression given is not a constant.");
+            throw new Exception("Unhandled case.");
         }
 
-        private static string ConstantToString(Expression constant)
+        private static string ConstantToString(Constant constant)
         {
             if (constant is IntegerConstant)
             {
@@ -386,25 +367,25 @@ namespace BpmnToDcrConverter
             throw new Exception("Expression given is not a constant.");
         }
 
-        private static DataType GetExpressionDataType(Expression expression, Dictionary<string, DataType> variableToDataTypeDict)
+        private static DataType GetUnitDataType(Unit unit, Dictionary<string, DataType> variableToDataTypeDict)
         {
-            if (ExpressionIsConstant(expression))
+            if (ExpressionIsConstant(unit))
             {
-                return ConstantToDataType(expression);
+                return ConstantToDataType((Constant)unit);
             }
 
-            Variable variable = (Variable)expression;
+            Variable variable = (Variable)unit;
             return variableToDataTypeDict[variable.Name];
         }
 
-        private static string GetExpressionString(Expression expression)
+        private static string GetUnitString(Unit unit)
         {
-            if (ExpressionIsConstant(expression))
+            if (ExpressionIsConstant(unit))
             {
-                return ConstantToString(expression);
+                return ConstantToString((Constant)unit);
             }
 
-            Variable variable = (Variable)expression;
+            Variable variable = (Variable)unit;
             return variable.Name;
         }
     }
