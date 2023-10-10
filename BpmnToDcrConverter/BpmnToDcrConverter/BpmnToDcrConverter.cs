@@ -318,19 +318,14 @@ namespace BpmnToDcrConverter
 
             foreach (BinaryOperation relation in relations)
             {
+                string leftName = GetExpressionString(relation.Left);
+                string rightName = GetExpressionString(relation.Right);
+
                 DataType left = GetExpressionDataType(relation.Left, variableDataTypeDict);
                 DataType right = GetExpressionDataType(relation.Right, variableDataTypeDict);
 
-                if (left == DataType.Unknown || right == DataType.Unknown)
-                {
-                    continue;
-                }
-
                 if (left != right)
                 {
-                    string leftName = GetExpressionString(relation.Left);
-                    string rightName = GetExpressionString(relation.Right);
-
                     throw new Exception($"Type mismatch between \"{leftName}\" and \"{rightName}\". They have types \"{left}\" and \"{right}\" respectively.");
                 }
             }
