@@ -26,6 +26,29 @@ namespace BpmnToDcrConverter
             Operator = op;
             Right = right;
         }
+
+        public bool ContainsConstant()
+        {
+            return Left is Constant || Right is Constant;
+        }
+
+        public bool PurelyConstant()
+        {
+            return Left is Constant && Right is Constant;
+        }
+
+        public bool ContainsKnownAndUnknownVariables(Dictionary<string, DataType> variableToDataTypeDict)
+        {
+            if (ContainsConstant())
+            {
+                return false;
+            }
+
+            bool containsUnknown = Left.GetDataType(variableToDataTypeDict) == DataType.Unknown || Right.GetDataType(variableToDataTypeDict) == DataType.Unknown;
+            bool containsKnown = Left.GetDataType(variableToDataTypeDict) != DataType.Unknown || Right.GetDataType(variableToDataTypeDict) != DataType.Unknown;
+
+            return containsUnknown && containsKnown;
+        }
     }
 
     public class LogicalOperation : BinaryOperation
@@ -62,7 +85,11 @@ namespace BpmnToDcrConverter
 
     public abstract class Unit : Expression
     {
+        public abstract bool IsConstant();
 
+        public abstract DataType GetDataType(Dictionary<string, DataType> variableToDataTypeDict);
+
+        public abstract string GetUnitString();
     }
 
     public class Variable : Unit
@@ -73,11 +100,29 @@ namespace BpmnToDcrConverter
         {
             Name = name;
         }
+
+        public override bool IsConstant()
+        {
+            return false;
+        }
+
+        public override DataType GetDataType(Dictionary<string, DataType> variableToDataTypeDict)
+        {
+            return variableToDataTypeDict[Name];
+        }
+
+        public override string GetUnitString()
+        {
+            return Name;
+        }
     }
 
     public abstract class Constant : Unit
     {
-
+        public override bool IsConstant()
+        {
+            return true;
+        }
     }
 
     public class IntegerConstant : Constant
@@ -88,6 +133,16 @@ namespace BpmnToDcrConverter
         {
             Value = value;
         }
+
+        public override DataType GetDataType(Dictionary<string, DataType> variableToDataTypeDict)
+        {
+            return DataType.Integer;
+        }
+
+        public override string GetUnitString()
+        {
+            return Value.ToString();
+        }
     }
 
     public class DecimalConstant : Constant
@@ -97,6 +152,16 @@ namespace BpmnToDcrConverter
         public DecimalConstant(decimal value)
         {
             Value = value;
+        }
+
+        public override DataType GetDataType(Dictionary<string, DataType> variableToDataTypeDict)
+        {
+            return DataType.Float;
+        }
+
+        public override string GetUnitString()
+        {
+            return Value.ToString();
         }
     }
 

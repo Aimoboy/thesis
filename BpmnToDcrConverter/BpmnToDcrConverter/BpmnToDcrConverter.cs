@@ -241,12 +241,12 @@ namespace BpmnToDcrConverter
         {
             Dictionary<string, DataType> variableDataTypeDict = allVariables.Distinct().ToDictionary(x => x, x => DataType.Unknown);
 
-            List<RelationalOperation> relationsWithConstants = relations.Where(x => RelationalOperationContainsConstant(x)).ToList();
+            List<RelationalOperation> relationsWithConstants = relations.Where(x => x.ContainsConstant()).ToList();
             List<RelationalOperation> relationsWithoutConstants = relations.Except(relationsWithConstants).ToList();
 
             foreach (RelationalOperation relation in relationsWithConstants)
             {
-                if (ExpressionIsConstant(relation.Left) && ExpressionIsConstant(relation.Right))
+                if (relation.PurelyConstant())
                 {
                     continue;
                 }
@@ -254,7 +254,7 @@ namespace BpmnToDcrConverter
                 Variable var;
                 Constant constant;
 
-                if (ExpressionIsConstant(relation.Left))
+                if (relation.Left.IsConstant())
                 {
                     constant = (Constant)relation.Left;
                     var = (Variable)relation.Right;
@@ -265,10 +265,10 @@ namespace BpmnToDcrConverter
                     var = (Variable)relation.Left;
                 }
 
-                variableDataTypeDict[var.Name] = ConstantToDataType(constant);
+                variableDataTypeDict[var.Name] = constant.GetDataType(variableDataTypeDict);
             }
 
-            List<RelationalOperation> relationsWithUnknown = relations.Where(x => RelationalOperationContainsKnownAndUnknownVariableDataTypes(x, variableDataTypeDict)).ToList();
+            List<RelationalOperation> relationsWithUnknown = relations.Where(x => x.ContainsKnownAndUnknownVariables(variableDataTypeDict)).ToList();
             while (relationsWithUnknown.Any())
             {
                 foreach (RelationalOperation relation in relationsWithUnknown)
@@ -286,7 +286,7 @@ namespace BpmnToDcrConverter
                     }
                 }
 
-                relationsWithUnknown = relations.Where(x => RelationalOperationContainsKnownAndUnknownVariableDataTypes(x, variableDataTypeDict)).ToList();
+                relationsWithUnknown = relations.Where(x => x.ContainsKnownAndUnknownVariables(variableDataTypeDict)).ToList();
             }
 
             foreach (string variable in allVariables)
@@ -299,11 +299,11 @@ namespace BpmnToDcrConverter
 
             foreach (RelationalOperation relation in relations)
             {
-                string leftName = GetUnitString(relation.Left);
-                string rightName = GetUnitString(relation.Right);
+                string leftName = relation.Left.GetUnitString();
+                string rightName = relation.Right.GetUnitString();
 
-                DataType left = GetUnitDataType(relation.Left, variableDataTypeDict);
-                DataType right = GetUnitDataType(relation.Right, variableDataTypeDict);
+                DataType left = relation.Left.GetDataType(variableDataTypeDict);
+                DataType right = relation.Right.GetDataType(variableDataTypeDict);
 
                 if (left != right)
                 {
@@ -312,81 +312,6 @@ namespace BpmnToDcrConverter
             }
 
             return variableDataTypeDict;
-        }
-
-        private static bool RelationalOperationContainsKnownAndUnknownVariableDataTypes(RelationalOperation operation, Dictionary<string, DataType> variableDataTypeDict)
-        {
-            if (RelationalOperationContainsConstant(operation))
-            {
-                return false;
-            }
-
-            Variable leftVariable = (Variable)operation.Left;
-            Variable rightVariable = (Variable)operation.Right;
-
-            return variableDataTypeDict[leftVariable.Name] == DataType.Unknown && variableDataTypeDict[rightVariable.Name] != DataType.Unknown || variableDataTypeDict[leftVariable.Name] != DataType.Unknown && variableDataTypeDict[rightVariable.Name] == DataType.Unknown;
-        }
-
-        private static bool RelationalOperationContainsConstant(RelationalOperation operation)
-        {
-            return ExpressionIsConstant(operation.Left) || ExpressionIsConstant(operation.Right);
-        }
-
-        private static bool ExpressionIsConstant(Expression expression)
-        {
-            return expression is Constant;
-        }
-
-        private static DataType ConstantToDataType(Constant constant)
-        {
-            if (constant is IntegerConstant)
-            {
-                return DataType.Integer;
-            }
-
-            if (constant is DecimalConstant)
-            {
-                return DataType.Float;
-            }
-
-            throw new Exception("Unhandled case.");
-        }
-
-        private static string ConstantToString(Constant constant)
-        {
-            if (constant is IntegerConstant)
-            {
-                return ((IntegerConstant)constant).Value.ToString();
-            }
-
-            if (constant is DecimalConstant)
-            {
-                return ((DecimalConstant)constant).Value.ToString();
-            }
-
-            throw new Exception("Expression given is not a constant.");
-        }
-
-        private static DataType GetUnitDataType(Unit unit, Dictionary<string, DataType> variableToDataTypeDict)
-        {
-            if (ExpressionIsConstant(unit))
-            {
-                return ConstantToDataType((Constant)unit);
-            }
-
-            Variable variable = (Variable)unit;
-            return variableToDataTypeDict[variable.Name];
-        }
-
-        private static string GetUnitString(Unit unit)
-        {
-            if (ExpressionIsConstant(unit))
-            {
-                return ConstantToString((Constant)unit);
-            }
-
-            Variable variable = (Variable)unit;
-            return variable.Name;
         }
     }
 }
