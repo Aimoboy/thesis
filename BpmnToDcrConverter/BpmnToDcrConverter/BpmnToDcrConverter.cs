@@ -26,10 +26,7 @@ namespace BpmnToDcrConverter
             List<string> allArrowConditions = allBpmnElements.SelectMany(x => x.OutgoingArrows).Select(x => x.Condition).Where(x => x != "").ToList();
             List<Expression> allArrowExpressions = allArrowConditions.Select(x => LogicParser.LogicalExpressionParser.Parse(x)).ToList();
             List<RelationalOperation> allRelationalExpressions = allArrowExpressions.SelectMany(x => GetRelationalExpressionsFromExpression(x)).ToList();
-            List<string> allVariables = allRelationalExpressions.SelectMany(x => new[] { x.Left, x.Right })
-                                                                .Where(x => x is Variable)
-                                                                .Select(x => ((Variable)x).Name)
-                                                                .ToList();
+            List<string> allVariables = allRelationalExpressions.SelectMany(x => x.GetVariableNames()).ToList();
 
             Dictionary<string, DataType> variableToDataTypeDict = GetVariableDataTypesDict(allVariables, allRelationalExpressions);
 

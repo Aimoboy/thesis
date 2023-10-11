@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using Sprache;
 
@@ -14,6 +15,8 @@ namespace BpmnToDcrConverter
         {
             return Evaluate(new Dictionary<string, decimal>());
         }
+
+        public abstract List<string> GetVariableNames();
     }
 
     public class RelationalOperation : Expression
@@ -81,6 +84,11 @@ namespace BpmnToDcrConverter
                     throw new Exception("Unhandled case.");
             }
         }
+
+        public override List<string> GetVariableNames()
+        {
+            return Left.GetVariableNames().Concat(Right.GetVariableNames()).ToList();
+        }
     }
 
     public class LogicalOperation : Expression
@@ -117,6 +125,11 @@ namespace BpmnToDcrConverter
                     throw new Exception("Unhandled case.");
             }
         }
+
+        public override List<string> GetVariableNames()
+        {
+            return Left.GetVariableNames().Concat(Right.GetVariableNames()).ToList();
+        }
     }
 
     public enum RelationalOperator
@@ -144,6 +157,8 @@ namespace BpmnToDcrConverter
         public abstract string GetString();
 
         public abstract decimal Evaluate(Dictionary<string, decimal> variableToValueDict);
+
+        public abstract List<string> GetVariableNames();
     }
 
     public class Variable : Term
@@ -179,6 +194,11 @@ namespace BpmnToDcrConverter
 
             throw new Exception($"A value for the variable {Name} is not defined.");
         }
+
+        public override List<string> GetVariableNames()
+        {
+            return new List<string>() { Name };
+        }
     }
 
     public abstract class Constant : Term
@@ -186,6 +206,11 @@ namespace BpmnToDcrConverter
         public override bool IsConstant()
         {
             return true;
+        }
+
+        public override List<string> GetVariableNames()
+        {
+            return new List<string>();
         }
     }
 
