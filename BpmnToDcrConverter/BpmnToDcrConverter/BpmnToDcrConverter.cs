@@ -241,9 +241,66 @@ namespace BpmnToDcrConverter
         {
             Dictionary<string, DataType> variableDataTypeDict = allVariables.Distinct().ToDictionary(x => x, x => DataType.Unknown);
 
-            List<RelationalOperation> relationsWithConstants = relations.Where(x => x.ContainsConstant()).ToList();
-            List<RelationalOperation> relationsWithoutConstants = relations.Except(relationsWithConstants).ToList();
+            GiveTypesToVariablesComparedToConstants(relations, variableDataTypeDict);
+            GiveTypesToVariablesComparedToVariables(relations, variableDataTypeDict);
 
+            CheckUnknownOrInconsistentTypes(allVariables, relations, variableDataTypeDict);
+
+            return variableDataTypeDict;
+        }
+
+        private static void CheckUnknownOrInconsistentTypes(List<string> allVariables, List<RelationalOperation> relations, Dictionary<string, DataType> variableDataTypeDict)
+        {
+            foreach (string variable in allVariables)
+            {
+                if (variableDataTypeDict[variable] == DataType.Unknown)
+                {
+                    Console.WriteLine($"Could not determine the data type of variable {variable}.");
+                }
+            }
+
+            foreach (RelationalOperation relation in relations)
+            {
+                string leftName = relation.Left.GetString();
+                string rightName = relation.Right.GetString();
+
+                DataType left = relation.Left.GetDataType(variableDataTypeDict);
+                DataType right = relation.Right.GetDataType(variableDataTypeDict);
+
+                if (left != right)
+                {
+                    throw new Exception($"Type mismatch between \"{leftName}\" and \"{rightName}\". They have types \"{left}\" and \"{right}\" respectively.");
+                }
+            }
+        }
+
+        private static void GiveTypesToVariablesComparedToVariables(List<RelationalOperation> relations, Dictionary<string, DataType> variableDataTypeDict)
+        {
+            List<RelationalOperation> relationsWithUnknown = relations.Where(x => x.ContainsKnownAndUnknownVariables(variableDataTypeDict)).ToList();
+            while (relationsWithUnknown.Any())
+            {
+                foreach (RelationalOperation relation in relationsWithUnknown)
+                {
+                    Variable leftVariable = (Variable)relation.Left;
+                    Variable rightVariable = (Variable)relation.Right;
+
+                    if (variableDataTypeDict[leftVariable.Name] == DataType.Unknown)
+                    {
+                        variableDataTypeDict[leftVariable.Name] = variableDataTypeDict[rightVariable.Name];
+                    }
+                    else
+                    {
+                        variableDataTypeDict[rightVariable.Name] = variableDataTypeDict[leftVariable.Name];
+                    }
+                }
+
+                relationsWithUnknown = relations.Where(x => x.ContainsKnownAndUnknownVariables(variableDataTypeDict)).ToList();
+            }
+        }
+
+        private static void GiveTypesToVariablesComparedToConstants(List<RelationalOperation> relations, Dictionary<string, DataType> variableDataTypeDict)
+        {
+            List<RelationalOperation> relationsWithConstants = relations.Where(x => x.ContainsConstant()).ToList();
             foreach (RelationalOperation relation in relationsWithConstants)
             {
                 if (relation.PurelyConstant())
@@ -267,51 +324,6 @@ namespace BpmnToDcrConverter
 
                 variableDataTypeDict[var.Name] = constant.GetDataType(variableDataTypeDict);
             }
-
-            List<RelationalOperation> relationsWithUnknown = relations.Where(x => x.ContainsKnownAndUnknownVariables(variableDataTypeDict)).ToList();
-            while (relationsWithUnknown.Any())
-            {
-                foreach (RelationalOperation relation in relationsWithUnknown)
-                {
-                    Variable leftVariable = (Variable)relation.Left;
-                    Variable rightVariable = (Variable)relation.Right;
-
-                    if (variableDataTypeDict[leftVariable.Name] == DataType.Unknown)
-                    {
-                        variableDataTypeDict[leftVariable.Name] = variableDataTypeDict[rightVariable.Name];
-                    }
-                    else
-                    {
-                        variableDataTypeDict[rightVariable.Name] = variableDataTypeDict[leftVariable.Name];
-                    }
-                }
-
-                relationsWithUnknown = relations.Where(x => x.ContainsKnownAndUnknownVariables(variableDataTypeDict)).ToList();
-            }
-
-            foreach (string variable in allVariables)
-            {
-                if (variableDataTypeDict[variable] == DataType.Unknown)
-                {
-                    Console.WriteLine($"Could not determine the data type of variable {variable}.");
-                }
-            }
-
-            foreach (RelationalOperation relation in relations)
-            {
-                string leftName = relation.Left.GetString();
-                string rightName = relation.Right.GetString();
-
-                DataType left = relation.Left.GetDataType(variableDataTypeDict);
-                DataType right = relation.Right.GetDataType(variableDataTypeDict);
-
-                if (left != right)
-                {
-                    throw new Exception($"Type mismatch between \"{leftName}\" and \"{rightName}\". They have types \"{left}\" and \"{right}\" respectively.");
-                }
-            }
-
-            return variableDataTypeDict;
         }
     }
 }

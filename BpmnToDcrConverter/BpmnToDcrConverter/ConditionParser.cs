@@ -9,6 +9,11 @@ namespace BpmnToDcrConverter
     public abstract class Expression
     {
         public abstract bool Evaluate(Dictionary<string, decimal> variableToValueDict);
+
+        public bool Evaluate()
+        {
+            return Evaluate(new Dictionary<string, decimal>());
+        }
     }
 
     public class RelationalOperation : Expression
