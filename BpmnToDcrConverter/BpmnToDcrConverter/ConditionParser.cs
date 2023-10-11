@@ -17,6 +17,12 @@ namespace BpmnToDcrConverter
         }
 
         public abstract List<string> GetVariableNames();
+
+        public abstract string GetString();
+
+        public abstract bool PurelyConstant();
+
+        public abstract List<Expression> GetAllPurelyConstantSubExpressions();
     }
 
     public class RelationalOperation : Expression
@@ -35,11 +41,6 @@ namespace BpmnToDcrConverter
         public bool ContainsConstant()
         {
             return Left is Constant || Right is Constant;
-        }
-
-        public bool PurelyConstant()
-        {
-            return Left is Constant && Right is Constant;
         }
 
         public bool ContainsKnownAndUnknownVariables(Dictionary<string, DataType> variableToDataTypeDict)
@@ -89,6 +90,51 @@ namespace BpmnToDcrConverter
         {
             return Left.GetVariableNames().Concat(Right.GetVariableNames()).ToList();
         }
+
+        public override string GetString()
+        {
+            string left = Left.GetString();
+            string right = Right.GetString();
+            string op = GetRelationalOperatorString(Operator);
+
+            return $"{left} {op} {right}";
+        }
+
+        public string GetRelationalOperatorString(RelationalOperator op)
+        {
+            switch (op)
+            {
+                case RelationalOperator.LessThan:
+                    return "<";
+                case RelationalOperator.GreaterThan:
+                    return ">";
+                case RelationalOperator.Equal:
+                    return "=";
+                case RelationalOperator.NotEqual:
+                    return "!=";
+                case RelationalOperator.LessThanOrEqual:
+                    return "<=";
+                case RelationalOperator.GreaterThanOrEqual:
+                    return ">=";
+                default:
+                    throw new Exception("Unhandled case.");
+            }
+        }
+
+        public override bool PurelyConstant()
+        {
+            return Left.IsConstant() && Right.IsConstant();
+        }
+
+        public override List<Expression> GetAllPurelyConstantSubExpressions()
+        {
+            if (PurelyConstant())
+            {
+                return new List<Expression> { this };
+            }
+
+            return new List<Expression>();
+        }
     }
 
     public class LogicalOperation : Expression
@@ -129,6 +175,43 @@ namespace BpmnToDcrConverter
         public override List<string> GetVariableNames()
         {
             return Left.GetVariableNames().Concat(Right.GetVariableNames()).ToList();
+        }
+
+        public override string GetString()
+        {
+            string left = Left.GetString();
+            string right = Right.GetString();
+            string op = GetLogicalOperatorString(Operator);
+
+            return $"({left}) {op} ({right})";
+        }
+
+        public string GetLogicalOperatorString(LogicalOperator op)
+        {
+            switch (op)
+            {
+                case LogicalOperator.And:
+                    return "&&";
+                case LogicalOperator.Or:
+                    return "||";
+                default:
+                    throw new Exception("Unhandled case.");
+            }
+        }
+
+        public override bool PurelyConstant()
+        {
+            return Left.PurelyConstant() && Right.PurelyConstant();
+        }
+
+        public override List<Expression> GetAllPurelyConstantSubExpressions()
+        {
+            if (PurelyConstant())
+            {
+                return new List<Expression> { this };
+            }
+
+            return Left.GetAllPurelyConstantSubExpressions().Concat(Right.GetAllPurelyConstantSubExpressions()).ToList();
         }
     }
 

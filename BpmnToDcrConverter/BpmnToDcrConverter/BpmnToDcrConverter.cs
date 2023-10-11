@@ -28,6 +28,20 @@ namespace BpmnToDcrConverter
             List<RelationalOperation> allRelationalExpressions = allArrowExpressions.SelectMany(x => GetRelationalExpressionsFromExpression(x)).ToList();
             List<string> allVariables = allRelationalExpressions.SelectMany(x => x.GetVariableNames()).ToList();
 
+            foreach (Expression exp in allArrowExpressions)
+            {
+                List<Expression> purelyConstantSubExpressions = exp.GetAllPurelyConstantSubExpressions();
+
+                foreach (Expression subExpression in purelyConstantSubExpressions)
+                {
+                    string wholeStr = exp.GetString();
+                    string subStr = subExpression.GetString();
+                    string res = subExpression.Evaluate().ToString().ToLower();
+
+                    Console.WriteLine($"Warning: {subStr} will always evaluate to {res} in {wholeStr}.");
+                }
+            }
+
             Dictionary<string, DataType> variableToDataTypeDict = GetVariableDataTypesDict(allVariables, allRelationalExpressions);
 
 
