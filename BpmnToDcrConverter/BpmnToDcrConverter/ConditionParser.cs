@@ -11,17 +11,13 @@ namespace BpmnToDcrConverter
         public abstract bool Evaluate(Dictionary<string, decimal> variableToValueDict);
     }
 
-    public abstract class BinaryOperation : Expression
+    public class RelationalOperation : Expression
     {
-    }
-
-    public class RelationalOperation : BinaryOperation
-    {
-        public Unit Left { get; }
-        public Unit Right { get; }
+        public Term Left { get; }
+        public Term Right { get; }
         public RelationalOperator Operator { get; }
 
-        public RelationalOperation(Unit left, RelationalOperator op, Unit right)
+        public RelationalOperation(Term left, RelationalOperator op, Term right)
         {
             Left = left;
             Operator = op;
@@ -82,13 +78,13 @@ namespace BpmnToDcrConverter
         }
     }
 
-    public class LogicalOperation : BinaryOperation
+    public class LogicalOperation : Expression
     {
-        public BinaryOperation Left { get; }
-        public BinaryOperation Right { get; }
+        public Expression Left { get; }
+        public Expression Right { get; }
         public LogicalOperator Operator { get; }
 
-        public LogicalOperation(BinaryOperation left, LogicalOperator op, BinaryOperation right)
+        public LogicalOperation(Expression left, LogicalOperator op, Expression right)
         {
             Left = left;
             Operator = op;
@@ -118,8 +114,6 @@ namespace BpmnToDcrConverter
         }
     }
 
-
-
     public enum RelationalOperator
     {
         LessThan,
@@ -136,18 +130,18 @@ namespace BpmnToDcrConverter
         Or
     }
 
-    public abstract class Unit
+    public abstract class Term
     {
         public abstract bool IsConstant();
 
         public abstract DataType GetDataType(Dictionary<string, DataType> variableToDataTypeDict);
 
-        public abstract string GetUnitString();
+        public abstract string GetString();
 
         public abstract decimal Evaluate(Dictionary<string, decimal> variableToValueDict);
     }
 
-    public class Variable : Unit
+    public class Variable : Term
     {
         public string Name { get; }
 
@@ -166,7 +160,7 @@ namespace BpmnToDcrConverter
             return variableToDataTypeDict[Name];
         }
 
-        public override string GetUnitString()
+        public override string GetString()
         {
             return Name;
         }
@@ -182,7 +176,7 @@ namespace BpmnToDcrConverter
         }
     }
 
-    public abstract class Constant : Unit
+    public abstract class Constant : Term
     {
         public override bool IsConstant()
         {
@@ -204,7 +198,7 @@ namespace BpmnToDcrConverter
             return DataType.Integer;
         }
 
-        public override string GetUnitString()
+        public override string GetString()
         {
             return Value.ToString();
         }
@@ -229,7 +223,7 @@ namespace BpmnToDcrConverter
             return DataType.Float;
         }
 
-        public override string GetUnitString()
+        public override string GetString()
         {
             return Value.ToString();
         }
@@ -266,24 +260,24 @@ namespace BpmnToDcrConverter
             from back in Parse.Digit.AtLeastOnce().Text()
             select new DecimalConstant(decimal.Parse(minus.GetOrElse("") + front + dot + back, CultureInfo.InvariantCulture));
 
-        private static readonly Parser<Unit> Constant =
+        private static readonly Parser<Term> Constant =
             Decimal.Or(Integer);
 
-        private static readonly Parser<Unit> Variable =
+        private static readonly Parser<Term> Variable =
             from letter in Parse.Letter
             from rest in Parse.LetterOrDigit.Many().Text()
             select new Variable(letter + rest);
 
-        private static readonly Parser<Unit> Term =
+        private static readonly Parser<Term> TermParser =
             Constant.Or(Variable).Token();
 
-        private static readonly Parser<BinaryOperation> RelationalExpression =
-            from firstTerm in Term
+        private static readonly Parser<Expression> RelationalExpression =
+            from firstTerm in TermParser
             from op in RelationalOperatorParser
-            from secondTerm in Term
+            from secondTerm in TermParser
             select new RelationalOperation(firstTerm, op, secondTerm);
 
-        private static readonly Parser<BinaryOperation> LogicalExpression =
+        private static readonly Parser<Expression> LogicalExpression =
             from firstParens in Parse.Char('(').Token()
             from firstTerm in LogicalExpression.Or(RelationalExpression)
             from secondParens in Parse.Char(')').Token()
@@ -293,7 +287,7 @@ namespace BpmnToDcrConverter
             from fourthParens in Parse.Char(')').Token()
             select new LogicalOperation(firstTerm, op, secondTerm);
 
-        public static readonly Parser<BinaryOperation> LogicalExpressionParser =
+        public static readonly Parser<Expression> LogicalExpressionParser =
             RelationalExpression.Or(LogicalExpression).End();
     }
 

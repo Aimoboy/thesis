@@ -24,7 +24,7 @@ namespace BpmnToDcrConverter
 
             // Get variables and their types
             List<string> allArrowConditions = allBpmnElements.SelectMany(x => x.OutgoingArrows).Select(x => x.Condition).Where(x => x != "").ToList();
-            List<BinaryOperation> allArrowExpressions = allArrowConditions.Select(x => LogicParser.LogicalExpressionParser.Parse(x)).ToList();
+            List<Expression> allArrowExpressions = allArrowConditions.Select(x => LogicParser.LogicalExpressionParser.Parse(x)).ToList();
             List<RelationalOperation> allRelationalExpressions = allArrowExpressions.SelectMany(x => GetRelationalExpressionsFromExpression(x)).ToList();
             List<string> allVariables = allRelationalExpressions.SelectMany(x => new[] { x.Left, x.Right })
                                                                 .Where(x => x is Variable)
@@ -217,7 +217,7 @@ namespace BpmnToDcrConverter
 
         private static List<RelationalOperation> GetRelationalExpressionsFromExpression(Expression expression)
         {
-            if (expression is Unit)
+            if (expression is Term)
             {
                 return new List<RelationalOperation>();
             }
@@ -299,8 +299,8 @@ namespace BpmnToDcrConverter
 
             foreach (RelationalOperation relation in relations)
             {
-                string leftName = relation.Left.GetUnitString();
-                string rightName = relation.Right.GetUnitString();
+                string leftName = relation.Left.GetString();
+                string rightName = relation.Right.GetString();
 
                 DataType left = relation.Left.GetDataType(variableDataTypeDict);
                 DataType right = relation.Right.GetDataType(variableDataTypeDict);
