@@ -23,6 +23,8 @@ namespace BpmnToDcrConverter
         public abstract bool PurelyConstant();
 
         public abstract List<Expression> GetAllPurelyConstantSubExpressions();
+
+        public abstract bool EqualToExpression(Expression other);
     }
 
     public class RelationalOperation : Expression
@@ -135,6 +137,17 @@ namespace BpmnToDcrConverter
 
             return new List<Expression>();
         }
+
+        public override bool EqualToExpression(Expression other)
+        {
+            if (!(other is RelationalOperation))
+            {
+                return false;
+            }
+
+            RelationalOperation otherRelation = (RelationalOperation)other;
+            return Operator == otherRelation.Operator && Left.EqualToTerm(otherRelation.Left) && Right.EqualToTerm(otherRelation.Right);
+        }
     }
 
     public class LogicalOperation : Expression
@@ -213,6 +226,24 @@ namespace BpmnToDcrConverter
 
             return Left.GetAllPurelyConstantSubExpressions().Concat(Right.GetAllPurelyConstantSubExpressions()).ToList();
         }
+
+        public override bool EqualToExpression(Expression other)
+        {
+            if (!(other is LogicalOperation))
+            {
+                return false;
+            }
+
+            LogicalOperation otherlogical = (LogicalOperation)other;
+
+            if (Operator != otherlogical.Operator)
+            {
+                return false;
+            }
+
+            // The logical opeators are commutative
+            return Left.EqualToExpression(otherlogical.Left) && Right.EqualToExpression(otherlogical.Right) || Left.EqualToExpression(otherlogical.Right) && Right.EqualToExpression(otherlogical.Left);
+        }
     }
 
     public enum RelationalOperator
@@ -242,6 +273,8 @@ namespace BpmnToDcrConverter
         public abstract decimal Evaluate(Dictionary<string, decimal> variableToValueDict);
 
         public abstract List<string> GetVariableNames();
+
+        public abstract bool EqualToTerm(Term other);
     }
 
     public class Variable : Term
@@ -282,6 +315,17 @@ namespace BpmnToDcrConverter
         {
             return new List<string>() { Name };
         }
+
+        public override bool EqualToTerm(Term other)
+        {
+            if (!(other is Variable))
+            {
+                return false;
+            }
+
+            Variable otherVariable = (Variable)other;
+            return Name == otherVariable.Name;
+        }
     }
 
     public abstract class Constant : Term
@@ -320,6 +364,17 @@ namespace BpmnToDcrConverter
         {
             return Value;
         }
+
+        public override bool EqualToTerm(Term other)
+        {
+            if (!(other is IntegerConstant))
+            {
+                return false;
+            }
+
+            IntegerConstant otherConstant = (IntegerConstant)other;
+            return Value == otherConstant.Value;
+        }
     }
 
     public class DecimalConstant : Constant
@@ -344,6 +399,17 @@ namespace BpmnToDcrConverter
         public override decimal Evaluate(Dictionary<string, decimal> variableToValueDict)
         {
             return Value;
+        }
+
+        public override bool EqualToTerm(Term other)
+        {
+            if (!(other is DecimalConstant))
+            {
+                return false;
+            }
+
+            DecimalConstant otherConstant = (DecimalConstant)other;
+            return Value == otherConstant.Value;
         }
     }
 

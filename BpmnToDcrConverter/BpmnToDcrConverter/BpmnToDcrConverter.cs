@@ -38,7 +38,14 @@ namespace BpmnToDcrConverter
                     string subStr = subExpression.GetString();
                     string res = subExpression.Evaluate().ToString().ToLower();
 
-                    Console.WriteLine($"Warning: {subStr} will always evaluate to {res} in {wholeStr}.");
+                    if (wholeStr == subStr)
+                    {
+                        Console.WriteLine($"Warning: {subStr} will always evaluate to {res}.");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Warning: {subStr} will always evaluate to {res} in {wholeStr}.");
+                    }
                 }
             }
 
