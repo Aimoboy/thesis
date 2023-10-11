@@ -350,8 +350,10 @@ namespace BpmnToDcrConverter
     public static class LogicParser
     {
         private static readonly Parser<LogicalOperator> LogicalOperatorParser =
-            Parse.String("&&").Token().Return(LogicalOperator.And)
-                 .Or(Parse.String("||").Token().Return(LogicalOperator.Or));
+            Parse.String("&&").Return(LogicalOperator.And)
+                 .Or(Parse.IgnoreCase("and").Return(LogicalOperator.And))
+                 .Or(Parse.String("||").Return(LogicalOperator.Or))
+                 .Or(Parse.IgnoreCase("or").Return(LogicalOperator.Or)).Token();
 
         private static readonly Parser<RelationalOperator> RelationalOperatorParser =
             Parse.String(">=").Token().Return(RelationalOperator.GreaterThanOrEqual)
