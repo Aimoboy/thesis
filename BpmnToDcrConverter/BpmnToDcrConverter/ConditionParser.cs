@@ -8,6 +8,7 @@ namespace BpmnToDcrConverter
 {
     public abstract class Expression
     {
+        public abstract bool Evaluate(Dictionary<string, decimal> variableToValueDict);
     }
 
     public abstract class BinaryOperation : Expression
@@ -49,6 +50,36 @@ namespace BpmnToDcrConverter
 
             return containsUnknown && containsKnown;
         }
+
+        public override bool Evaluate(Dictionary<string, decimal> variableToValueDict)
+        {
+            decimal leftRes = Left.Evaluate(variableToValueDict);
+            decimal rightRes = Right.Evaluate(variableToValueDict);
+            Func<decimal, decimal, bool> func = GetRelationalOperatorFunction(Operator);
+
+            return func(leftRes, rightRes);
+        }
+
+        public Func<decimal, decimal, bool> GetRelationalOperatorFunction(RelationalOperator op)
+        {
+            switch (op)
+            {
+                case RelationalOperator.LessThan:
+                    return (a, b) => a < b;
+                case RelationalOperator.GreaterThan:
+                    return (a, b) => a > b;
+                case RelationalOperator.Equal:
+                    return (a, b) => a == b;
+                case RelationalOperator.NotEqual:
+                    return (a, b) => a != b;
+                case RelationalOperator.LessThanOrEqual:
+                    return (a, b) => a <= b;
+                case RelationalOperator.GreaterThanOrEqual:
+                    return (a, b) => a >= b;
+                default:
+                    throw new Exception("Unhandled case.");
+            }
+        }
     }
 
     public class LogicalOperation : BinaryOperation
@@ -62,6 +93,28 @@ namespace BpmnToDcrConverter
             Left = left;
             Operator = op;
             Right = right;
+        }
+
+        public override bool Evaluate(Dictionary<string, decimal> variableToValueDict)
+        {
+            bool leftRes = Left.Evaluate(variableToValueDict);
+            bool rightRes = Right.Evaluate(variableToValueDict);
+            Func<bool, bool, bool> func = GetLogicalOperatorFunction(Operator);
+
+            return func(leftRes, rightRes);
+        }
+
+        public Func<bool, bool, bool> GetLogicalOperatorFunction(LogicalOperator op)
+        {
+            switch (op)
+            {
+                case LogicalOperator.And:
+                    return (a, b) => a && b;
+                case LogicalOperator.Or:
+                    return (a, b) => a || b;
+                default:
+                    throw new Exception("Unhandled case.");
+            }
         }
     }
 
@@ -83,13 +136,15 @@ namespace BpmnToDcrConverter
         Or
     }
 
-    public abstract class Unit : Expression
+    public abstract class Unit
     {
         public abstract bool IsConstant();
 
         public abstract DataType GetDataType(Dictionary<string, DataType> variableToDataTypeDict);
 
         public abstract string GetUnitString();
+
+        public abstract decimal Evaluate(Dictionary<string, decimal> variableToValueDict);
     }
 
     public class Variable : Unit
@@ -114,6 +169,16 @@ namespace BpmnToDcrConverter
         public override string GetUnitString()
         {
             return Name;
+        }
+
+        public override decimal Evaluate(Dictionary<string, decimal> variableToValueDict)
+        {
+            if (variableToValueDict.ContainsKey(Name))
+            {
+                return variableToValueDict[Name];
+            }
+
+            throw new Exception($"A value for the variable {Name} is not defined.");
         }
     }
 
@@ -143,6 +208,11 @@ namespace BpmnToDcrConverter
         {
             return Value.ToString();
         }
+
+        public override decimal Evaluate(Dictionary<string, decimal> variableToValueDict)
+        {
+            return Value;
+        }
     }
 
     public class DecimalConstant : Constant
@@ -162,6 +232,11 @@ namespace BpmnToDcrConverter
         public override string GetUnitString()
         {
             return Value.ToString();
+        }
+
+        public override decimal Evaluate(Dictionary<string, decimal> variableToValueDict)
+        {
+            return Value;
         }
     }
 
