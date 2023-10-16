@@ -30,7 +30,7 @@ namespace BpmnToDcrConverter
 
             foreach (Expression exp in allArrowExpressions)
             {
-                List<Expression> purelyConstantSubExpressions = exp.GetAllPurelyConstantSubExpressions();
+                List<Expression> purelyConstantSubExpressions = exp.GetAllConstantlyEvaluableSubExpressions();
 
                 foreach (Expression subExpression in purelyConstantSubExpressions)
                 {

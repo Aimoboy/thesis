@@ -22,7 +22,9 @@ namespace BpmnToDcrConverter
 
         public abstract bool PurelyConstant();
 
-        public abstract List<Expression> GetAllPurelyConstantSubExpressions();
+        public abstract bool CanEvaluateWithoutVariables();
+
+        public abstract List<Expression> GetAllConstantlyEvaluableSubExpressions();
 
         public abstract bool EqualToExpression(Expression other);
     }
@@ -128,7 +130,12 @@ namespace BpmnToDcrConverter
             return Left.IsConstant() && Right.IsConstant();
         }
 
-        public override List<Expression> GetAllPurelyConstantSubExpressions()
+        public override bool CanEvaluateWithoutVariables()
+        {
+            return PurelyConstant();
+        }
+
+        public override List<Expression> GetAllConstantlyEvaluableSubExpressions()
         {
             if (PurelyConstant())
             {
@@ -165,8 +172,55 @@ namespace BpmnToDcrConverter
 
         public override bool Evaluate(Dictionary<string, decimal> variableToValueDict)
         {
-            bool leftRes = Left.Evaluate(variableToValueDict);
-            bool rightRes = Right.Evaluate(variableToValueDict);
+            bool leftRes;
+            bool rightRes;
+
+            // Short circuit
+            switch (Operator)
+            {
+                case LogicalOperator.And:
+                    leftRes = true;
+                    rightRes = true;
+
+                    if (Left.CanEvaluateWithoutVariables())
+                    {
+                        leftRes = Left.Evaluate();
+                    }
+
+                    if (Right.CanEvaluateWithoutVariables())
+                    {
+                        rightRes = Right.Evaluate();
+                    }
+
+                    if (!leftRes || !rightRes)
+                    {
+                        return false;
+                    }
+                    break;
+                case LogicalOperator.Or:
+                    leftRes = false;
+                    rightRes = false;
+
+                    if (Left.CanEvaluateWithoutVariables())
+                    {
+                        leftRes = Left.Evaluate();
+                    }
+
+                    if (Right.CanEvaluateWithoutVariables())
+                    {
+                        rightRes = Right.Evaluate();
+                    }
+
+                    if (leftRes || rightRes)
+                    {
+                        return true;
+                    }
+                    break;
+            }
+
+
+            leftRes = Left.Evaluate(variableToValueDict);
+            rightRes = Right.Evaluate(variableToValueDict);
             Func<bool, bool, bool> func = GetLogicalOperatorFunction(Operator);
 
             return func(leftRes, rightRes);
@@ -217,14 +271,56 @@ namespace BpmnToDcrConverter
             return Left.PurelyConstant() && Right.PurelyConstant();
         }
 
-        public override List<Expression> GetAllPurelyConstantSubExpressions()
+        public override bool CanEvaluateWithoutVariables()
         {
-            if (PurelyConstant())
+            bool leftEval;
+            bool rightEval;
+
+            switch (Operator)
+            {
+                case LogicalOperator.And:
+                    leftEval = true;
+                    rightEval = true;
+
+                    if (Left.CanEvaluateWithoutVariables())
+                    {
+                        leftEval = Left.Evaluate();
+                    }
+
+                    if (Right.CanEvaluateWithoutVariables())
+                    {
+                        rightEval = Right.Evaluate();
+                    }
+
+                    return !leftEval || !rightEval;
+                case LogicalOperator.Or:
+                    leftEval = false;
+                    rightEval = false;
+
+                    if (Left.CanEvaluateWithoutVariables())
+                    {
+                        leftEval = Left.Evaluate();
+                    }
+
+                    if (Right.CanEvaluateWithoutVariables())
+                    {
+                        rightEval = Right.Evaluate();
+                    }
+
+                    return leftEval || rightEval;
+            }
+
+            throw new Exception("Unhandled case");
+        }
+
+        public override List<Expression> GetAllConstantlyEvaluableSubExpressions()
+        {
+            if (CanEvaluateWithoutVariables())
             {
                 return new List<Expression> { this };
             }
 
-            return Left.GetAllPurelyConstantSubExpressions().Concat(Right.GetAllPurelyConstantSubExpressions()).ToList();
+            return Left.GetAllConstantlyEvaluableSubExpressions().Concat(Right.GetAllConstantlyEvaluableSubExpressions()).ToList();
         }
 
         public override bool EqualToExpression(Expression other)
