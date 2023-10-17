@@ -12,105 +12,15 @@ namespace BpmnToDcrConverter
     {
         public static DcrGraph ConvertBpmnToDcr(BpmnGraph bpmnGraph)
         {
+            List<Tuple<DcrFlowElement, DcrFlowElement, string>> arrowsToAdd = new List<Tuple<DcrFlowElement, DcrFlowElement, string>>();
+
             List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
 
-            List<BpmnActivity> bpmnActivities = allBpmnElements.Where(x => x is BpmnActivity)
-                                                               .Select(x => (BpmnActivity)x)
-                                                               .ToList();
-
-            List<BpmnExclusiveGateway> bpmnXors = allBpmnElements.Where(x => x is BpmnExclusiveGateway)
-                                                                 .Select(x => (BpmnExclusiveGateway)x)
-                                                                 .ToList();
+            MakeBpmnStartEventsToActivities(bpmnGraph, allBpmnElements);
 
             // Get variables and their types
-            List<string> allArrowConditions = allBpmnElements.SelectMany(x => x.OutgoingArrows).Select(x => x.Condition).Where(x => x != "").ToList();
-            List<Expression> allArrowExpressions = allArrowConditions.Select(x => LogicParser.LogicalExpressionParser.Parse(x)).ToList();
-            List<RelationalOperation> allRelationalExpressions = allArrowExpressions.SelectMany(x => GetRelationalExpressionsFromExpression(x)).ToList();
-            List<string> allVariables = allRelationalExpressions.SelectMany(x => x.GetVariableNames()).ToList();
-
-            foreach (Expression exp in allArrowExpressions)
-            {
-                List<Expression> purelyConstantSubExpressions = exp.GetAllConstantlyEvaluableSubExpressions();
-
-                foreach (Expression subExpression in purelyConstantSubExpressions)
-                {
-                    string wholeStr = exp.GetString();
-                    string subStr = subExpression.GetString();
-                    string res = subExpression.Evaluate().ToString().ToLower();
-
-                    if (wholeStr == subStr)
-                    {
-                        Console.WriteLine($"Warning: {subStr} will always evaluate to {res}.");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Warning: {subStr} will always evaluate to {res} in {wholeStr}.");
-                    }
-                }
-            }
-
-            Dictionary<string, DataType> variableToDataTypeDict = GetVariableDataTypesDict(allVariables, allRelationalExpressions);
-
-
-            // Give conditions to arrows from XOR without one (inverted of all the other conditions)
-            foreach (BpmnExclusiveGateway bpmnXor in bpmnXors)
-            {
-                BpmnFlowArrow arrowWithoutCondition = bpmnXor.OutgoingArrows.Where(x => x.Condition == "").FirstOrDefault();
-                List<BpmnFlowArrow> otherArrows = bpmnXor.OutgoingArrows.Where(x => x != arrowWithoutCondition).ToList();
-
-                if (arrowWithoutCondition != null)
-                {
-                    List<string> otherConditions = otherArrows.ConvertAll(x => x.Condition);
-                    List<string> otherConditionsPrep = otherConditions.ConvertAll(x => $"!({x})");
-                    string newCondition = string.Join(" && ", otherConditionsPrep);
-
-                    arrowWithoutCondition.Condition = newCondition;
-                }
-            }
-
-            // Dechain XORs
-            foreach (BpmnExclusiveGateway xor in bpmnXors)
-            {
-                DeChainExclusiveGateway(xor);
-            }
-
-            // Convert start events to activities
-            List<BpmnStartEvent> startEvents = allBpmnElements.Where(x => x is BpmnStartEvent).Select(x => (BpmnStartEvent)x).ToList();
-            foreach (BpmnStartEvent startEvent in startEvents)
-            {
-                BpmnActivity activity = new BpmnActivity(startEvent.Id, "Start");
-
-                BpmnFlowArrow arrow = startEvent.OutgoingArrows.FirstOrDefault();
-                Utilities.AddBpmnArrow(activity, arrow.Element, BpmnFlowArrowType.Sequence, arrow.Condition);
-                Utilities.RemoveBpmnArrow(startEvent, arrow);
-
-                List<BpmnFlowElement> collection = bpmnGraph.GetElementCollectionFromId(startEvent.Id);
-                collection.Add(activity);
-                collection.Remove(startEvent);
-            }
-
-            allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
-
-            // Turn XOR arrows into direct arrows
-            List<BpmnFlowElement> bpmnElementsPointingToXors = allBpmnElements.Where(x => x.OutgoingArrows.Any(y => y.Element is BpmnExclusiveGateway)).ToList();
-            foreach (BpmnFlowElement element in bpmnElementsPointingToXors)
-            {
-                foreach (BpmnFlowArrow arrow in element.OutgoingArrows.ToList())
-                {
-                    if (!(arrow.Element is BpmnExclusiveGateway))
-                    {
-                        continue;
-                    }
-
-                    BpmnExclusiveGateway xor = (BpmnExclusiveGateway)arrow.Element;
-                    foreach (BpmnFlowArrow nestedArrow in xor.OutgoingArrows.ToList())
-                    {
-                        Utilities.AddBpmnArrow(element, nestedArrow.Element, BpmnFlowArrowType.Sequence, nestedArrow.Condition);
-                    }
-
-                    Utilities.RemoveBpmnArrow(element, arrow);
-                }
-            }
+            Dictionary<string, DataType> variableToDataTypeDict = GetVariableDataTypesDict(allBpmnElements);
+            HandleExclusiveGateways(allBpmnElements);
 
             // Turn AND arrows into direct arrows
             List<BpmnFlowElement> bpmnElementsPointingToAnds = allBpmnElements.Where(x => x.OutgoingArrows.Any(y => y.Element is BpmnParallelGateway)).ToList();
@@ -135,12 +45,8 @@ namespace BpmnToDcrConverter
 
             // Convert to DCR activities and add arrows
             allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
-            bpmnActivities = allBpmnElements.Where(x => x is BpmnActivity)
-                                            .Select(x => (BpmnActivity)x)
-                                            .ToList();
-            List<BpmnSubProcess> bpmnSubProcesses = allBpmnElements.Where(x => x is BpmnSubProcess)
-                                                               .Select(x => (BpmnSubProcess)x)
-                                                               .ToList();
+            List<BpmnActivity> bpmnActivities = allBpmnElements.OfType<BpmnActivity>().ToList();
+            List<BpmnSubProcess> bpmnSubProcesses = allBpmnElements.OfType<BpmnSubProcess>().ToList();
 
             // Add roles
             Dictionary<string, string> idToRoleDict = new Dictionary<string, string>();
@@ -186,8 +92,7 @@ namespace BpmnToDcrConverter
 
                     DcrActivity toDcrActivity = idToDcrActivityDict[arrow.Element.Id];
 
-                    Utilities.AddDcrArrow(dcrActivity, toDcrActivity, DcrFlowArrowType.Response, arrow.Condition);
-                    Utilities.AddDcrArrow(dcrActivity, toDcrActivity, DcrFlowArrowType.Include, arrow.Condition);
+                    arrowsToAdd.Add(new Tuple<DcrFlowElement, DcrFlowElement, string>(dcrActivity, toDcrActivity, arrow.Condition));
                 }
             }
 
@@ -230,10 +135,15 @@ namespace BpmnToDcrConverter
                         DcrFlowElement dcrElement = allDcrFlowElements.Where(x => x.Id == bpmnElement.Id).FirstOrDefault();
                         DcrFlowElement dcrSubProcess = allDcrFlowElements.Where(x => x.Id == arrow.Element.Id).FirstOrDefault();
 
-                        Utilities.AddDcrArrow(dcrElement, dcrSubProcess, DcrFlowArrowType.Response, arrow.Condition);
-                        Utilities.AddDcrArrow(dcrElement, dcrSubProcess, DcrFlowArrowType.Include, arrow.Condition);
+                        arrowsToAdd.Add(new Tuple<DcrFlowElement, DcrFlowElement, string>(dcrElement, dcrSubProcess, arrow.Condition));
                     }
                 }
+            }
+
+            foreach (var arrowToAdd in arrowsToAdd)
+            {
+                Utilities.AddDcrArrow(arrowToAdd.Item1, arrowToAdd.Item2, DcrFlowArrowType.Response, arrowToAdd.Item3);
+                Utilities.AddDcrArrow(arrowToAdd.Item1, arrowToAdd.Item2, DcrFlowArrowType.Include, arrowToAdd.Item3);
             }
 
             // Include start activities and set them to pending
@@ -260,26 +170,103 @@ namespace BpmnToDcrConverter
             return dcrGraph;
         }
 
-        private static void DeChainExclusiveGateway(BpmnExclusiveGateway bpmnExclusiveGateway)
+        private static void HandleExclusiveGateways(List<BpmnFlowElement> allBpmnElements)
         {
-            foreach (BpmnFlowArrow arrow in bpmnExclusiveGateway.OutgoingArrows.ToList())
+            List<BpmnExclusiveGateway> bpmnXors = allBpmnElements.OfType<BpmnExclusiveGateway>().ToList();
+            GiveConditionsToArrowsWithoutOne(bpmnXors);
+            SkipAllExclusiveGateways(bpmnXors);
+            RemoveAllExclusiveGateways(allBpmnElements);
+        }
+
+        private static void RemoveAllExclusiveGateways(List<BpmnFlowElement> allBpmnElements)
+        {
+            allBpmnElements = allBpmnElements.Where(x => !(x is BpmnExclusiveGateway)).ToList();
+        }
+
+        private static void SkipAllExclusiveGateways(List<BpmnExclusiveGateway> exclusiveGateways)
+        {
+            foreach (BpmnExclusiveGateway exclusiveGateway in exclusiveGateways)
             {
-                if (!(arrow.Element is BpmnExclusiveGateway))
-                {
-                    continue;
-                }
-
-                BpmnExclusiveGateway xor = (BpmnExclusiveGateway)arrow.Element;
-                DeChainExclusiveGateway(xor);
-
-                foreach (BpmnFlowArrow nestedArrow in xor.OutgoingArrows.ToList())
-                {
-                    string newCondition = $"({arrow.Condition}) && ({nestedArrow.Condition})";
-                    Utilities.AddBpmnArrow(bpmnExclusiveGateway, nestedArrow.Element, BpmnFlowArrowType.Sequence, newCondition);
-                }
-
-                Utilities.RemoveBpmnArrow(bpmnExclusiveGateway, arrow);
+                MakeArrowsSkipBpmnElement(exclusiveGateway);
             }
+        }
+
+        private static void MakeArrowsSkipBpmnElement(BpmnFlowElement element)
+        {
+            foreach (BpmnFlowArrow incomingArrow in element.IncomingArrows)
+            {
+                foreach (BpmnFlowArrow outgoingArrow in element.OutgoingArrows)
+                {
+                    string condition = "";
+
+                    if (incomingArrow.Condition != "" && outgoingArrow.Condition != "")
+                    {
+                        condition = $"{incomingArrow.Condition} && {outgoingArrow.Condition}";
+                    }
+                    else if (incomingArrow.Condition != "")
+                    {
+                        condition = incomingArrow.Condition;
+                    }
+                    else if (outgoingArrow.Condition != "")
+                    {
+                        condition = outgoingArrow.Condition;
+                    }
+
+                    Utilities.AddBpmnArrow(incomingArrow.Element, outgoingArrow.Element, BpmnFlowArrowType.Sequence, condition);
+                }
+            }
+
+            // Remove incoming arrows
+            List<BpmnFlowArrow> incomingArrows = element.IncomingArrows.ToList();
+            foreach (BpmnFlowArrow incomingArrow in incomingArrows)
+            {
+                BpmnFlowArrow arrow = incomingArrow.Element.OutgoingArrows.Where(x => x.Element == element).FirstOrDefault();
+                Utilities.RemoveBpmnArrow(incomingArrow.Element, arrow);
+            }
+
+            // Remove outgoing arrows
+            List<BpmnFlowArrow> outgoingArrows = element.OutgoingArrows.ToList();
+            foreach (BpmnFlowArrow outgoingArrow in outgoingArrows)
+            {
+                Utilities.RemoveBpmnArrow(element, outgoingArrow);
+            }
+        }
+
+        private static void GiveConditionsToArrowsWithoutOne(List<BpmnExclusiveGateway> bpmnXors)
+        {
+            foreach (BpmnExclusiveGateway bpmnXor in bpmnXors)
+            {
+                BpmnFlowArrow arrowWithoutCondition = bpmnXor.OutgoingArrows.Where(x => x.Condition == "").FirstOrDefault();
+                List<BpmnFlowArrow> otherArrows = bpmnXor.OutgoingArrows.Where(x => x != arrowWithoutCondition).ToList();
+
+                if (arrowWithoutCondition != null)
+                {
+                    List<string> otherConditions = otherArrows.ConvertAll(x => x.Condition);
+                    List<string> otherConditionsPrep = otherConditions.ConvertAll(x => $"!({x})");
+                    string newCondition = string.Join(" && ", otherConditionsPrep);
+
+                    arrowWithoutCondition.Condition = newCondition;
+                }
+            }
+        }
+
+        private static void MakeBpmnStartEventsToActivities(BpmnGraph bpmnGraph, List<BpmnFlowElement> allBpmnElements)
+        {
+            List<BpmnStartEvent> startEvents = allBpmnElements.OfType<BpmnStartEvent>().ToList();
+            foreach (BpmnStartEvent startEvent in startEvents)
+            {
+                BpmnActivity activity = new BpmnActivity(startEvent.Id, "Start");
+
+                BpmnFlowArrow arrow = startEvent.OutgoingArrows.FirstOrDefault();
+                Utilities.AddBpmnArrow(activity, arrow.Element, BpmnFlowArrowType.Sequence, arrow.Condition);
+                Utilities.RemoveBpmnArrow(startEvent, arrow);
+
+                List<BpmnFlowElement> collection = bpmnGraph.GetElementCollectionFromId(startEvent.Id);
+                collection.Add(activity);
+                collection.Remove(startEvent);
+            }
+
+            allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
         }
 
         private static List<RelationalOperation> GetRelationalExpressionsFromExpression(Expression expression)
@@ -304,16 +291,45 @@ namespace BpmnToDcrConverter
             throw new Exception("Unhandled case.");
         }
 
-        private static Dictionary<string, DataType> GetVariableDataTypesDict(List<string> allVariables, List<RelationalOperation> relations)
+        private static Dictionary<string, DataType> GetVariableDataTypesDict(List<BpmnFlowElement> allBpmnElements)
         {
-            Dictionary<string, DataType> variableDataTypeDict = allVariables.Distinct().ToDictionary(x => x, x => DataType.Unknown);
+            List<string> allArrowConditions = allBpmnElements.SelectMany(x => x.OutgoingArrows).Select(x => x.Condition).Where(x => x != "").ToList();
+            List<Expression> allArrowExpressions = allArrowConditions.Select(x => LogicParser.LogicalExpressionParser.Parse(x)).ToList();
+            List<RelationalOperation> allRelationalExpressions = allArrowExpressions.SelectMany(x => GetRelationalExpressionsFromExpression(x)).ToList();
+            List<string> allVariables = allRelationalExpressions.SelectMany(x => x.GetVariableNames()).Distinct().ToList();
 
-            GiveTypesToVariablesComparedToConstants(relations, variableDataTypeDict);
-            GiveTypesToVariablesComparedToVariables(relations, variableDataTypeDict);
+            CheckForConstantlyEvaluablePartsOfExpressions(allArrowExpressions);
 
-            CheckUnknownOrInconsistentTypes(allVariables, relations, variableDataTypeDict);
+            Dictionary<string, DataType> variableDataTypeDict = allVariables.ToDictionary(x => x, x => DataType.Unknown);
+            GiveTypesToVariablesComparedToConstants(allRelationalExpressions, variableDataTypeDict);
+            GiveTypesToVariablesComparedToVariables(allRelationalExpressions, variableDataTypeDict);
+            CheckUnknownOrInconsistentTypes(allVariables, allRelationalExpressions, variableDataTypeDict);
 
             return variableDataTypeDict;
+        }
+
+        private static void CheckForConstantlyEvaluablePartsOfExpressions(List<Expression> allArrowExpressions)
+        {
+            foreach (Expression exp in allArrowExpressions)
+            {
+                List<Expression> constantlyEvaluableSubExpressions = exp.GetAllConstantlyEvaluableSubExpressions();
+
+                foreach (Expression subExpression in constantlyEvaluableSubExpressions)
+                {
+                    string wholeStr = exp.GetString();
+                    string subStr = subExpression.GetString();
+                    string res = subExpression.Evaluate().ToString().ToLower();
+
+                    if (wholeStr == subStr)
+                    {
+                        Console.WriteLine($"Warning: {subStr} will always evaluate to {res}.");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Warning: {subStr} will always evaluate to {res} in {wholeStr}.");
+                    }
+                }
+            }
         }
 
         private static void CheckUnknownOrInconsistentTypes(List<string> allVariables, List<RelationalOperation> relations, Dictionary<string, DataType> variableDataTypeDict)

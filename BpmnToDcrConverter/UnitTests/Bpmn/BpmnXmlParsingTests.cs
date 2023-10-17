@@ -13,7 +13,7 @@ namespace UnitTests.Bpmn
             BpmnGraph graph = BpmnXmlParser.Parse(path);
             graph.TestGraphValidity();
 
-            Assert.AreEqual(2, graph.GetAllFlowElements().Count);
+            Assert.AreEqual(2, graph.GetAllFlowElementsFlat().Count);
 
             BpmnFlowElement start = graph.GetFlowElementFromId("StartEvent_1");
             BpmnFlowElement end = graph.GetFlowElementFromId("Event_07tbguc");
@@ -37,7 +37,7 @@ namespace UnitTests.Bpmn
             BpmnGraph graph = BpmnXmlParser.Parse(path);
             graph.TestGraphValidity();
 
-            Assert.AreEqual(3, graph.GetAllFlowElements().Count);
+            Assert.AreEqual(3, graph.GetAllFlowElementsFlat().Count);
 
             BpmnFlowElement start = graph.GetFlowElementFromId("StartEvent_1");
             BpmnFlowElement end = graph.GetFlowElementFromId("Event_07tbguc");
@@ -69,7 +69,7 @@ namespace UnitTests.Bpmn
             BpmnGraph graph = BpmnXmlParser.Parse(path);
             graph.TestGraphValidity();
 
-            Assert.AreEqual(7, graph.GetAllFlowElements().Count);
+            Assert.AreEqual(7, graph.GetAllFlowElementsFlat().Count);
 
             BpmnFlowElement start = graph.GetFlowElementFromId("StartEvent_1");
             BpmnFlowElement end = graph.GetFlowElementFromId("Event_07tbguc");
@@ -122,7 +122,7 @@ namespace UnitTests.Bpmn
             BpmnGraph graph = BpmnXmlParser.Parse(path);
             graph.TestGraphValidity();
 
-            Assert.AreEqual(10, graph.GetAllFlowElements().Count);
+            Assert.AreEqual(10, graph.GetAllFlowElementsFlat().Count);
 
             BpmnFlowElement start = graph.GetFlowElementFromId("StartEvent_1");
             BpmnFlowElement end = graph.GetFlowElementFromId("Event_07tbguc");
@@ -188,7 +188,7 @@ namespace UnitTests.Bpmn
             BpmnGraph graph = BpmnXmlParser.Parse(path);
             graph.TestGraphValidity();
 
-            Assert.AreEqual(8, graph.GetAllFlowElements().Count);
+            Assert.AreEqual(8, graph.GetAllFlowElementsFlat().Count);
 
             BpmnFlowElement start = graph.GetFlowElementFromId("StartEvent_1");
             BpmnFlowElement end = graph.GetFlowElementFromId("Event_07tbguc");
