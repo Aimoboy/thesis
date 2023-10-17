@@ -14,37 +14,13 @@ namespace BpmnToDcrConverter
         {
             List<Tuple<DcrFlowElement, DcrFlowElement, string>> arrowsToAdd = new List<Tuple<DcrFlowElement, DcrFlowElement, string>>();
 
-            List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
-
-            MakeBpmnStartEventsToActivities(bpmnGraph, allBpmnElements);
-
-            // Get variables and their types
-            Dictionary<string, DataType> variableToDataTypeDict = GetVariableDataTypesDict(allBpmnElements);
-            HandleExclusiveGateways(allBpmnElements);
-
-            // Turn AND arrows into direct arrows
-            List<BpmnFlowElement> bpmnElementsPointingToAnds = allBpmnElements.Where(x => x.OutgoingArrows.Any(y => y.Element is BpmnParallelGateway)).ToList();
-            foreach (BpmnFlowElement element in bpmnElementsPointingToAnds)
-            {
-                foreach (BpmnFlowArrow arrow in element.OutgoingArrows)
-                {
-                    if (!(arrow.Element is BpmnParallelGateway))
-                    {
-                        continue;
-                    }
-
-                    BpmnParallelGateway and = (BpmnParallelGateway)arrow.Element;
-                    foreach (BpmnFlowArrow nestedArrow in and.OutgoingArrows)
-                    {
-                        Utilities.AddBpmnArrow(element, nestedArrow.Element, BpmnFlowArrowType.Sequence, "");
-                    }
-
-                    Utilities.RemoveBpmnArrow(element, arrow);
-                }
-            }
+            MakeBpmnStartEventsToActivities(bpmnGraph);
+            Dictionary<string, DataType> variableToDataTypeDict = GetVariableDataTypesDict(bpmnGraph);
+            HandleExclusiveGateways(bpmnGraph);
+            HandleParallelGateways(bpmnGraph);
 
             // Convert to DCR activities and add arrows
-            allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
+            List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
             List<BpmnActivity> bpmnActivities = allBpmnElements.OfType<BpmnActivity>().ToList();
             List<BpmnSubProcess> bpmnSubProcesses = allBpmnElements.OfType<BpmnSubProcess>().ToList();
 
@@ -170,17 +146,44 @@ namespace BpmnToDcrConverter
             return dcrGraph;
         }
 
-        private static void HandleExclusiveGateways(List<BpmnFlowElement> allBpmnElements)
+        private static void HandleParallelGateways(BpmnGraph bpmnGraph)
         {
+            List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
+            List<BpmnParallelGateway> bpmnAnds = allBpmnElements.OfType<BpmnParallelGateway>().ToList();
+
+            foreach (BpmnParallelGateway gateway in bpmnAnds)
+            {
+                MakeArrowsSkipBpmnElement(gateway);
+            }
+
+            RemoveAllParallelGateways(bpmnGraph);
+        }
+
+        private static void HandleExclusiveGateways(BpmnGraph bpmnGraph)
+        {
+            List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
             List<BpmnExclusiveGateway> bpmnXors = allBpmnElements.OfType<BpmnExclusiveGateway>().ToList();
             GiveConditionsToArrowsWithoutOne(bpmnXors);
             SkipAllExclusiveGateways(bpmnXors);
-            RemoveAllExclusiveGateways(allBpmnElements);
+            RemoveAllExclusiveGateways(bpmnGraph);
         }
 
-        private static void RemoveAllExclusiveGateways(List<BpmnFlowElement> allBpmnElements)
+        private static void RemoveAllParallelGateways(BpmnGraph bpmnGraph)
         {
-            allBpmnElements = allBpmnElements.Where(x => !(x is BpmnExclusiveGateway)).ToList();
+            List<BpmnParallelGateway> gateways = bpmnGraph.GetAllFlowElementsFlat().OfType<BpmnParallelGateway>().ToList();
+            foreach (BpmnParallelGateway gateway in gateways)
+            {
+                bpmnGraph.DeleteElementFromId(gateway.Id);
+            }
+        }
+
+        private static void RemoveAllExclusiveGateways(BpmnGraph bpmnGraph)
+        {
+            List<BpmnExclusiveGateway> gateways = bpmnGraph.GetAllFlowElementsFlat().OfType<BpmnExclusiveGateway>().ToList();
+            foreach (BpmnExclusiveGateway gateway in gateways)
+            {
+                bpmnGraph.DeleteElementFromId(gateway.Id);
+            }
         }
 
         private static void SkipAllExclusiveGateways(List<BpmnExclusiveGateway> exclusiveGateways)
@@ -250,8 +253,9 @@ namespace BpmnToDcrConverter
             }
         }
 
-        private static void MakeBpmnStartEventsToActivities(BpmnGraph bpmnGraph, List<BpmnFlowElement> allBpmnElements)
+        private static void MakeBpmnStartEventsToActivities(BpmnGraph bpmnGraph)
         {
+            List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
             List<BpmnStartEvent> startEvents = allBpmnElements.OfType<BpmnStartEvent>().ToList();
             foreach (BpmnStartEvent startEvent in startEvents)
             {
@@ -265,8 +269,6 @@ namespace BpmnToDcrConverter
                 collection.Add(activity);
                 collection.Remove(startEvent);
             }
-
-            allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
         }
 
         private static List<RelationalOperation> GetRelationalExpressionsFromExpression(Expression expression)
@@ -291,8 +293,9 @@ namespace BpmnToDcrConverter
             throw new Exception("Unhandled case.");
         }
 
-        private static Dictionary<string, DataType> GetVariableDataTypesDict(List<BpmnFlowElement> allBpmnElements)
+        private static Dictionary<string, DataType> GetVariableDataTypesDict(BpmnGraph bpmnGraph)
         {
+            List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
             List<string> allArrowConditions = allBpmnElements.SelectMany(x => x.OutgoingArrows).Select(x => x.Condition).Where(x => x != "").ToList();
             List<Expression> allArrowExpressions = allArrowConditions.Select(x => LogicParser.LogicalExpressionParser.Parse(x)).ToList();
             List<RelationalOperation> allRelationalExpressions = allArrowExpressions.SelectMany(x => GetRelationalExpressionsFromExpression(x)).ToList();

@@ -122,6 +122,14 @@ namespace BpmnToDcrConverter.Bpmn
 
             return null;
         }
+
+        public void DeleteElementFromId(string id)
+        {
+            foreach (BpmnPool pool in _pools)
+            {
+                pool.DeleteElementFromId(id);
+            }
+        }
     }
 
     public class BpmnPool
@@ -178,6 +186,14 @@ namespace BpmnToDcrConverter.Bpmn
             }
 
             return null;
+        }
+
+        public void DeleteElementFromId(string id)
+        {
+            foreach (BpmnPoolLane lane in Lanes)
+            {
+                lane.DeleteElementFromId(id);
+            }
         }
     }
 
@@ -238,6 +254,14 @@ namespace BpmnToDcrConverter.Bpmn
             }
 
             return null;
+        }
+
+        public void DeleteElementFromId(string id)
+        {
+            foreach (BpmnFlowElement element in Elements)
+            {
+                element.DeleteElementFromId(id);
+            }
         }
     }
 }

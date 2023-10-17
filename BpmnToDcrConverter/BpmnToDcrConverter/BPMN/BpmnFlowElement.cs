@@ -68,6 +68,11 @@ namespace BpmnToDcrConverter.Bpmn
         {
             return null;
         }
+
+        public virtual void DeleteElementFromId(string id)
+        {
+
+        }
     }
 
     public class BpmnActivity : BpmnFlowElement
@@ -287,6 +292,14 @@ namespace BpmnToDcrConverter.Bpmn
             }
 
             return null;
+        }
+
+        public override void DeleteElementFromId(string id)
+        {
+            foreach (BpmnFlowElement element in flowElements)
+            {
+                element.DeleteElementFromId(id);
+            }
         }
     }
 
