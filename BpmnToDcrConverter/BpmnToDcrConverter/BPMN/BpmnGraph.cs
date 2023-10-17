@@ -54,7 +54,12 @@ namespace BpmnToDcrConverter.Bpmn
             return _pools;
         }
 
-        public List<BpmnFlowElement> GetAllFlowElements()
+        public List<BpmnFlowElement> GetFirstLayerFlowElements()
+        {
+            return _pools.SelectMany(x => x.Lanes).SelectMany(x => x.Elements).ToList();
+        }
+
+        public List<BpmnFlowElement> GetAllFlowElementsFlat()
         {
             return _pools.SelectMany(x => x.GetFlowElementsFlat()).ToList();
         }
@@ -66,7 +71,7 @@ namespace BpmnToDcrConverter.Bpmn
 
         public void TestGraphValidity()
         {
-            foreach (BpmnFlowElement element in GetAllFlowElements())
+            foreach (BpmnFlowElement element in GetAllFlowElementsFlat())
             {
                 element.TestValidity();
                 TestValidArrowReferences(element);
@@ -76,7 +81,7 @@ namespace BpmnToDcrConverter.Bpmn
         private void TestValidArrowReferences(BpmnFlowElement element)
         {
             List<BpmnFlowArrow> allArrows = element.OutgoingArrows.Concat(element.IncomingArrows).ToList();
-            HashSet<BpmnFlowElement> allElements = GetAllFlowElements().ToHashSet();
+            HashSet<BpmnFlowElement> allElements = GetAllFlowElementsFlat().ToHashSet();
 
             foreach (BpmnFlowArrow arrow in allArrows)
             {
@@ -100,7 +105,7 @@ namespace BpmnToDcrConverter.Bpmn
 
         public BpmnFlowElement GetFlowElementFromId(string id)
         {
-            List<BpmnFlowElement> allFlowElements = GetAllFlowElements();
+            List<BpmnFlowElement> allFlowElements = GetAllFlowElementsFlat();
             return allFlowElements.Where(x => x.Id == id).FirstOrDefault();
         }
 
@@ -221,6 +226,15 @@ namespace BpmnToDcrConverter.Bpmn
             if (Elements.Select(x => x.Id).Contains(id))
             {
                 return Elements;
+            }
+
+            List<List<BpmnFlowElement>> res = Elements.Select(x => x.GetElementCollectionFromId(id)).ToList();
+            foreach (List<BpmnFlowElement> collection in res)
+            {
+                if (collection != null)
+                {
+                    return collection;
+                }
             }
 
             return null;

@@ -12,7 +12,7 @@ namespace BpmnToDcrConverter
     {
         public static DcrGraph ConvertBpmnToDcr(BpmnGraph bpmnGraph)
         {
-            List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElements();
+            List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
 
             List<BpmnActivity> bpmnActivities = allBpmnElements.Where(x => x is BpmnActivity)
                                                                .Select(x => (BpmnActivity)x)
@@ -89,7 +89,7 @@ namespace BpmnToDcrConverter
                 collection.Remove(startEvent);
             }
 
-            allBpmnElements = bpmnGraph.GetAllFlowElements();
+            allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
 
             // Turn XOR arrows into direct arrows
             List<BpmnFlowElement> bpmnElementsPointingToXors = allBpmnElements.Where(x => x.OutgoingArrows.Any(y => y.Element is BpmnExclusiveGateway)).ToList();
@@ -134,10 +134,13 @@ namespace BpmnToDcrConverter
             }
 
             // Convert to DCR activities and add arrows
-            allBpmnElements = bpmnGraph.GetAllFlowElements();
+            allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
             bpmnActivities = allBpmnElements.Where(x => x is BpmnActivity)
                                             .Select(x => (BpmnActivity)x)
                                             .ToList();
+            List<BpmnSubProcess> bpmnSubProcesses = allBpmnElements.Where(x => x is BpmnSubProcess)
+                                                               .Select(x => (BpmnSubProcess)x)
+                                                               .ToList();
 
             // Add roles
             Dictionary<string, string> idToRoleDict = new Dictionary<string, string>();
@@ -188,9 +191,54 @@ namespace BpmnToDcrConverter
                 }
             }
 
+            // Subprocesses
+            List<DcrSubProcess> dcrSubProcesses = bpmnSubProcesses.ConvertAll(x => new DcrSubProcess(x.Id, "", new List<DcrActivity>(), false, false, false));
+
+            Dictionary<string, DcrSubProcess> idToSubprocessDict = new Dictionary<string, DcrSubProcess>();
+            foreach (BpmnSubProcess subProcess in bpmnSubProcesses)
+            {
+                DcrSubProcess dcrSubProcess = dcrSubProcesses.Where(x => x.Id == subProcess.Id).FirstOrDefault();
+
+                List<string> ids = subProcess.flowElements.ConvertAll(x => x.Id);
+                foreach (string id in ids)
+                {
+                    idToSubprocessDict[id] = dcrSubProcess;
+                }
+            }
+
+            List<DcrFlowElement> allDcrFlowElements = dcrActivities.Select(x => (DcrFlowElement)x).Concat(dcrSubProcesses.Select(x => (DcrFlowElement)x)).ToList();
+            foreach (DcrFlowElement flowElement in allDcrFlowElements)
+            {
+                if (idToSubprocessDict.ContainsKey(flowElement.Id))
+                {
+                    DcrSubProcess subProcess = idToSubprocessDict[flowElement.Id];
+                    subProcess.Elements.Add(flowElement);
+                }
+            }
+
+            foreach (BpmnFlowElement bpmnElement in allBpmnElements)
+            {
+                if (!(bpmnElement is BpmnActivity))
+                {
+                    continue;
+                }
+
+                foreach (BpmnFlowArrow arrow in bpmnElement.OutgoingArrows)
+                {
+                    if (arrow.Element is BpmnSubProcess)
+                    {
+                        DcrFlowElement dcrElement = allDcrFlowElements.Where(x => x.Id == bpmnElement.Id).FirstOrDefault();
+                        DcrFlowElement dcrSubProcess = allDcrFlowElements.Where(x => x.Id == arrow.Element.Id).FirstOrDefault();
+
+                        Utilities.AddDcrArrow(dcrElement, dcrSubProcess, DcrFlowArrowType.Response, arrow.Condition);
+                        Utilities.AddDcrArrow(dcrElement, dcrSubProcess, DcrFlowArrowType.Include, arrow.Condition);
+                    }
+                }
+            }
+
             // Include start activities and set them to pending
-            Dictionary<BpmnFlowElement, List<BpmnFlowElement>> pointingToDict = bpmnGraph.GetAllFlowElements().ToDictionary(x => x, x => new List<BpmnFlowElement>());
-            foreach (BpmnFlowElement element in bpmnGraph.GetAllFlowElements())
+            Dictionary<BpmnFlowElement, List<BpmnFlowElement>> pointingToDict = bpmnGraph.GetAllFlowElementsFlat().ToDictionary(x => x, x => new List<BpmnFlowElement>());
+            foreach (BpmnFlowElement element in bpmnGraph.GetAllFlowElementsFlat())
             {
                 foreach (BpmnFlowArrow arrow in element.OutgoingArrows)
                 {
@@ -206,7 +254,8 @@ namespace BpmnToDcrConverter
                 activity.Pending = true;
             }
 
-            DcrGraph dcrGraph = new DcrGraph(dcrActivities);
+            List<DcrFlowElement> firstLevelElements = allDcrFlowElements.Where(x => !idToSubprocessDict.ContainsKey(x.Id)).ToList();
+            DcrGraph dcrGraph = new DcrGraph(firstLevelElements);
 
             return dcrGraph;
         }

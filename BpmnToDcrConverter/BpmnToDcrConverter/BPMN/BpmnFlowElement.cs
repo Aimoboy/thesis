@@ -63,6 +63,11 @@ namespace BpmnToDcrConverter.Bpmn
 
             return copiedElement;
         }
+
+        public virtual List<BpmnFlowElement> GetElementCollectionFromId(string id)
+        {
+            return null;
+        }
     }
 
     public class BpmnActivity : BpmnFlowElement
@@ -263,6 +268,25 @@ namespace BpmnToDcrConverter.Bpmn
             BpmnSubProcess copiedElement = new BpmnSubProcess(Id);
             copiedElement.flowElements = flowElements.ConvertAll(x => x.Copy());
             return copiedElement;
+        }
+
+        public override List<BpmnFlowElement> GetElementCollectionFromId(string id)
+        {
+            if (flowElements.Select(x => x.Id).Contains(id))
+            {
+                return flowElements;
+            }
+
+            List<List<BpmnFlowElement>> results = flowElements.ConvertAll(x => x.GetElementCollectionFromId(id));
+            foreach (List<BpmnFlowElement> lst in results)
+            {
+                if (lst != null)
+                {
+                    return lst;
+                }
+            }
+
+            return null;
         }
     }
 
