@@ -315,19 +315,14 @@ namespace BpmnToDcrConverter
 
         private static List<RelationalOperation> GetRelationalExpressionsFromExpression(Expression expression)
         {
-            if (expression is Term)
-            {
-                return new List<RelationalOperation>();
-            }
-
             if (expression is RelationalOperation)
             {
                 return new List<RelationalOperation> { (RelationalOperation)expression };
             }
 
-            if (expression is LogicalOperation)
+            if (expression is BinaryLogicalOperation)
             {
-                LogicalOperation operation = (LogicalOperation)expression;
+                BinaryLogicalOperation operation = (BinaryLogicalOperation)expression;
 
                 return GetRelationalExpressionsFromExpression(operation.Left).Concat(GetRelationalExpressionsFromExpression(operation.Right)).ToList();
             }
