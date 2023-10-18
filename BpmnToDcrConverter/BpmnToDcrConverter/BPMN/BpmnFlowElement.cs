@@ -73,6 +73,20 @@ namespace BpmnToDcrConverter.Bpmn
         {
 
         }
+
+        public void RemoveAllArrows()
+        {
+            foreach (BpmnFlowArrow arrow in OutgoingArrows)
+            {
+                Utilities.RemoveBpmnArrow(this, arrow);
+            }
+
+            foreach (BpmnFlowArrow fromArrow in IncomingArrows)
+            {
+                BpmnFlowArrow toArrow = fromArrow.Element.OutgoingArrows.Where(x => x.Element == this).FirstOrDefault();
+                Utilities.RemoveBpmnArrow(fromArrow.Element, toArrow);
+            }
+        }
     }
 
     public class BpmnActivity : BpmnFlowElement
@@ -296,10 +310,7 @@ namespace BpmnToDcrConverter.Bpmn
 
         public override void DeleteElementFromId(string id)
         {
-            foreach (BpmnFlowElement element in flowElements)
-            {
-                element.DeleteElementFromId(id);
-            }
+            Utilities.RemoveIdFromBpmnCollection(id, flowElements);
         }
     }
 

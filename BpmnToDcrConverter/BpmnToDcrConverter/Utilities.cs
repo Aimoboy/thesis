@@ -45,5 +45,20 @@ namespace BpmnToDcrConverter
             from.OutgoingArrows.Add(new DcrFlowArrow(arrowType, to, condition));
             to.IncomingArrows.Add(new DcrFlowArrow(arrowType, from, condition));
         }
+
+        public static void RemoveIdFromBpmnCollection(string id, List<BpmnFlowElement> collection)
+        {
+            BpmnFlowElement match = collection.Where(x => x.Id == id).FirstOrDefault();
+            if (match != null)
+            {
+                match.RemoveAllArrows();
+                collection.Remove(match);
+            }
+
+            foreach (BpmnFlowElement element in collection)
+            {
+                element.DeleteElementFromId(id);
+            }
+        }
     }
 }

@@ -258,10 +258,7 @@ namespace BpmnToDcrConverter.Bpmn
 
         public void DeleteElementFromId(string id)
         {
-            foreach (BpmnFlowElement element in Elements)
-            {
-                element.DeleteElementFromId(id);
-            }
+            Utilities.RemoveIdFromBpmnCollection(id, Elements);
         }
     }
 }
