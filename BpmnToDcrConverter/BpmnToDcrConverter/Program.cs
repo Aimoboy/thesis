@@ -98,4 +98,6 @@ namespace BpmnToDcrConverter
 // - Handle message arrows
 // - Add excludes betweeen XOR gateway paths in case their conditions overlap
 // - Add pool handling in conversion
-// - Check for short circuiting in conditions
+// - Loops with BPMN sub processes dont work
+// - Loops with a single activity dont work
+// - Should I simplify BPMN sub processes, by "extracting its contents"
