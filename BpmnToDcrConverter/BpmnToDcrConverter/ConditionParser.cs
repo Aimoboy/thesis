@@ -606,11 +606,14 @@ namespace BpmnToDcrConverter
 
     public static class LogicParser
     {
-        private static readonly Parser<BinaryLogicalOperator> LogicalOperatorParser =
+        private static readonly Parser<BinaryLogicalOperator> BinaryLogicalOperatorParser =
             Parse.String("&&").Return(BinaryLogicalOperator.And)
                  .Or(Parse.IgnoreCase("and").Return(BinaryLogicalOperator.And))
                  .Or(Parse.String("||").Return(BinaryLogicalOperator.Or))
                  .Or(Parse.IgnoreCase("or").Return(BinaryLogicalOperator.Or)).Token();
+
+        private static readonly Parser<UnaryLogicalOperator> UnaryLogicalOperatorParser =
+            Parse.String("!").Return(UnaryLogicalOperator.Not);
 
         private static readonly Parser<RelationalOperator> RelationalOperatorParser =
             Parse.String(">=").Token().Return(RelationalOperator.GreaterThanOrEqual)
@@ -644,23 +647,39 @@ namespace BpmnToDcrConverter
             Constant.Or(Variable).Token();
 
         private static readonly Parser<Expression> RelationalExpression =
-            from firstTerm in TermParser
+            from firstExp in TermParser
             from op in RelationalOperatorParser
-            from secondTerm in TermParser
-            select new RelationalOperation(firstTerm, op, secondTerm);
+            from secondExp in TermParser
+            select new RelationalOperation(firstExp, op, secondExp);
 
-        private static readonly Parser<Expression> LogicalExpression =
+        private static readonly Parser<Expression> BinaryLogicalExpression =
             from firstParens in Parse.Char('(').Token()
-            from firstTerm in LogicalExpression.Or(RelationalExpression)
+            from firstExp in ExpressionParser
             from secondParens in Parse.Char(')').Token()
-            from op in LogicalOperatorParser
+            from op in BinaryLogicalOperatorParser
             from thirdParens in Parse.Char('(').Token()
-            from secondTerm in LogicalExpression.Or(RelationalExpression)
+            from secondExp in ExpressionParser
             from fourthParens in Parse.Char(')').Token()
-            select new BinaryLogicalOperation(firstTerm, op, secondTerm);
+            select new BinaryLogicalOperation(firstExp, op, secondExp);
+
+        private static readonly Parser<Expression> UnaryLogicalExpression =
+            from op in UnaryLogicalOperatorParser
+            from firstParens in Parse.Char('(').Token()
+            from exp in ExpressionParser
+            from secondParens in Parse.Char(')').Token()
+            select new UnaryLogicalOperation(exp, op);
+
+        private static readonly Parser<Expression> ExpressionInParentheses =
+            from firstParens in Parse.Char('(').Token()
+            from exp in ExpressionParser
+            from secondParens in Parse.Char(')').Token()
+            select exp;
+
+        private static readonly Parser<Expression> ExpressionParser =
+            ExpressionInParentheses.Or(RelationalExpression).Or(BinaryLogicalExpression).Or(UnaryLogicalExpression);
 
         public static readonly Parser<Expression> LogicalExpressionParser =
-            RelationalExpression.Or(LogicalExpression).End();
+            ExpressionParser.End();
     }
 
     public enum DataType
