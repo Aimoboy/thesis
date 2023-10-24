@@ -26,6 +26,14 @@ namespace BpmnToDcrConverter
             TraceElements = traceElements;
         }
 
+        public GraphTrace(string title, string description, GraphTraceType type, GraphTraceEndState endState, List<TraceElement> traceElements) : this(Guid.NewGuid().ToString("N"),
+                                                                                                                                                       title,
+                                                                                                                                                       description,
+                                                                                                                                                       DateTime.Now.ToString("o"),
+                                                                                                                                                       type,
+                                                                                                                                                       endState,
+                                                                                                                                                       traceElements) { }
+
         public XmlDocument ToXml()
         {
             XmlDocument doc = new XmlDocument();
