@@ -100,13 +100,11 @@ namespace BpmnToDcrConverter
     {
         public string Id;
         public string Role;
-        public string Label;
 
-        public TraceActivity(string id, string role, string label)
+        public TraceActivity(string id, string role)
         {
             Id = id;
             Role = role;
-            Label = label;
         }
 
         public override void AddToXML(XmlDocument doc, XmlElement parent)
@@ -115,7 +113,6 @@ namespace BpmnToDcrConverter
 
             elementXml.SetAttribute("id", Id);
             elementXml.SetAttribute("role", Role);
-            elementXml.SetAttribute("label", Label);
 
             parent.AppendChild(elementXml);
         }
