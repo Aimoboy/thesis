@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Xml;
 
@@ -29,7 +30,7 @@ namespace BpmnToDcrConverter
         public GraphTrace(string title, string description, GraphTraceType type, GraphTraceEndState endState, List<TraceElement> traceElements) : this(Guid.NewGuid().ToString("N"),
                                                                                                                                                        title,
                                                                                                                                                        description,
-                                                                                                                                                       DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ"),
+                                                                                                                                                       DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture),
                                                                                                                                                        type,
                                                                                                                                                        endState,
                                                                                                                                                        traceElements) { }
@@ -39,6 +40,7 @@ namespace BpmnToDcrConverter
             XmlDocument doc = new XmlDocument();
 
             XmlElement log = doc.CreateElement("log");
+            doc.AppendChild(log);
 
             XmlElement trace = doc.CreateElement("trace");
             trace.SetAttribute("id", Id);
