@@ -29,7 +29,7 @@ namespace BpmnToDcrConverter
         public GraphTrace(string title, string description, GraphTraceType type, GraphTraceEndState endState, List<TraceElement> traceElements) : this(Guid.NewGuid().ToString("N"),
                                                                                                                                                        title,
                                                                                                                                                        description,
-                                                                                                                                                       DateTime.Now.ToString("o"),
+                                                                                                                                                       DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ"),
                                                                                                                                                        type,
                                                                                                                                                        endState,
                                                                                                                                                        traceElements) { }
