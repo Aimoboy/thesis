@@ -334,7 +334,7 @@ namespace BpmnToDcrConverter
         {
             List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
             List<string> allArrowConditions = allBpmnElements.SelectMany(x => x.OutgoingArrows).Select(x => x.Condition).Where(x => x != "").ToList();
-            List<Expression> allArrowExpressions = allArrowConditions.Select(x => LogicParser.LogicalExpressionParser.Parse(x)).ToList();
+            List<Expression> allArrowExpressions = allArrowConditions.Select(x => LogicParser.ConditionParser.Parse(x)).ToList();
             List<RelationalOperation> allRelationalExpressions = allArrowExpressions.SelectMany(x => GetRelationalExpressionsFromExpression(x)).ToList();
             List<string> allVariables = allRelationalExpressions.SelectMany(x => x.GetVariableNames()).Distinct().ToList();
 
