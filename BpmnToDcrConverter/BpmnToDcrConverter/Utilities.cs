@@ -60,5 +60,10 @@ namespace BpmnToDcrConverter
                 element.DeleteElementFromId(id);
             }
         }
+
+        public static string EscapeStringForApi(string str)
+        {
+            return str.Replace("\"", "\\\"");
+        }
     }
 }

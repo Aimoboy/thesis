@@ -30,7 +30,8 @@ namespace BpmnToDcrConverter
                     dcrGraph.Export(outputPath);
                     break;
                 case OutputType.DcrSolutionsPost:
-                    DcrSolutionsPostRequestHandler.Post(dcrGraph).GetAwaiter().GetResult();
+                    AuthenticationHeaderValue authenticationHeader = DcrSolutionsPostRequestHandler.GetDcrSolutionsAuthenticationHeader();
+                    DcrSolutionsPostRequestHandler.PostGraph(dcrGraph, authenticationHeader);
                     break;
             }
         }

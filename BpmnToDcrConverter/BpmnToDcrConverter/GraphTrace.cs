@@ -8,7 +8,6 @@ namespace BpmnToDcrConverter
 {
     public class GraphTrace
     {
-        public string Id;
         public string Title;
         public string Description;
         public string InitTime;
@@ -16,9 +15,8 @@ namespace BpmnToDcrConverter
         public GraphTraceEndState EndState;
         public List<TraceElement> TraceElements = new List<TraceElement>();
 
-        public GraphTrace(string id, string title, string description, string initTime, GraphTraceType type, GraphTraceEndState endState, List<TraceElement> traceElements)
+        public GraphTrace(string title, string description, string initTime, GraphTraceType type, GraphTraceEndState endState, List<TraceElement> traceElements)
         {
-            Id = id;
             Title = title;
             Description = description;
             InitTime = initTime;
@@ -27,8 +25,7 @@ namespace BpmnToDcrConverter
             TraceElements = traceElements;
         }
 
-        public GraphTrace(string title, string description, GraphTraceType type, GraphTraceEndState endState, List<TraceElement> traceElements) : this(Guid.NewGuid().ToString("N"),
-                                                                                                                                                       title,
+        public GraphTrace(string title, string description, GraphTraceType type, GraphTraceEndState endState, List<TraceElement> traceElements) : this(title,
                                                                                                                                                        description,
                                                                                                                                                        DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture),
                                                                                                                                                        type,
@@ -43,7 +40,7 @@ namespace BpmnToDcrConverter
             doc.AppendChild(log);
 
             XmlElement trace = doc.CreateElement("trace");
-            trace.SetAttribute("id", Id);
+            trace.SetAttribute("id", "0");
             trace.SetAttribute("title", Title);
             trace.SetAttribute("description", Description);
             trace.SetAttribute("init", InitTime);
