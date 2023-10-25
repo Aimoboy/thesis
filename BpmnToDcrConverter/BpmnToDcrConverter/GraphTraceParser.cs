@@ -33,7 +33,7 @@ namespace BpmnToDcrConverter
             from endState in Parse.LetterOrDigit.Or(Parse.Char(' ')).Many().Text().Token()
             from thirdBracket in Parse.Char(')').Token()
             from semiColon in Parse.Char(';').Token()
-            from ids in Parse.LetterOrDigit.AtLeastOnce().Text().DelimitedBy(Parse.Char(',').Token())
+            from ids in Parse.LetterOrDigit.AtLeastOnce().Text().DelimitedBy(Parse.Char(',').Token()).Optional().Select(x => x.GetOrElse(new List<string>()))
             from fourthBracket in Parse.Char('}').Token()
             select new TraceParseTrace
             {
