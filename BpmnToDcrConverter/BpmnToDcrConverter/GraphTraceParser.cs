@@ -12,7 +12,7 @@ namespace BpmnToDcrConverter
         private static readonly Parser<Tuple<string, string>> KeyValueParser =
             from key in Parse.LetterOrDigit.AtLeastOnce().Text().Token()
             from equ in Parse.Char('=').Token()
-            from value in Parse.LetterOrDigit.AtLeastOnce().Text().Token()
+            from value in Parse.LetterOrDigit.Or(Parse.Char('_')).Or(Parse.Char('-')).AtLeastOnce().Text().Token()
             select new Tuple<string, string>(key, value);
 
         private static readonly Parser<List<TraceParseDefinition>> DefinitionParser =
@@ -30,7 +30,7 @@ namespace BpmnToDcrConverter
             from secondColon in Parse.Char(':').Token()
             from type in Parse.LetterOrDigit.Many().Text().Token()
             from thirdColon in Parse.Char(':').Token()
-            from endState in Parse.LetterOrDigit.Many().Text().Token()
+            from endState in Parse.LetterOrDigit.Or(Parse.Char(' ')).Many().Text().Token()
             from thirdBracket in Parse.Char(')').Token()
             from semiColon in Parse.Char(';').Token()
             from ids in Parse.LetterOrDigit.AtLeastOnce().Text().DelimitedBy(Parse.Char(',').Token())
@@ -47,8 +47,8 @@ namespace BpmnToDcrConverter
         public static readonly Parser<TraceParseResult> TraceResultParser =
             from firstBracket in Parse.Char('{').Token()
             from definitions in DefinitionParser.Token().Optional()
-            from traces in TraceParser.AtLeastOnce().Token()
-            from secondBracket in Parse.Char('}').Token()
+            from traces in TraceParser.Token().AtLeastOnce()
+            from secondBracket in Parse.Char('}').Token().End()
             select new TraceParseResult
             {
                 Definitions = definitions.GetOrElse(new List<TraceParseDefinition>()),
