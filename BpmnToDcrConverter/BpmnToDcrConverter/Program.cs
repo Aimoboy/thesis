@@ -6,6 +6,7 @@ using System.IO;
 using System.Xml.Linq;
 using System.Linq;
 using BpmnToDcrConverter.Dcr;
+using System.Net.Http.Headers;
 
 namespace BpmnToDcrConverter
 {

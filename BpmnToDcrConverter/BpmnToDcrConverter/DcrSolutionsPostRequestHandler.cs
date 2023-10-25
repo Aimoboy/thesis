@@ -80,7 +80,7 @@ namespace BpmnToDcrConverter
             string traceJson = trace.ToXml().OuterXml;
             traceJson = Utilities.EscapeStringForApi(traceJson);
 
-            string json = "{\"log\": " + traceJson + " \"\"}";
+            string json = "{\"log\": \"" + traceJson + "\"}";
             string url = REPOSITORY_URL + $"graphs/{graphId}/sims";
             PostToDcrSolutions(url, json, authenticationHeader);
         }
