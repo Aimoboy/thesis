@@ -182,5 +182,21 @@ namespace BpmnToDcrConverter.Dcr
             
             doc.Save(path);
         }
+
+        public bool ValidateTrace(GraphTrace trace)
+        {
+            HashSet<string> allElementsIds = GetFlowElementsFlat().Select(x => x.Id).ToHashSet();
+            List<string> traceIds = trace.TraceElements.OfType<TraceActivity>().Select(x => x.Id).ToList();
+
+            foreach (string id in traceIds)
+            {
+                if (!allElementsIds.Contains(id))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }

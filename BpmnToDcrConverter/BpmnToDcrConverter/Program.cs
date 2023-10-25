@@ -30,43 +30,111 @@ namespace BpmnToDcrConverter
                     string outputPath = Path.Combine(argumentParsingResults.Folder, xmlFileName);
                     dcrGraph.Export(outputPath);
                     break;
+
                 case OutputType.DcrSolutionsPost:
                     AuthenticationHeaderValue authenticationHeader = DcrSolutionsPostRequestHandler.GetDcrSolutionsAuthenticationHeader();
-                    DcrSolutionsPostRequestHandler.PostGraph(dcrGraph, authenticationHeader);
+                    string graphId = DcrSolutionsPostRequestHandler.PostGraph(dcrGraph, authenticationHeader);
+                    Console.WriteLine($"Created new graph with id \"{graphId}\".");
+
+                    if (argumentParsingResults.TracesPath != null)
+                    {
+
+
+                        try
+                        {
+                            using (StreamReader reader = new StreamReader(argumentParsingResults.TracesPath))
+                            {
+                                TraceParseResult tracesParseResult = GraphTraceParser.TraceResultParser.Parse(reader.ReadToEnd());
+                                List<GraphTrace> graphTraces = tracesParseResult.ToGraphTraces();
+
+                                bool validTraces = false;
+                                foreach (GraphTrace trace in graphTraces)
+                                {
+                                    bool valid = dcrGraph.ValidateTrace(trace);
+
+                                    if (!valid)
+                                    {
+                                        Console.WriteLine($"Trace \"{trace.Title}\" is not valid.");
+                                        validTraces = true;
+                                    }
+                                }
+
+                                if (validTraces)
+                                {
+                                    throw new Exception("Traces file contains invalid trace(s).");
+                                }
+                                
+                                foreach (GraphTrace trace in graphTraces)
+                                {
+                                    DcrSolutionsPostRequestHandler.PostTrace(graphId, trace, authenticationHeader);
+                                    Console.WriteLine($"Created trace \"{trace.Title}\".");
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.ToString());
+                        }
+                    }
+
                     break;
             }
         }
 
         private static ArgumentParsingResults HandleArguments(string[] args)
         {
+            string path = null;
             OutputType outputType = OutputType.XML;
+            string tracesPath = null;
 
-            if (args.Length == 0)
+            int i = 0;
+            while (i < args.Length)
             {
-                throw new ArgumentException("Too few arguments. Please specify the path to the file you want to convert.");
-            }
+                string arg = args[i].ToLower();
 
-            // Handle flags
-            if (args.Length >= 2)
-            {
-                foreach (string arg in args[1..])
+                if (arg == "--path")
                 {
-                    if (arg == "--dcrsolutions")
-                    {
-                        outputType = OutputType.DcrSolutionsPost;
-                    }
-                    else if (arg == "--xml")
+                    path = args[i + 1];
+                }
+                else if (arg == "--output")
+                {
+                    string secondArg = args[i + 1].ToLower();
+
+                    if (secondArg == "xml")
                     {
                         outputType = OutputType.XML;
                     }
+                    else if (secondArg == "dcrsolutions")
+                    {
+                        outputType = OutputType.DcrSolutionsPost;
+                    }
                     else
                     {
-                        throw new ArgumentException($"Argument \"{arg}\" not recognized.");
+                        throw new Exception($"{args[i + 1]} is not a valid output type");
                     }
                 }
+                else if (arg == "--traces")
+                {
+                    tracesPath = args[i + 1];
+                }
+                else
+                {
+                    throw new Exception($"{args[i]} is not a valid flag");
+                }
+
+                i += 2;
             }
 
-            string path = args[0];
+            if (path == null)
+            {
+                throw new Exception("You need to give a path to a BPMN XML file like \"--path (path)\"");
+            }
+
+            if (outputType == OutputType.XML && tracesPath != null)
+            {
+                Console.WriteLine("Warning: Traces does not do anything if the output is set to XML.");
+            }
+
             if (!File.Exists(path))
             {
                 throw new ArgumentException($"The given path \"{path}\" is not valid");
@@ -76,7 +144,8 @@ namespace BpmnToDcrConverter
             {
                 Folder = Path.GetDirectoryName(path),
                 File = Path.GetFileName(path),
-                OutputType = outputType
+                OutputType = outputType,
+                TracesPath = tracesPath
             };
         }
     }
@@ -86,6 +155,7 @@ namespace BpmnToDcrConverter
         public string Folder;
         public string File;
         public OutputType OutputType;
+        public string TracesPath;
     }
 
 
