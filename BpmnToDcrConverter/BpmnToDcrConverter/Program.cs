@@ -32,52 +32,58 @@ namespace BpmnToDcrConverter
                     break;
 
                 case OutputType.DcrSolutionsPost:
-                    AuthenticationHeaderValue authenticationHeader = DcrSolutionsPostRequestHandler.GetDcrSolutionsAuthenticationHeader();
-                    string graphId = DcrSolutionsPostRequestHandler.PostGraph(dcrGraph, authenticationHeader);
-                    Console.WriteLine($"Created new graph with id \"{graphId}\".");
-
-                    if (argumentParsingResults.TracesPath != null)
+                    try
                     {
-
-
-                        try
-                        {
-                            using (StreamReader reader = new StreamReader(argumentParsingResults.TracesPath))
-                            {
-                                TraceParseResult tracesParseResult = GraphTraceParser.TraceResultParser.Parse(reader.ReadToEnd());
-                                List<GraphTrace> graphTraces = tracesParseResult.ToGraphTraces();
-
-                                bool validTraces = false;
-                                foreach (GraphTrace trace in graphTraces)
-                                {
-                                    bool valid = dcrGraph.ValidateTrace(trace);
-
-                                    if (!valid)
-                                    {
-                                        Console.WriteLine($"Trace \"{trace.Title}\" is not valid.");
-                                        validTraces = true;
-                                    }
-                                }
-
-                                if (validTraces)
-                                {
-                                    throw new Exception("Traces file contains invalid trace(s).");
-                                }
-                                
-                                foreach (GraphTrace trace in graphTraces)
-                                {
-                                    DcrSolutionsPostRequestHandler.PostTrace(graphId, trace, authenticationHeader);
-                                    Console.WriteLine($"Created trace \"{trace.Title}\".");
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.ToString());
-                        }
+                        DcrSolutionsPostCase(argumentParsingResults, dcrGraph);
                     }
-
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.ToString());
+                    }
                     break;
+            }
+        }
+
+        private static void DcrSolutionsPostCase(ArgumentParsingResults argumentParsingResults, DcrGraph dcrGraph)
+        {
+            List<GraphTrace> graphTraces = new List<GraphTrace>();
+            if (argumentParsingResults.TracesPath != null)
+            {
+                TraceParseResult tracesParseResult = null;
+                using (StreamReader reader = new StreamReader(argumentParsingResults.TracesPath))
+                {
+                    tracesParseResult = GraphTraceParser.TraceResultParser.Parse(reader.ReadToEnd());
+                }
+
+                graphTraces = tracesParseResult.ToGraphTraces();
+
+                bool validTraces = false;
+                foreach (GraphTrace trace in graphTraces)
+                {
+                    bool valid = dcrGraph.ValidateTrace(trace);
+
+                    if (!valid)
+                    {
+                        Console.WriteLine($"Trace \"{trace.Title}\" is not valid.");
+                        validTraces = true;
+                    }
+                }
+
+                if (validTraces)
+                {
+                    throw new Exception("Traces file contains invalid trace(s).");
+                }
+            }
+
+            AuthenticationHeaderValue authenticationHeader = DcrSolutionsPostRequestHandler.GetDcrSolutionsAuthenticationHeader();
+
+            string graphId = DcrSolutionsPostRequestHandler.PostGraph(dcrGraph, authenticationHeader);
+            Console.WriteLine($"Created new graph with id \"{graphId}\".");
+
+            foreach (GraphTrace trace in graphTraces)
+            {
+                DcrSolutionsPostRequestHandler.PostTrace(graphId, trace, authenticationHeader);
+                Console.WriteLine($"Created trace \"{trace.Title}\".");
             }
         }
 
