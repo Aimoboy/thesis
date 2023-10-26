@@ -123,6 +123,14 @@ namespace BpmnToDcrConverter
         public DataType DataType;
         public string Data;
 
+        public TraceTransaction(string id, string role, DataType type, string data)
+        {
+            Id = id;
+            Role = role;
+            DataType = type;
+            Data = data;
+        }
+
         public override void AddToXML(XmlDocument doc, XmlElement parent)
         {
             XmlElement transactionXml = doc.CreateElement("transaction");

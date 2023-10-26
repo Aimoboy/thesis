@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Linq;
-using System.Text;
 using Sprache;
 
 namespace BpmnToDcrConverter
@@ -21,6 +19,18 @@ namespace BpmnToDcrConverter
             from secondBracket in Parse.Char('}').Token()
             select pairs.Select(x => new TraceParseDefinition(x.Item1, x.Item2)).ToList();
 
+        public static readonly Parser<Tuple<string, string>> ActivityParser =
+            from id in Parse.LetterOrDigit.AtLeastOnce().Text()
+            from input in (from leftBracket in Parse.Char('(').Token()
+                           from minus in Parse.String("-").Text().Optional()
+                           from num in Parse.Digit.AtLeastOnce().Text()
+                           from rest in (from dot in Parse.Char('.')
+                                         from num in Parse.Digit.AtLeastOnce()
+                                         select "." + num).Text().Optional()
+                           from rightBracket in Parse.Char(')').Token()
+                           select minus.GetOrElse("") + num + rest.GetOrElse("")).Optional()
+            select new Tuple<string, string>(id, input.GetOrElse(""));
+
         private static readonly Parser<TraceParseTrace> TraceParser =
             from firstBracket in Parse.Char('{').Token()
             from secondBracket in Parse.Char('(').Token()
@@ -33,7 +43,7 @@ namespace BpmnToDcrConverter
             from endState in Parse.LetterOrDigit.Or(Parse.Char(' ')).Many().Text().Token()
             from thirdBracket in Parse.Char(')').Token()
             from semiColon in Parse.Char(';').Token()
-            from ids in Parse.LetterOrDigit.AtLeastOnce().Text().DelimitedBy(Parse.Char(',').Token()).Optional().Select(x => x.GetOrElse(new List<string>()))
+            from ids in ActivityParser.DelimitedBy(Parse.Char(',').Token()).Optional().Select(x => x.GetOrElse(new List<Tuple<string, string>>()))
             from fourthBracket in Parse.Char('}').Token()
             select new TraceParseTrace
             {
@@ -54,6 +64,21 @@ namespace BpmnToDcrConverter
                 Definitions = definitions.GetOrElse(new List<TraceParseDefinition>()),
                 Traces = traces.ToList()
             };
+
+        private static readonly Parser<DataType> ParseInteger =
+            from minus in Parse.String("-").Optional()
+            from num in Parse.Digit.AtLeastOnce()
+            select DataType.Integer;
+
+        private static readonly Parser<DataType> ParseDecimal =
+            from minus in Parse.Char('-').Optional()
+            from num in Parse.Digit.AtLeastOnce()
+            from dot in Parse.Char('.').Optional()
+            from rest in Parse.Digit.AtLeastOnce()
+            select DataType.Float;
+
+        public static readonly Parser<DataType> DataTypeParser =
+            ParseInteger.Or(ParseDecimal);
     }
 
     public class TraceParseResult
@@ -68,9 +93,21 @@ namespace BpmnToDcrConverter
             List<GraphTrace> graphTraces = new List<GraphTrace>();
             foreach (TraceParseTrace trace in Traces)
             {
-                List<TraceElement> activities = trace.Activities.Select(x => keyValueDict.ContainsKey(x) ? keyValueDict[x] : x)
-                                                                .Select(x => (TraceElement)new TraceActivity(x, ""))
-                                                                .ToList();
+                List<TraceElement> traceElements = trace.Activities.Select(x =>
+                {
+                    string id = keyValueDict.ContainsKey(x.Item1) switch
+                    {
+                        true => keyValueDict[x.Item1],
+                        false => x.Item1
+                    };
+
+                    if (x.Item2 == "")
+                    {
+                        return (TraceElement)new TraceActivity(id, "");
+                    }
+
+                    return (TraceElement)new TraceTransaction(id, "", GraphTraceParser.DataTypeParser.Parse(x.Item2), x.Item2);
+                }).ToList();
 
                 GraphTraceType type = trace.Type.ToLower() switch
                 {
@@ -90,7 +127,7 @@ namespace BpmnToDcrConverter
                 };
 
                 graphTraces.Add(
-                    new GraphTrace(trace.Title, trace.Description, type, endState, activities)
+                    new GraphTrace(trace.Title, trace.Description, type, endState, traceElements)
                 );
             }
 
@@ -116,6 +153,6 @@ namespace BpmnToDcrConverter
         public string Description;
         public string Type;
         public string EndState;
-        public List<string> Activities;
+        public List<Tuple<string, string>> Activities;
     }
 }
