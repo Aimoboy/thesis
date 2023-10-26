@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BpmnToDcrConverter.Dcr;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -112,6 +113,41 @@ namespace BpmnToDcrConverter
             elementXml.SetAttribute("role", Role);
 
             parent.AppendChild(elementXml);
+        }
+    }
+
+    public class TraceTransaction : TraceElement
+    {
+        public string Id;
+        public string Role;
+        public DataType DataType;
+        public string Data;
+
+        public override void AddToXML(XmlDocument doc, XmlElement parent)
+        {
+            XmlElement transactionXml = doc.CreateElement("transaction");
+            transactionXml.SetAttribute("id", Id);
+            transactionXml.SetAttribute("role", Role);
+
+            XmlElement eventXml = doc.CreateElement("event");
+            eventXml.SetAttribute("id", Id);
+            eventXml.SetAttribute("data", Data);
+            eventXml.SetAttribute("type", DataTypeToString(DataType));
+            eventXml.SetAttribute("isNull", "false");
+
+            transactionXml.AppendChild(eventXml);
+            parent.AppendChild(transactionXml);
+        }
+
+        private string DataTypeToString(DataType type)
+        {
+            return type switch
+            {
+                DataType.Integer => "int",
+                DataType.Float => "float",
+                DataType.Unknown => throw new Exception("Parsing somehow failed making the DataType unknown."),
+                _ => throw new Exception("Unhandled case.")
+            };
         }
     }
 
