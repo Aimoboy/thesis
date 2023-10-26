@@ -19,7 +19,7 @@ namespace BpmnToDcrConverter
             from secondBracket in Parse.Char('}').Token()
             select pairs.Select(x => new TraceParseDefinition(x.Item1, x.Item2)).ToList();
 
-        public static readonly Parser<Tuple<string, string>> ActivityParser =
+        public static readonly Parser<Tuple<string, string, string>> ActivityParser =
             from id in Parse.LetterOrDigit.AtLeastOnce().Text()
             from input in (from leftBracket in Parse.Char('(').Token()
                            from minus in Parse.String("-").Text().Optional()
@@ -29,7 +29,11 @@ namespace BpmnToDcrConverter
                                          select "." + num).Text().Optional()
                            from rightBracket in Parse.Char(')').Token()
                            select minus.GetOrElse("") + num + rest.GetOrElse("")).Optional()
-            select new Tuple<string, string>(id, input.GetOrElse(""));
+            from role in (from leftBracket in Parse.Char('[').Token()
+                          from text in Parse.LetterOrDigit.Or(Parse.Char(' ')).Or(Parse.Char('_')).Or(Parse.Char('-')).AtLeastOnce().Text()
+                          from rightBracket in Parse.Char(']').Token()
+                          select text).Optional()
+            select new Tuple<string, string, string>(id, input.GetOrElse(""), role.GetOrElse(""));
 
         private static readonly Parser<TraceParseTrace> TraceParser =
             from firstBracket in Parse.Char('{').Token()
@@ -43,7 +47,7 @@ namespace BpmnToDcrConverter
             from endState in Parse.LetterOrDigit.Or(Parse.Char(' ')).Many().Text().Token()
             from thirdBracket in Parse.Char(')').Token()
             from semiColon in Parse.Char(';').Token()
-            from ids in ActivityParser.DelimitedBy(Parse.Char(',').Token()).Optional().Select(x => x.GetOrElse(new List<Tuple<string, string>>()))
+            from ids in ActivityParser.DelimitedBy(Parse.Char(',').Token()).Optional().Select(x => x.GetOrElse(new List<Tuple<string, string, string>>()))
             from fourthBracket in Parse.Char('}').Token()
             select new TraceParseTrace
             {
@@ -103,10 +107,10 @@ namespace BpmnToDcrConverter
 
                     if (x.Item2 == "")
                     {
-                        return (TraceElement)new TraceActivity(id, "");
+                        return (TraceElement)new TraceActivity(id, x.Item3);
                     }
 
-                    return (TraceElement)new TraceTransaction(id, "", GraphTraceParser.DataTypeParser.Parse(x.Item2), x.Item2);
+                    return (TraceElement)new TraceTransaction(id, x.Item3, GraphTraceParser.DataTypeParser.Parse(x.Item2), x.Item2);
                 }).ToList();
 
                 GraphTraceType type = trace.Type.ToLower() switch
@@ -153,6 +157,6 @@ namespace BpmnToDcrConverter
         public string Description;
         public string Type;
         public string EndState;
-        public List<Tuple<string, string>> Activities;
+        public List<Tuple<string, string, string>> Activities;
     }
 }
