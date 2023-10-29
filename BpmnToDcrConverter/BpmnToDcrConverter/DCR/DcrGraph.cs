@@ -1,8 +1,10 @@
 ﻿using BpmnToDcrConverter.Dcr.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Transactions;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -185,12 +187,58 @@ namespace BpmnToDcrConverter.Dcr
 
         public bool ValidateTrace(GraphTrace trace)
         {
-            HashSet<string> allElementsIds = GetFlowElementsFlat().Select(x => x.Id).ToHashSet();
-            List<string> traceIds = trace.TraceElements.OfType<TraceActivity>().Select(x => x.Id).ToList();
+            List<DcrFlowElement> allGraphElements = GetFlowElementsFlat();
+            HashSet<string> allGraphElementsIds = allGraphElements.Select(x => x.Id).ToHashSet();
+            HashSet<string> roles = allGraphElements.OfType<DcrActivity>().Select(x => x.Role.ToLower()).ToHashSet();
 
-            foreach (string id in traceIds)
+            List<TraceActivity> traceActivities = trace.TraceElements.OfType<TraceActivity>().ToList();
+            List<TraceTransaction> traceTransactions = trace.TraceElements.OfType<TraceTransaction>().ToList();
+
+            foreach (TraceActivity activity in traceActivities)
             {
-                if (!allElementsIds.Contains(id))
+                if (!allGraphElementsIds.Contains(activity.Id))
+                {
+                    return false;
+                }
+
+                DcrFlowElement graphElement = allGraphElements.Where(x => x.Id == activity.Id).FirstOrDefault();
+                if (!(graphElement is DcrActivity))
+                {
+                    return false;
+                }
+
+                DcrActivity graphActivity = (DcrActivity)graphElement;
+                if (graphActivity.DataType != DataType.Unknown)
+                {
+                    return false;
+                }
+
+                if (activity.Role != "" && !roles.Contains(activity.Role))
+                {
+                    return false;
+                }
+            }
+
+            foreach (TraceTransaction transaction in traceTransactions)
+            {
+                if (!allGraphElementsIds.Contains(transaction.Id))
+                {
+                    return false;
+                }
+
+                DcrFlowElement graphElement = allGraphElements.Where(x => x.Id == transaction.Id).FirstOrDefault();
+                if (!(graphElement is DcrActivity))
+                {
+                    return false;
+                }
+
+                DcrActivity graphActivity = (DcrActivity)graphElement;
+                if (graphActivity.DataType != transaction.DataType)
+                {
+                    return false;
+                }
+
+                if (transaction.Role != "" && !roles.Contains(transaction.Role))
                 {
                     return false;
                 }
