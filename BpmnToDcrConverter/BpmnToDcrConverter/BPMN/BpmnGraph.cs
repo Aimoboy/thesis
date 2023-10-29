@@ -34,11 +34,22 @@ namespace BpmnToDcrConverter.Bpmn
             List<string> newIds = newPools.SelectMany(x => x.GetAllIds()).ToList();
             List<string> allIds = currentIds.Concat(newIds).ToList();
 
+            List<string> currentRoles = _pools.SelectMany(x => x.GetRoles()).Where(x => x != "").Select(x => x.ToLower()).ToList();
+            List<string> newRoles = newPools.SelectMany(x => x.GetRoles()).Where(x => x != "").Select(x => x.ToLower()).ToList();
+            List<string> allRoles = currentRoles.Concat(newRoles).ToList();
+
             List<string> duplicateIds = allIds.GroupBy(x => x).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
             if (duplicateIds.Any())
             {
                 string exceptionString = string.Join(", ", duplicateIds);
                 throw new BpmnDuplicateIdException($"Multiple elements have the ids \"{exceptionString}\".");
+            }
+
+            List<string> duplicateRoles = allRoles.GroupBy(x => x).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
+            if (duplicateRoles.Any())
+            {
+                string exceptionString = string.Join(", ", duplicateRoles);
+                throw new BpmnDuplicateIdException($"Multiple lanes have the roles \"{exceptionString}\".");
             }
 
             _pools = _pools.Concat(newPools).ToList();
@@ -194,6 +205,11 @@ namespace BpmnToDcrConverter.Bpmn
             {
                 lane.DeleteElementFromId(id);
             }
+        }
+
+        public IEnumerable<string> GetRoles()
+        {
+            return Lanes.Select(x => x.Role);
         }
     }
 

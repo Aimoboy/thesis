@@ -179,5 +179,4 @@ namespace BpmnToDcrConverter
 // - Loops with BPMN sub processes dont work
 // - Loops with a single activity dont work
 // - Should I simplify BPMN sub processes, by "extracting its contents"
-// - Check no duplicate roles (also for lower)
 // - Check that the given role can do the activity/transaction
