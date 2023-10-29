@@ -1,10 +1,7 @@
 ﻿using BpmnToDcrConverter.Dcr.Exceptions;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Transactions;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -185,7 +182,7 @@ namespace BpmnToDcrConverter.Dcr
             doc.Save(path);
         }
 
-        public bool ValidateTrace(GraphTrace trace)
+        public (bool, List<string>) ValidateTrace(GraphTrace trace)
         {
             List<DcrFlowElement> allGraphElements = GetFlowElementsFlat();
             HashSet<string> allGraphElementsIds = allGraphElements.Select(x => x.Id).ToHashSet();
@@ -194,33 +191,46 @@ namespace BpmnToDcrConverter.Dcr
             List<TraceActivity> traceActivities = trace.TraceElements.OfType<TraceActivity>().ToList();
             List<TraceTransaction> traceTransactions = trace.TraceElements.OfType<TraceTransaction>().ToList();
 
+            bool isValid = true;
+            List<string> errorMessages = new List<string>();
+
             foreach (TraceActivity activity in traceActivities)
             {
                 if (!allGraphElementsIds.Contains(activity.Id))
                 {
-                    return false;
+                    errorMessages.Add($"Could not find an activity with ID \"{activity.Id}\".");
+                    isValid = false;
+                    continue;
                 }
 
                 DcrFlowElement graphElement = allGraphElements.Where(x => x.Id == activity.Id).FirstOrDefault();
                 if (!(graphElement is DcrActivity))
                 {
-                    return false;
+                    errorMessages.Add($"Found element with ID \"{activity.Id}\" is of type {graphElement.GetType()}, but expected DcrActivity.");
+                    isValid = false;
+                    continue;
                 }
 
                 DcrActivity graphActivity = (DcrActivity)graphElement;
                 if (graphActivity.DataType != DataType.Unknown)
                 {
-                    return false;
+                    errorMessages.Add($"Activity with ID \"{activity.Id}\" needs data of type {graphActivity.DataType} but none was given.");
+                    isValid = false;
+                    continue;
                 }
 
-                if (activity.Role != "" && !roles.Contains(activity.Role))
+                if (activity.Role != "" && !roles.Contains(activity.Role.ToLower()))
                 {
-                    return false;
+                    errorMessages.Add($"Activity with ID \"{activity.Id}\" has a given role of {activity.Role} that does not exist.");
+                    isValid = false;
+                    continue;
                 }
 
                 if (activity.Role != "" && activity.Role.ToLower() != graphActivity.Role.ToLower())
                 {
-                    return false;
+                    errorMessages.Add($"Activity with ID \"{activity.Id}\" has a given role of {activity.Role}, but only the role {graphActivity.Role} can do this activity.");
+                    isValid = false;
+                    continue;
                 }
             }
 
@@ -228,33 +238,43 @@ namespace BpmnToDcrConverter.Dcr
             {
                 if (!allGraphElementsIds.Contains(transaction.Id))
                 {
-                    return false;
+                    errorMessages.Add($"Could not find an activity with ID \"{transaction.Id}\".");
+                    isValid = false;
+                    continue;
                 }
 
                 DcrFlowElement graphElement = allGraphElements.Where(x => x.Id == transaction.Id).FirstOrDefault();
                 if (!(graphElement is DcrActivity))
                 {
-                    return false;
+                    errorMessages.Add($"Found element with ID \"{transaction.Id}\" is of type {graphElement.GetType()}, but expected DcrActivity.");
+                    isValid = false;
+                    continue;
                 }
 
                 DcrActivity graphActivity = (DcrActivity)graphElement;
                 if (graphActivity.DataType != transaction.DataType)
                 {
-                    return false;
+                    errorMessages.Add($"Activity with ID \"{transaction.Id}\" needs data of type {graphActivity.DataType} but was given data of type {transaction.DataType}.");
+                    isValid = false;
+                    continue;
                 }
 
-                if (transaction.Role != "" && !roles.Contains(transaction.Role))
+                if (transaction.Role != "" && !roles.Contains(transaction.Role.ToLower()))
                 {
-                    return false;
+                    errorMessages.Add($"Activity with ID \"{transaction.Id}\" has a given role of {transaction.Role} that does not exist.");
+                    isValid = false;
+                    continue;
                 }
 
                 if (transaction.Role != "" && transaction.Role.ToLower() != graphActivity.Role.ToLower())
                 {
-                    return false;
+                    errorMessages.Add($"Activity with ID \"{transaction.Id}\" has a given role of {transaction.Role}, but only the role {graphActivity.Role} can do this activity.");
+                    isValid = false;
+                    continue;
                 }
             }
 
-            return true;
+            return (isValid, errorMessages);
         }
     }
 }

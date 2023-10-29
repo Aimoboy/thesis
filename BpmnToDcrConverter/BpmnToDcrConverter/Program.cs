@@ -57,19 +57,22 @@ namespace BpmnToDcrConverter
 
                 graphTraces = tracesParseResult.ToGraphTraces();
 
-                bool validTraces = false;
+                bool invalidTraces = false;
                 foreach (GraphTrace trace in graphTraces)
                 {
-                    bool valid = dcrGraph.ValidateTrace(trace);
+                    var (isValid, errorMessages) = dcrGraph.ValidateTrace(trace);
 
-                    if (!valid)
+                    if (!isValid)
                     {
-                        Console.WriteLine($"Trace \"{trace.Title}\" is not valid.");
-                        validTraces = true;
+                        Console.WriteLine($"Trace \"{trace.Title}\" is not valid:");
+                        string combinedErrorMessages = string.Join("\n", errorMessages.Select(x => "    - " + x));
+                        Console.WriteLine(combinedErrorMessages);
+
+                        invalidTraces = true;
                     }
                 }
 
-                if (validTraces)
+                if (invalidTraces)
                 {
                     throw new Exception("Traces file contains invalid trace(s).");
                 }
