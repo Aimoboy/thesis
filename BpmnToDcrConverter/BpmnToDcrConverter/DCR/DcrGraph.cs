@@ -217,6 +217,11 @@ namespace BpmnToDcrConverter.Dcr
                 {
                     return false;
                 }
+
+                if (activity.Role != "" && activity.Role.ToLower() != graphActivity.Role.ToLower())
+                {
+                    return false;
+                }
             }
 
             foreach (TraceTransaction transaction in traceTransactions)
@@ -239,6 +244,11 @@ namespace BpmnToDcrConverter.Dcr
                 }
 
                 if (transaction.Role != "" && !roles.Contains(transaction.Role))
+                {
+                    return false;
+                }
+
+                if (transaction.Role != "" && transaction.Role.ToLower() != graphActivity.Role.ToLower())
                 {
                     return false;
                 }
