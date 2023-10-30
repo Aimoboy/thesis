@@ -25,7 +25,7 @@ namespace BpmnToDcrConverter
                            from minus in Parse.String("-").Text().Optional()
                            from num in Parse.Digit.AtLeastOnce().Text()
                            from rest in (from dot in Parse.Char('.')
-                                         from num in Parse.Digit.AtLeastOnce()
+                                         from num in Parse.Digit.AtLeastOnce().Text()
                                          select "." + num).Text().Optional()
                            from rightBracket in Parse.Char(')').Token()
                            select minus.GetOrElse("") + num + rest.GetOrElse("")).Optional()
@@ -82,7 +82,7 @@ namespace BpmnToDcrConverter
             select DataType.Float;
 
         public static readonly Parser<DataType> DataTypeParser =
-            ParseInteger.Or(ParseDecimal);
+            ParseDecimal.Or(ParseInteger);
     }
 
     public class TraceParseResult
