@@ -207,3 +207,4 @@ namespace BpmnToDcrConverter
 // - Handle message arrows
 // - Add pool handling in conversion
 // - Loops with BPMN sub processes dont work
+// - Export DCR as XML to run trace validation
