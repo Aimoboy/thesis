@@ -50,6 +50,9 @@ namespace BpmnToDcrConverter
                     case ApiRequestType.GET:
                         response = await client.GetAsync(url);
                         break;
+                    case ApiRequestType.DELETE:
+                        response = await client.DeleteAsync(url);
+                        break;
                     default:
                         throw new Exception("Unhandled case.");
                 }
@@ -94,6 +97,12 @@ namespace BpmnToDcrConverter
             return match.Groups[1].Value;
         }
 
+        public static void DeleteGraph(string graphId, AuthenticationHeaderValue authenticationHeader)
+        {
+            string url = REPOSITORY_URL + $"graphs/{graphId}";
+            ApiRequest(ApiRequestType.DELETE, url, authenticationHeader);
+        }
+
         public static void PostTrace(string graphId, GraphTrace trace, AuthenticationHeaderValue authenticationHeader)
         {
             string traceJson = trace.ToXml().OuterXml;
@@ -117,10 +126,9 @@ namespace BpmnToDcrConverter
         private enum ApiRequestType
         {
             POST,
-            GET
+            GET,
+            DELETE
         }
     }
 
 }
-
-// https://www.dcrgraphs.net/api/Rerun/ValidateLog/1701929

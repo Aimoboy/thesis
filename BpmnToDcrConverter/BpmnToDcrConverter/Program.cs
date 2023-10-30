@@ -82,13 +82,21 @@ namespace BpmnToDcrConverter
             AuthenticationHeaderValue authenticationHeader = DcrSolutionsApiHandler.GetDcrSolutionsAuthenticationHeader();
 
             string graphId = DcrSolutionsApiHandler.PostGraph(dcrGraph, authenticationHeader);
-            Console.WriteLine($"Created new graph with id \"{graphId}\".");
+            Console.WriteLine($"Created new graph with ID \"{graphId}\".");
 
             foreach (GraphTrace trace in graphTraces)
             {
                 DcrSolutionsApiHandler.PostTrace(graphId, trace, authenticationHeader);
                 Console.WriteLine($"Created trace \"{trace.Title}\".");
             }
+
+            if (argumentParsingResults.CleanUpAfter)
+            {
+                DcrSolutionsApiHandler.DeleteGraph(graphId, authenticationHeader);
+                Console.WriteLine($"Deleted graph with ID \"{graphId}\".");
+            }
+
+
         }
 
         private static ArgumentParsingResults HandleArguments(string[] args)
@@ -96,6 +104,7 @@ namespace BpmnToDcrConverter
             string path = null;
             OutputType outputType = OutputType.XML;
             string tracesPath = null;
+            bool clean = false;
 
             int i = 0;
             while (i < args.Length)
@@ -127,6 +136,22 @@ namespace BpmnToDcrConverter
                 {
                     tracesPath = args[i + 1];
                 }
+                else if (arg == "--clean")
+                {
+                    string secondArg = args[i + 1].ToLower();
+                    if (secondArg == "true")
+                    {
+                        clean = true;
+                    }
+                    else if (secondArg == "false")
+                    {
+                        clean = false;
+                    }
+                    else
+                    {
+                        throw new Exception($"{args[i + 1]} is not a valid clean option");
+                    }
+                }
                 else
                 {
                     throw new Exception($"{args[i]} is not a valid flag");
@@ -155,7 +180,8 @@ namespace BpmnToDcrConverter
                 Folder = Path.GetDirectoryName(path),
                 File = Path.GetFileName(path),
                 OutputType = outputType,
-                TracesPath = tracesPath
+                TracesPath = tracesPath,
+                CleanUpAfter = clean
             };
         }
     }
@@ -166,6 +192,7 @@ namespace BpmnToDcrConverter
         public string File;
         public OutputType OutputType;
         public string TracesPath;
+        public bool CleanUpAfter;
     }
 
 
