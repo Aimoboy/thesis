@@ -79,14 +79,14 @@ namespace BpmnToDcrConverter
                 }
             }
 
-            AuthenticationHeaderValue authenticationHeader = DcrSolutionsPostRequestHandler.GetDcrSolutionsAuthenticationHeader();
+            AuthenticationHeaderValue authenticationHeader = DcrSolutionsApiHandler.GetDcrSolutionsAuthenticationHeader();
 
-            string graphId = DcrSolutionsPostRequestHandler.PostGraph(dcrGraph, authenticationHeader);
+            string graphId = DcrSolutionsApiHandler.PostGraph(dcrGraph, authenticationHeader);
             Console.WriteLine($"Created new graph with id \"{graphId}\".");
 
             foreach (GraphTrace trace in graphTraces)
             {
-                DcrSolutionsPostRequestHandler.PostTrace(graphId, trace, authenticationHeader);
+                DcrSolutionsApiHandler.PostTrace(graphId, trace, authenticationHeader);
                 Console.WriteLine($"Created trace \"{trace.Title}\".");
             }
         }

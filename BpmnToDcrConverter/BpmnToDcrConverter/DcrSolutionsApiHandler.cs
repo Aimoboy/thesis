@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 
 namespace BpmnToDcrConverter
 {
-    public static class DcrSolutionsPostRequestHandler
+    public static class DcrSolutionsApiHandler
     {
         private const string REPOSITORY_URL = @"https://repository.dcrgraphs.net/api/";
 
@@ -29,23 +29,42 @@ namespace BpmnToDcrConverter
             return authenticationHeader;
         }
 
-        private static HttpResponseMessage PostToDcrSolutions(string url, string jsonBody, AuthenticationHeaderValue authenticationHeader)
+        private static HttpResponseMessage ApiRequest(ApiRequestType requestType, string url, AuthenticationHeaderValue authenticationHeader, string jsonBody = null)
         {
-            return PostToDcrSolutionsHelper(url, jsonBody, authenticationHeader).GetAwaiter().GetResult();
+            return ApiRequestHelper(requestType, url, authenticationHeader, jsonBody).GetAwaiter().GetResult();
         }
 
-        private static async Task<HttpResponseMessage> PostToDcrSolutionsHelper(string url, string jsonBody, AuthenticationHeaderValue authenticationHeader)
+        private static async Task<HttpResponseMessage> ApiRequestHelper(ApiRequestType requestType, string url, AuthenticationHeaderValue authenticationHeader, string jsonBody)
         {
             HttpResponseMessage response;
             using (HttpClient client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Authorization = authenticationHeader;
-                StringContent content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
-                response = await client.PostAsync(url, content);
+                switch (requestType)
+                {
+                    case ApiRequestType.POST:
+                        StringContent content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+                        response = await client.PostAsync(url, content);
+                        break;
+                    case ApiRequestType.GET:
+                        response = await client.GetAsync(url);
+                        break;
+                    default:
+                        throw new Exception("Unhandled case.");
+                }
+                
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw new Exception($"POST request to {url} failed. Body: {jsonBody}");
+                    string typeString = ApiRequestTypeToString(requestType);
+                    string errorMessage = $"{typeString} request to {url} failed.";
+
+                    if (requestType == ApiRequestType.POST)
+                    {
+                        errorMessage += $" Body: {jsonBody}";
+                    }
+
+                    throw new Exception(errorMessage);
                 }
             }
 
@@ -59,7 +78,7 @@ namespace BpmnToDcrConverter
 
             string json = "{\"JSON\":\"" + modelJson + "\"}";
             string url = REPOSITORY_URL + "graphs";
-            HttpResponseMessage response = PostToDcrSolutions(url, json, authenticationHeader);
+            HttpResponseMessage response = ApiRequest(ApiRequestType.POST, url, authenticationHeader, json);
 
             // Get graph id
             string locationHeader = response.Headers.Location.ToString();
@@ -82,7 +101,26 @@ namespace BpmnToDcrConverter
 
             string json = "{\"log\": \"" + traceJson + "\"}";
             string url = REPOSITORY_URL + $"graphs/{graphId}/sims";
-            PostToDcrSolutions(url, json, authenticationHeader);
+            ApiRequest(ApiRequestType.POST, url, authenticationHeader, json);
+        }
+
+        private static string ApiRequestTypeToString(ApiRequestType type)
+        {
+            return type switch
+            {
+                ApiRequestType.POST => "POST",
+                ApiRequestType.GET => "GET",
+                _ => throw new Exception("Unhandled case.")
+            };
+        }
+
+        private enum ApiRequestType
+        {
+            POST,
+            GET
         }
     }
+
 }
+
+// https://www.dcrgraphs.net/api/Rerun/ValidateLog/1701929
