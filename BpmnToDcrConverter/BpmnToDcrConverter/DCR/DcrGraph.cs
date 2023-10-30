@@ -254,7 +254,14 @@ namespace BpmnToDcrConverter.Dcr
                 DcrActivity graphActivity = (DcrActivity)graphElement;
                 if (graphActivity.DataType != transaction.DataType)
                 {
-                    errorMessages.Add($"Activity with ID \"{transaction.Id}\" needs data of type {graphActivity.DataType} but was given data of type {transaction.DataType}.");
+                    if (graphActivity.DataType == DataType.Unknown)
+                    {
+                        errorMessages.Add($"Activity with ID \"{transaction.Id}\" does not take data but was given data of type {transaction.DataType}.");
+                    }
+                    else
+                    {
+                        errorMessages.Add($"Activity with ID \"{transaction.Id}\" needs data of type {graphActivity.DataType} but was given data of type {transaction.DataType}.");
+                    }
                     isValid = false;
                     continue;
                 }
