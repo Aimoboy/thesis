@@ -20,7 +20,7 @@ namespace BpmnToDcrConverter
             select pairs.Select(x => new TraceParseDefinition(x.Item1, x.Item2)).ToList();
 
         private static readonly Parser<Tuple<string, string, string>> ActivityParser =
-            from id in Parse.LetterOrDigit.AtLeastOnce().Text()
+            from id in Parse.LetterOrDigit.Or(Parse.Char('_')).Or(Parse.Char('-')).AtLeastOnce().Text()
             from input in (from leftBracket in Parse.Char('(').Token()
                            from minus in Parse.String("-").Text().Optional()
                            from num in Parse.Digit.AtLeastOnce().Text()
