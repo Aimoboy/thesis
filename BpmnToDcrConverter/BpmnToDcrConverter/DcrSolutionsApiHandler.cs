@@ -103,6 +103,13 @@ namespace BpmnToDcrConverter
             ApiRequest(ApiRequestType.DELETE, url, authenticationHeader);
         }
 
+        public static string GetGraphXml(string graphId, AuthenticationHeaderValue authenticationHeader)
+        {
+            string url = REPOSITORY_URL + $"graphs/{graphId}";
+            HttpResponseMessage response = ApiRequest(ApiRequestType.GET, url, authenticationHeader);
+            return response.Content.ReadAsStringAsync().Result;
+        }
+
         public static void PostTrace(string graphId, GraphTrace trace, AuthenticationHeaderValue authenticationHeader)
         {
             string traceJson = trace.ToXml().OuterXml;
