@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace BpmnToDcrConverter
 {
@@ -120,14 +121,24 @@ namespace BpmnToDcrConverter
             ApiRequest(ApiRequestType.POST, url, authenticationHeader, json);
         }
 
-        public static HttpResponseMessage ValidateLog(string graphXml, string traceXml, AuthenticationHeaderValue authenticationHeader)
+        public static (bool, string) ValidateLog(string graphXml, string traceXml, AuthenticationHeaderValue authenticationHeader)
         {
-            string escapedGraphXml = graphXml.Replace("\"", "\\\"");
-            string escapedTraceXml = traceXml.Replace("\"", "\\\"");
+            string escapedGraphXml = Utilities.EscapeStringForApi(graphXml);
+            string escapedTraceXml = Utilities.EscapeStringForApi(traceXml);
 
             string json = "{\"graphXml\": \"" + escapedGraphXml + "\", \"dcrLogXml\": \"" + escapedTraceXml + "\", \"detailed\": true}";
             string url = REPOSITORY_URL + "utility/validatelog";
-            return ApiRequest(ApiRequestType.POST, url, authenticationHeader, json);
+            HttpResponseMessage response = ApiRequest(ApiRequestType.POST, url, authenticationHeader, json);
+            string responseXml = response.Content.ReadAsStringAsync().Result;
+
+            XDocument doc = XDocument.Parse(responseXml);
+            XElement replay = doc.Element("replay");
+            XElement trace = replay.Element("trace");
+
+            bool valid = bool.Parse(trace.Attribute("valid").Value);
+            string explanation = trace.Attribute("explanation").Value;
+
+            return (valid, explanation);
         }
 
         private static string ApiRequestTypeToString(ApiRequestType type)
