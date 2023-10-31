@@ -120,6 +120,16 @@ namespace BpmnToDcrConverter
             ApiRequest(ApiRequestType.POST, url, authenticationHeader, json);
         }
 
+        public static HttpResponseMessage ValidateLog(string graphXml, string traceXml, AuthenticationHeaderValue authenticationHeader)
+        {
+            string escapedGraphXml = graphXml.Replace("\"", "\\\"");
+            string escapedTraceXml = traceXml.Replace("\"", "\\\"");
+
+            string json = "{\"graphXml\": \"" + escapedGraphXml + "\", \"dcrLogXml\": \"" + escapedTraceXml + "\", \"detailed\": true}";
+            string url = REPOSITORY_URL + "utility/validatelog";
+            return ApiRequest(ApiRequestType.POST, url, authenticationHeader, json);
+        }
+
         private static string ApiRequestTypeToString(ApiRequestType type)
         {
             return type switch
