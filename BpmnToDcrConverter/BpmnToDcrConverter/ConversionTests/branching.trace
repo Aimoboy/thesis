@@ -1,0 +1,44 @@
+{
+	{s=Event_07kbw7o, 1=x, 2=a, 3=Activity_12351d7, 4=Activity_09421u6, 5=Activity_11qilgc, 6=Activity_1ytdpmv, 7=Activity_0v70nrr, 8=Activity_01ptb91, 9=Activity_1rhglih, 10=Activity_149zs43, 11=Activity_138627t}
+	{(Sim 1::required:accepting);s,1(-1),2(1),3,4,11}
+	{(Sim 2::required:not accepting);s,1(-1),2(1),3,4}
+	{(Sim 3::required:not accepting);s,1(-1),2(1),3}
+	{(Sim 4::required:not accepting);s,1(-1),2(1)}
+	{(Sim 5::required:not accepting);s,1(-1)}
+	{(Sim 6::required:not accepting);s}
+	{(Sim 7::required:not accepting);}
+	
+	{(Sim 8::required:accepting);s,1(-1),2(-1),5,6,11}
+	{(Sim 9::required:not accepting);s,1(-1),2(-1),5,6}
+	{(Sim 10::required:not accepting);s,1(-1),2(-1),5}
+	{(Sim 11::required:not accepting);s,1(-1),2(-1)}
+	{(Sim 12::required:not accepting);s,1(-1)}
+	{(Sim 13::required:not accepting);s}
+	{(Sim 14::required:not accepting);}
+	
+	{(Sim 15::required:accepting);s,1(0),7,8,11}
+	{(Sim 16::required:not accepting);s,1(0),7,8}
+	{(Sim 17::required:not accepting);s,1(0),7}
+	{(Sim 18::required:not accepting);s,1(0)}
+	{(Sim 19::required:not accepting);s}
+	{(Sim 20::required:not accepting);}
+	
+	{(Sim 21::required:accepting);s,1(1),9,10,11}
+	{(Sim 22::required:not accepting);s,1(1),9,10}
+	{(Sim 23::required:not accepting);s,1(1),9}
+	{(Sim 24::required:not accepting);s,1(1)}
+	{(Sim 25::required:not accepting);s}
+	{(Sim 26::required:not accepting);}
+	
+	{(Sim 27::forbidden:dont care);s,1(-1),7}
+	{(Sim 28::forbidden:dont care);s,1(-1),9}
+	
+	{(Sim 29::forbidden:dont care);s,1(0),2}
+	{(Sim 30::forbidden:dont care);s,1(0),9}
+	
+	{(Sim 31::forbidden:dont care);s,1(1),2}
+	{(Sim 32::forbidden:dont care);s,1(1),7}
+	
+	{(Sim 33::forbidden:dont care);s,1(-1),2(1),5}
+	{(Sim 34::forbidden:dont care);s,1(-1),2(-1),3}
+}
