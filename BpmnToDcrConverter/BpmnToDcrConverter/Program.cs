@@ -57,6 +57,12 @@ namespace BpmnToDcrConverter
             {
                 fileLines = reader.ReadToEnd().Replace("\r", "").Split("\n").Where(x => x != "").ToList();
             }
+
+            if (!fileLines.Any())
+            {
+                Console.WriteLine("The specified file does not contain any filenames.");
+                return;
+            }
             
             List<string> duplicateLines = fileLines.GroupBy(x => x).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
             if (duplicateLines.Any())
@@ -300,7 +306,10 @@ namespace BpmnToDcrConverter
 
                 if (completeTestPath.ToLower() == "default")
                 {
-                    completeTestPath = "default here";
+                    string currentDir = Directory.GetCurrentDirectory();
+                    string targetDir = Path.Combine(currentDir, @"..\..\..\ConversionTests\complete-test");
+
+                    completeTestPath = Path.GetFullPath(targetDir);
                 }
 
                 if (!File.Exists(completeTestPath))
