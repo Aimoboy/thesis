@@ -102,9 +102,10 @@ namespace BpmnToDcrConverter
         private static ArgumentParsingResults HandleArguments(string[] args)
         {
             string path = null;
-            OutputType outputType = OutputType.XML;
+            OutputType outputType = OutputType.None;
             string tracesPath = null;
             bool clean = false;
+            string completeTestPath = null;
 
             int i = 0;
             while (i < args.Length)
@@ -152,6 +153,10 @@ namespace BpmnToDcrConverter
                         throw new Exception($"{args[i + 1]} is not a valid clean option");
                     }
                 }
+                else if (arg == "--completetest")
+                {
+                    completeTestPath = args[i + 1];
+                }
                 else
                 {
                     throw new Exception($"{args[i]} is not a valid flag");
@@ -160,19 +165,56 @@ namespace BpmnToDcrConverter
                 i += 2;
             }
 
-            if (path == null)
+            if (completeTestPath != null {
+                if (path != null)
+                {
+                    Console.WriteLine("Warning: Path argument does not do anything if CompleteTest is specified.");
+                }
+
+                if (outputType != OutputType.None)
+                {
+                    Console.WriteLine("Warning: Output argument does not do anything if CompleteTest is specified.");
+                }
+
+                if (tracesPath != null)
+                {
+                    Console.WriteLine("Warning: Traces argument does not do anything if CompleteTest is specified.");
+                }
+
+                if (clean)
+                {
+                    Console.WriteLine("Warning: Clean argument does not do anything if CompleteTest is specified.");
+                }
+
+                if (completeTestPath.ToLower() == "default")
+                {
+                    completeTestPath = "default here";
+                }
+
+                if (!File.Exists(completeTestPath))
+                {
+                    throw new Exception($"The given path \"{completeTestPath}\" is not valid.");
+                }
+            }
+
+            if (completeTestPath == null && path == null)
             {
                 throw new Exception("You need to give a path to a BPMN XML file like \"--path (path)\"");
             }
 
-            if (outputType == OutputType.XML && tracesPath != null)
+            if (outputType != OutputType.DcrSolutionsPost && tracesPath != null)
             {
-                Console.WriteLine("Warning: Traces does not do anything if the output is set to XML.");
+                Console.WriteLine("Warning: Traces argument does not do anything if the output is not set to DCR Solutions.");
             }
 
             if (!File.Exists(path))
             {
                 throw new ArgumentException($"The given path \"{path}\" is not valid");
+            }
+
+            if (outputType == OutputType.None)
+            {
+                outputType = OutputType.XML;
             }
 
             return new ArgumentParsingResults
@@ -193,11 +235,13 @@ namespace BpmnToDcrConverter
         public OutputType OutputType;
         public string TracesPath;
         public bool CleanUpAfter;
+        public string CompleteTestPath;
     }
 
 
     public enum OutputType
     {
+        None,
         XML,
         DcrSolutionsPost
     }
