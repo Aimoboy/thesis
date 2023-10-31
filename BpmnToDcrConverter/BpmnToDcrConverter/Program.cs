@@ -17,18 +17,23 @@ namespace BpmnToDcrConverter
         {
             ArgumentParsingResults argumentParsingResults = HandleArguments(args);
 
-            string inputPath = Path.Combine(argumentParsingResults.Folder, argumentParsingResults.File);
-            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(argumentParsingResults.File);
+            if (argumentParsingResults.CompleteTestPath != null)
+            {
+                CompleteTest(argumentParsingResults);
+                return;
+            }
 
-            BpmnGraph bpmnGraph = BpmnXmlParser.Parse(inputPath);
+            BpmnGraph bpmnGraph = BpmnXmlParser.Parse(argumentParsingResults.BpmnPath);
             DcrGraph dcrGraph = BpmnToDcrConverter.ConvertBpmnToDcr(bpmnGraph);
-            dcrGraph.Name = fileNameWithoutExtension;
+
+            string fileName = Path.GetFileNameWithoutExtension(argumentParsingResults.BpmnPath);
+            dcrGraph.Name = fileName;
 
             switch (argumentParsingResults.OutputType)
             {
                 case OutputType.XML:
-                    string xmlFileName = fileNameWithoutExtension + ".xml";
-                    string outputPath = Path.Combine(argumentParsingResults.Folder, xmlFileName);
+                    string xmlFileName = fileName + ".xml";
+                    string outputPath = Path.Combine(Path.GetDirectoryName(argumentParsingResults.BpmnPath), xmlFileName);
                     dcrGraph.Export(outputPath);
                     break;
 
@@ -43,6 +48,113 @@ namespace BpmnToDcrConverter
                     }
                     break;
             }
+        }
+
+        private static void CompleteTest(ArgumentParsingResults argumentParsingResults)
+        {
+            List<string> fileLines;
+            using (StreamReader reader = new StreamReader(argumentParsingResults.CompleteTestPath))
+            {
+                fileLines = reader.ReadToEnd().Replace("\r", "").Split("\n").Where(x => x != "").ToList();
+            }
+            
+            List<string> duplicateLines = fileLines.GroupBy(x => x).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
+            if (duplicateLines.Any())
+            {
+                Console.WriteLine("The following filenames not unique:");
+                Console.WriteLine(string.Join("\n", duplicateLines.Select(x => "    - " + x)));
+                return;
+            }
+
+            string dir = Path.GetDirectoryName(argumentParsingResults.CompleteTestPath);
+            List<string> files = Directory.GetFiles(dir).Select(x => Path.GetFileName(x)).ToList();
+
+            List<string> missingFiles = new List<string>();
+            foreach (string line in fileLines)
+            {
+                string bpmnFile = line + ".bpmn";
+                string traceFile = line + ".trace";
+
+                if (!files.Contains(bpmnFile))
+                {
+                    missingFiles.Add(bpmnFile);
+                }
+
+                if (!files.Contains(traceFile))
+                {
+                    missingFiles.Add(traceFile);
+                }
+            }
+
+            if (missingFiles.Any())
+            {
+                string missingFilesStr = string.Join("\n", missingFiles.Select(x => "    - " + x));
+
+                Console.WriteLine("Missing files:");
+                Console.WriteLine(missingFilesStr);
+                return;
+            }
+
+            AuthenticationHeaderValue authenticationHeader = DcrSolutionsApiHandler.GetDcrSolutionsAuthenticationHeader();
+
+            Dictionary<string, string> lineToGraphXmlDict = new Dictionary<string, string>();
+            foreach (string line in fileLines)
+            {
+                string bpmnGraphXmlPath = Path.Combine(dir, line + ".bpmn");
+                BpmnGraph bpmnGraph = BpmnXmlParser.Parse(bpmnGraphXmlPath);
+                DcrGraph dcrGraph = BpmnToDcrConverter.ConvertBpmnToDcr(bpmnGraph);
+
+                string graphId = DcrSolutionsApiHandler.PostGraph(dcrGraph, authenticationHeader);
+                string graphXml = DcrSolutionsApiHandler.GetGraphXml(graphId, authenticationHeader);
+                lineToGraphXmlDict.Add(line, graphXml);
+
+                DcrSolutionsApiHandler.DeleteGraph(graphId, authenticationHeader);
+            }
+
+            Dictionary<string, List<GraphTrace>> lineToTracesDict = new Dictionary<string, List<GraphTrace>>();
+            foreach (string line in fileLines)
+            {
+                string tracePath = Path.Combine(dir, line + ".trace");
+
+                TraceParseResult tracesParseResult;
+                using (StreamReader reader = new StreamReader(tracePath))
+                {
+                    tracesParseResult = GraphTraceParser.TraceResultParser.Parse(reader.ReadToEnd());
+                }
+
+                lineToTracesDict[line] = tracesParseResult.ToGraphTraces();
+            }
+
+            Console.WriteLine();
+
+            int errorCount = 0;
+            foreach (string line in fileLines)
+            {
+                string graphXml = lineToGraphXmlDict[line];
+                List<GraphTrace> traces = lineToTracesDict[line];
+
+                Console.WriteLine(line + ":");
+
+                foreach (GraphTrace trace in traces)
+                {
+                    string traceXml = trace.ToXml().OuterXml;
+                    var (valid, explanation) = DcrSolutionsApiHandler.ValidateLog(graphXml, traceXml, authenticationHeader);
+
+                    if (valid)
+                    {
+                        Console.WriteLine($"    - {trace.Title} (valid)");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"    - {trace.Title} (invalid): {explanation}");
+                        errorCount++;
+                    }
+                }
+
+            }
+
+            Console.WriteLine();
+            Console.WriteLine($"Errors: {errorCount}");
         }
 
         private static void DcrSolutionsPostCase(ArgumentParsingResults argumentParsingResults, DcrGraph dcrGraph)
@@ -165,7 +277,7 @@ namespace BpmnToDcrConverter
                 i += 2;
             }
 
-            if (completeTestPath != null {
+            if (completeTestPath != null) {
                 if (path != null)
                 {
                     Console.WriteLine("Warning: Path argument does not do anything if CompleteTest is specified.");
@@ -207,7 +319,7 @@ namespace BpmnToDcrConverter
                 Console.WriteLine("Warning: Traces argument does not do anything if the output is not set to DCR Solutions.");
             }
 
-            if (!File.Exists(path))
+            if (path != null && !File.Exists(path))
             {
                 throw new ArgumentException($"The given path \"{path}\" is not valid");
             }
@@ -219,19 +331,18 @@ namespace BpmnToDcrConverter
 
             return new ArgumentParsingResults
             {
-                Folder = Path.GetDirectoryName(path),
-                File = Path.GetFileName(path),
+                BpmnPath = path,
                 OutputType = outputType,
                 TracesPath = tracesPath,
-                CleanUpAfter = clean
+                CleanUpAfter = clean,
+                CompleteTestPath = completeTestPath
             };
         }
     }
 
     public class ArgumentParsingResults
     {
-        public string Folder;
-        public string File;
+        public string BpmnPath;
         public OutputType OutputType;
         public string TracesPath;
         public bool CleanUpAfter;
