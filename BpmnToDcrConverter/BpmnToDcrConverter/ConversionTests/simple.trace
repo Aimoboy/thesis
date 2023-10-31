@@ -1,0 +1,6 @@
+{
+	{start=StartEvent_1, activity=Activity_0f9rj6c}
+	{(Sim 1::required:accepting);start,activity}
+	{(Sim 2::required:not accepting);start}
+	{(Sim 3::required:not accepting);}
+}
