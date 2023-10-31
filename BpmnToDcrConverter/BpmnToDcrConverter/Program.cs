@@ -75,7 +75,7 @@ namespace BpmnToDcrConverter
 
                 if (invalidTraces)
                 {
-                    throw new Exception("Traces file contains invalid trace(s).");
+                    throw new Exception("Traces file contains an invalid trace(s).");
                 }
             }
 
