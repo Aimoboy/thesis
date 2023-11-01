@@ -16,7 +16,7 @@ namespace BpmnToDcrConverter
 
         public static AuthenticationHeaderValue GetDcrSolutionsAuthenticationHeader()
         {
-            Console.WriteLine("Your dcrgraphs.net credentials are needed to make the POST request.");
+            Console.WriteLine("Your dcrgraphs.net credentials are needed to make API requests.");
 
             Console.Write("Username: ");
             string username = Console.ReadLine();
