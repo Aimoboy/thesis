@@ -1,12 +1,100 @@
 {
 	{s=x, 1=Activity_0hk9odl, 2=Activity_11z2grj, 3=Activity_0k47kfg, 4=Activity_0g73hd7, 5=Activity_0w0dd60, 6=y, 7=Activity_1g1q8wi, 8=Activity_1wm5ap8, 9=Activity_0cwkpq1, 10=Activity_0fqvjh6}
 	{(Sim 1::required:accepting);s(30),1}
-	{(Sim 2::required:accepting);s(20),2}
-	{(Sim 3::required:accepting);s(10),3}
-	{(Sim 4::required:accepting);s(0),4}
-	{(Sim 5::required:accepting);s(-10),5}
-	{(Sim 6::required:accepting);s(-30),6(10),8}
-	{(Sim 7::required:accepting);s(-30),6(5),9}
-	{(Sim 8::required:accepting);s(-50),7,9}
-	{(Sim 9::required:accepting);s(-100),7,10}
+	{(Sim 2::required:not accepting);s(30)}
+	{(Sim 3::required:not accepting);}
+	
+	{(Sim 4::required:accepting);s(20),2}
+	{(Sim 5::required:not accepting);s(20)}
+	{(Sim 6::required:not accepting);}
+	
+	{(Sim 7::required:accepting);s(10),3}
+	{(Sim 8::required:not accepting);s(10)}
+	{(Sim 9::required:not accepting);}
+	
+	{(Sim 10::required:accepting);s(0),4}
+	{(Sim 11::required:not accepting);s(0)}
+	{(Sim 12::required:not accepting);}
+	
+	{(Sim 13::required:accepting);s(-10),5}
+	{(Sim 14::required:not accepting);s(-10)}
+	{(Sim 15::required:not accepting);}
+	
+	{(Sim 16::required:accepting);s(-30),6(10),8}
+	{(Sim 17::required:not accepting);s(-30),6(10)}
+	{(Sim 18::required:not accepting);s(-30)}
+	{(Sim 19::required:not accepting);}
+	
+	{(Sim 20::required:accepting);s(-30),6(5),9}
+	{(Sim 21::required:not accepting);s(-30),6(5)}
+	{(Sim 22::required:not accepting);s(-30)}
+	{(Sim 23::required:not accepting);}
+	
+	{(Sim 24::required:accepting);s(-50),7,9}
+	{(Sim 25::required:not accepting);s(-50),7}
+	{(Sim 26::required:not accepting);s(-50)}
+	{(Sim 27::required:not accepting);}
+	
+	{(Sim 28::required:accepting);s(-100),7,10}
+	{(Sim 29::required:not accepting);s(-100),7}
+	{(Sim 30::required:not accepting);s(-100)}
+	{(Sim 31::required:not accepting);}
+	
+	
+	{(Sim 32::forbidden:dont care);s(30),2}
+	{(Sim 33::forbidden:dont care);s(30),3}
+	{(Sim 34::forbidden:dont care);s(30),4}
+	{(Sim 35::forbidden:dont care);s(30),5}
+	{(Sim 36::forbidden:dont care);s(30),6}
+	{(Sim 37::forbidden:dont care);s(30),7}
+	
+	{(Sim 38::forbidden:dont care);s(20),1}
+	{(Sim 39::forbidden:dont care);s(20),3}
+	{(Sim 40::forbidden:dont care);s(20),4}
+	{(Sim 41::forbidden:dont care);s(20),5}
+	{(Sim 42::forbidden:dont care);s(20),6}
+	{(Sim 43::forbidden:dont care);s(20),7}
+	
+	{(Sim 44::forbidden:dont care);s(10),1}
+	{(Sim 45::forbidden:dont care);s(10),2}
+	{(Sim 46::forbidden:dont care);s(10),4}
+	{(Sim 47::forbidden:dont care);s(10),5}
+	{(Sim 48::forbidden:dont care);s(10),6}
+	{(Sim 49::forbidden:dont care);s(10),7}
+	
+	{(Sim 50::forbidden:dont care);s(0),1}
+	{(Sim 51::forbidden:dont care);s(0),2}
+	{(Sim 52::forbidden:dont care);s(0),3}
+	{(Sim 53::forbidden:dont care);s(0),5}
+	{(Sim 54::forbidden:dont care);s(0),6}
+	{(Sim 55::forbidden:dont care);s(0),7}
+	
+	{(Sim 56::forbidden:dont care);s(-10),1}
+	{(Sim 57::forbidden:dont care);s(-10),2}
+	{(Sim 58::forbidden:dont care);s(-10),3}
+	{(Sim 59::forbidden:dont care);s(-10),4}
+	{(Sim 60::forbidden:dont care);s(-10),6}
+	{(Sim 61::forbidden:dont care);s(-10),7}
+	
+	{(Sim 62::forbidden:dont care);s(-30),1}
+	{(Sim 63::forbidden:dont care);s(-30),2}
+	{(Sim 64::forbidden:dont care);s(-30),3}
+	{(Sim 65::forbidden:dont care);s(-30),4}
+	{(Sim 66::forbidden:dont care);s(-30),5}
+	{(Sim 67::forbidden:dont care);s(-30),7}
+	
+	{(Sim 68::forbidden:dont care);s(-50),1}
+	{(Sim 69::forbidden:dont care);s(-50),2}
+	{(Sim 70::forbidden:dont care);s(-50),3}
+	{(Sim 71::forbidden:dont care);s(-50),4}
+	{(Sim 72::forbidden:dont care);s(-50),5}
+	{(Sim 73::forbidden:dont care);s(-50),6}
+	
+	{(Sim 74::forbidden:dont care);s(-30),6(10),9}
+	{(Sim 75::forbidden:dont care);s(-30),6(10),10}
+	
+	{(Sim 76::forbidden:dont care);s(-30),6(5),8}
+	
+	{(Sim 77::forbidden:dont care);s(-50),7,10}
+	{(Sim 78::forbidden:dont care);s(-100),7,9}
 }
