@@ -1,0 +1,12 @@
+{
+	{s=x, 1=Activity_0hk9odl, 2=Activity_11z2grj, 3=Activity_0k47kfg, 4=Activity_0g73hd7, 5=Activity_0w0dd60, 6=y, 7=Activity_1g1q8wi, 8=Activity_1wm5ap8, 9=Activity_0cwkpq1, 10=Activity_0fqvjh6}
+	{(Sim 1::required:accepting);s(30),1}
+	{(Sim 2::required:accepting);s(20),2}
+	{(Sim 3::required:accepting);s(10),3}
+	{(Sim 4::required:accepting);s(0),4}
+	{(Sim 5::required:accepting);s(-10),5}
+	{(Sim 6::required:accepting);s(-30),6(10),8}
+	{(Sim 7::required:accepting);s(-30),6(5),9}
+	{(Sim 8::required:accepting);s(-50),7,9}
+	{(Sim 9::required:accepting);s(-100),7,10}
+}
