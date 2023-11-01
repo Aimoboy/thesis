@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using System.Linq;
+using System.Xml;
 
 namespace BpmnToDcrConverter
 {
@@ -33,6 +35,11 @@ namespace BpmnToDcrConverter
         private static HttpResponseMessage ApiRequest(ApiRequestType requestType, string url, AuthenticationHeaderValue authenticationHeader, string jsonBody = null)
         {
             return ApiRequestHelper(requestType, url, authenticationHeader, jsonBody).GetAwaiter().GetResult();
+        }
+
+        private static Task<HttpResponseMessage> AsyncApiRequest(ApiRequestType requestType, string url, AuthenticationHeaderValue authenticationHeader, string jsonBody = null)
+        {
+            return ApiRequestHelper(requestType, url, authenticationHeader, jsonBody);
         }
 
         private static async Task<HttpResponseMessage> ApiRequestHelper(ApiRequestType requestType, string url, AuthenticationHeaderValue authenticationHeader, string jsonBody)
@@ -75,7 +82,7 @@ namespace BpmnToDcrConverter
             return response;
         }
 
-        public static string PostGraph(DcrGraph dcrGraph, AuthenticationHeaderValue authenticationHeader)
+        public static string CreateGraph(DcrGraph dcrGraph, AuthenticationHeaderValue authenticationHeader)
         {
             string modelJson = DcrToJsonConverter.GetJsonString(dcrGraph);
             modelJson = Utilities.EscapeStringForApi(modelJson);
@@ -139,6 +146,42 @@ namespace BpmnToDcrConverter
             string explanation = trace.Attribute("explanation").Value;
 
             return (valid, explanation);
+        }
+
+        public static async Task<List<(string, string, bool, string)>> AsyncValidateLog(List<(string, string, string, string)> payloads, AuthenticationHeaderValue authenticationHeader)
+        {
+            string url = REPOSITORY_URL + "utility/validatelog";
+            Func<string, string, string> toJson = (graphXml, traceXml) => {
+                string escapedGraphXml = Utilities.EscapeStringForApi(graphXml);
+                string escapedTraceXml = Utilities.EscapeStringForApi(traceXml);
+
+                return "{\"graphXml\": \"" + escapedGraphXml + "\", \"dcrLogXml\": \"" + escapedTraceXml + "\", \"detailed\": true}";
+            };
+
+            List<(string, string, Task<HttpResponseMessage>)> tasks = new List<(string, string, Task<HttpResponseMessage>)>();
+            foreach (var payload in payloads)
+            {
+                string json = toJson(payload.Item3, payload.Item4);
+
+                Task<HttpResponseMessage> response = AsyncApiRequest(ApiRequestType.POST, url, authenticationHeader, json);
+                tasks.Add((payload.Item1, payload.Item2, response));
+            }
+
+            await Task.WhenAll(tasks.Select(x => x.Item3));
+
+            return tasks.Select(x =>
+            {
+                HttpResponseMessage response = x.Item3.Result;
+                string responseXml = response.Content.ReadAsStringAsync().Result;
+                XDocument doc = XDocument.Parse(responseXml);
+                XElement replay = doc.Element("replay");
+                XElement trace = replay.Element("trace");
+
+                bool valid = bool.Parse(trace.Attribute("valid").Value);
+                string explanation = trace.Attribute("explanation").Value;
+
+                return (x.Item1, x.Item2, valid, explanation);
+            }).ToList();
         }
 
         private static string ApiRequestTypeToString(ApiRequestType type)

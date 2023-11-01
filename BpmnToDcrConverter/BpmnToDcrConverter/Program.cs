@@ -110,7 +110,7 @@ namespace BpmnToDcrConverter
                 BpmnGraph bpmnGraph = BpmnXmlParser.Parse(bpmnGraphXmlPath);
                 DcrGraph dcrGraph = BpmnToDcrConverter.ConvertBpmnToDcr(bpmnGraph);
 
-                string graphId = DcrSolutionsApiHandler.PostGraph(dcrGraph, authenticationHeader);
+                string graphId = DcrSolutionsApiHandler.CreateGraph(dcrGraph, authenticationHeader);
                 string graphXml = DcrSolutionsApiHandler.GetGraphXml(graphId, authenticationHeader);
                 lineToGraphXmlDict.Add(line, graphXml);
 
@@ -199,7 +199,7 @@ namespace BpmnToDcrConverter
 
             AuthenticationHeaderValue authenticationHeader = DcrSolutionsApiHandler.GetDcrSolutionsAuthenticationHeader();
 
-            string graphId = DcrSolutionsApiHandler.PostGraph(dcrGraph, authenticationHeader);
+            string graphId = DcrSolutionsApiHandler.CreateGraph(dcrGraph, authenticationHeader);
             Console.WriteLine($"Created new graph with ID \"{graphId}\".");
 
             foreach (GraphTrace trace in graphTraces)
