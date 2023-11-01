@@ -628,7 +628,7 @@ namespace BpmnToDcrConverter
             from number in Parse.Digit.AtLeastOnce().Text()
             select new IntegerConstant(int.Parse(minus.GetOrElse("") + number));
 
-        public static readonly Parser<Constant> Decimal =
+        private static readonly Parser<Constant> Decimal =
             from minus in Parse.String("-").Text().Optional()
             from front in Parse.Digit.Many().Text()
             from dot in Parse.Char('.')
@@ -676,7 +676,7 @@ namespace BpmnToDcrConverter
             select exp;
 
         private static readonly Parser<Expression> ExpressionParser =
-            ExpressionInParentheses.Or(RelationalExpression).Or(BinaryLogicalExpression).Or(UnaryLogicalExpression);
+            UnaryLogicalExpression.Or(BinaryLogicalExpression).Or(RelationalExpression).Or(ExpressionInParentheses);
 
         public static readonly Parser<Expression> ConditionParser =
             ExpressionParser.End();

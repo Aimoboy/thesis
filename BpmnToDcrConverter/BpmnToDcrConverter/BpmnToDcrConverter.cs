@@ -246,7 +246,7 @@ namespace BpmnToDcrConverter
 
                     if (incomingArrow.Condition != "" && outgoingArrow.Condition != "")
                     {
-                        condition = $"{incomingArrow.Condition} && {outgoingArrow.Condition}";
+                        condition = $"({incomingArrow.Condition}) && ({outgoingArrow.Condition})";
                     }
                     else if (incomingArrow.Condition != "")
                     {
