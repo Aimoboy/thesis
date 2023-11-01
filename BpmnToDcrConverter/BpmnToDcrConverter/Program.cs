@@ -8,6 +8,7 @@ using System.Linq;
 using BpmnToDcrConverter.Dcr;
 using System.Net.Http.Headers;
 using Sprache;
+using System.Diagnostics;
 
 namespace BpmnToDcrConverter
 {
@@ -103,6 +104,9 @@ namespace BpmnToDcrConverter
 
             AuthenticationHeaderValue authenticationHeader = DcrSolutionsApiHandler.GetDcrSolutionsAuthenticationHeader();
 
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            Console.Write("Initializing...");
             Dictionary<string, string> lineToGraphXmlDict = new Dictionary<string, string>();
             foreach (string line in fileLines)
             {
@@ -131,36 +135,52 @@ namespace BpmnToDcrConverter
                 lineToTracesDict[line] = tracesParseResult.ToGraphTraces();
             }
 
-            Console.WriteLine();
-
-            int errorCount = 0;
+            List<(string, string, string, string)> payloads = new List<(string, string, string, string)>();
             foreach (string line in fileLines)
             {
                 string graphXml = lineToGraphXmlDict[line];
                 List<GraphTrace> traces = lineToTracesDict[line];
 
-                Console.WriteLine(line + ":");
-
                 foreach (GraphTrace trace in traces)
                 {
                     string traceXml = trace.ToXml().OuterXml;
-                    var (valid, explanation) = DcrSolutionsApiHandler.ValidateLog(graphXml, traceXml, authenticationHeader);
-
-                    if (valid)
-                    {
-                        Console.WriteLine($"    - {trace.Title} (valid)");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"    - {trace.Title} (invalid): {explanation}");
-                        errorCount++;
-                    }
+                    payloads.Add((line, trace.Title, graphXml, traceXml));
                 }
+            }
 
+            stopwatch.Stop();
+            Console.WriteLine($"Finished ({stopwatch.ElapsedMilliseconds} ms)");
+
+            stopwatch.Restart();
+            Console.Write("Testing...");
+            List<(string, string, bool, string)> results = DcrSolutionsApiHandler.AsyncValidateLog(payloads, authenticationHeader).GetAwaiter().GetResult();
+            stopwatch.Stop();
+            Console.WriteLine($"Finished ({stopwatch.ElapsedMilliseconds} ms)");
+
+            int totalErrorCount = results.Where(x => !x.Item3).Count();
+            ILookup<string, (string, string, bool, string)> lookup = results.ToLookup(x => x.Item1);
+
+            Console.WriteLine();
+            foreach (string line in fileLines)
+            {
+                List<(string, string, bool, string)> traceResults = lookup[line].ToList();
+                List<(string, string, bool, string)> invalidTraces = traceResults.Where(x => !x.Item3).ToList();
+                int invalidCount = invalidTraces.Count();
+                int validCount = traceResults.Count - invalidCount;
+
+                if (invalidCount == 0)
+                {
+                    Console.WriteLine($"{line} (all {traceResults.Count} traces are valid)");
+                }
+                else
+                {
+                    Console.WriteLine($"{line} ({validCount} traces are valid, {invalidCount} traces are invalid):");
+                    Console.WriteLine(string.Join("\n", invalidTraces.Select(x => "    - " + x.Item2 + ": " + x.Item4)));
+                }
             }
 
             Console.WriteLine();
-            Console.WriteLine($"Errors: {errorCount}");
+            Console.WriteLine($"Errors: {totalErrorCount}");
         }
 
         private static void DcrSolutionsPostCase(ArgumentParsingResults argumentParsingResults, DcrGraph dcrGraph)
