@@ -1,0 +1,58 @@
+{
+	{start=Event_178imzj, 1=Activity_0umvkly, 2=Activity_139bgtw, 3=Activity_17byi2z, 4=x, 5=Activity_0lg9buh, 6=Activity_0iisq5w, 7=Activity_0zyn1pb, 8=Activity_0lj2pyp}
+	{(Sim 1::required:accepting);start,1,2,3,4(0),5}
+	{(Sim 2::required:accepting);start,1,2,3,4(1),6,7,8,2,3,4(0),5}
+	{(Sim 3::required:accepting);start,1,2,3,4(1),6,7,8,2,3,4(1),6,7,8,2,3,4(0),5}
+	
+	{(Sim 4::required:not accepting);start,1,2,3,4(1),6,7,8}
+	{(Sim 5::required:not accepting);start,1,2,3,4(1),6,7}
+	{(Sim 6::required:not accepting);start,1,2,3,4(1),6}
+	{(Sim 7::required:not accepting);start,1,2,3,4(1)}
+	{(Sim 8::required:not accepting);start,1,2,3,4(0)}
+	{(Sim 9::required:not accepting);start,1,2,3}
+	{(Sim 10::required:not accepting);start,1,2}
+	{(Sim 11::required:not accepting);start,1}
+	{(Sim 12::required:not accepting);start}
+	{(Sim 13::required:not accepting);}
+	
+	{(Sim 14::forbidden:dont care);start,1,2,3,4(0),6}
+	{(Sim 15::forbidden:dont care);start,1,2,3,4(1),5}
+	
+	{(Sim 15::forbidden:dont care);1}
+	{(Sim 16::forbidden:dont care);2}
+	{(Sim 17::forbidden:dont care);3}
+	{(Sim 18::forbidden:dont care);4}
+	{(Sim 19::forbidden:dont care);5}
+	{(Sim 20::forbidden:dont care);6}
+	{(Sim 21::forbidden:dont care);7}
+	{(Sim 22::forbidden:dont care);8}
+	
+	{(Sim 23::forbidden:dont care);start,2}
+	{(Sim 24::forbidden:dont care);start,3}
+	{(Sim 25::forbidden:dont care);start,4}
+	{(Sim 26::forbidden:dont care);start,5}
+	{(Sim 27::forbidden:dont care);start,6}
+	{(Sim 28::forbidden:dont care);start,7}
+	{(Sim 29::forbidden:dont care);start,8}
+	
+	{(Sim 30::forbidden:dont care);start,1,3}
+	{(Sim 31::forbidden:dont care);start,1,4}
+	{(Sim 32::forbidden:dont care);start,1,5}
+	{(Sim 33::forbidden:dont care);start,1,6}
+	{(Sim 34::forbidden:dont care);start,1,7}
+	{(Sim 35::forbidden:dont care);start,1,8}
+	
+	{(Sim 36::forbidden:dont care);start,1,2,4}
+	{(Sim 37::forbidden:dont care);start,1,2,5}
+	{(Sim 38::forbidden:dont care);start,1,2,6}
+	{(Sim 39::forbidden:dont care);start,1,2,7}
+	{(Sim 40::forbidden:dont care);start,1,2,8}
+	
+	{(Sim 41::forbidden:dont care);start,1,2,3,5}
+	{(Sim 42::forbidden:dont care);start,1,2,3,6}
+	{(Sim 43::forbidden:dont care);start,1,2,3,7}
+	{(Sim 44::forbidden:dont care);start,1,2,3,8}
+	
+	{(Sim 45::forbidden:dont care);start,1,2,3,4(0),7}
+	{(Sim 46::forbidden:dont care);start,1,2,3,4(0),8}
+}
