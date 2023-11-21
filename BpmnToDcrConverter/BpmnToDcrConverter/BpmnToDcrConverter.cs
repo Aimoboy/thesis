@@ -327,6 +327,13 @@ namespace BpmnToDcrConverter
                 return GetRelationalExpressionsFromExpression(operation.Left).Concat(GetRelationalExpressionsFromExpression(operation.Right)).ToList();
             }
 
+            if (expression is UnaryLogicalOperation)
+            {
+                UnaryLogicalOperation operation = (UnaryLogicalOperation)expression;
+
+                return GetRelationalExpressionsFromExpression(operation.Expression);
+            }
+
             throw new Exception("Unhandled case.");
         }
 
