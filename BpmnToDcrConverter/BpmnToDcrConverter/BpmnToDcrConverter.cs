@@ -287,7 +287,7 @@ namespace BpmnToDcrConverter
                 if (arrowWithoutCondition != null)
                 {
                     List<string> otherConditions = otherArrows.ConvertAll(x => x.Condition);
-                    List<string> otherConditionsPrep = otherConditions.ConvertAll(x => $"!({x})");
+                    List<string> otherConditionsPrep = otherConditions.ConvertAll(x => $"(!({x}))");
                     string newCondition = string.Join(" && ", otherConditionsPrep);
 
                     arrowWithoutCondition.Condition = newCondition;

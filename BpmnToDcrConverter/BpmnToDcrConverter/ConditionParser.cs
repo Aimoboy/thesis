@@ -676,7 +676,7 @@ namespace BpmnToDcrConverter
             select exp;
 
         private static readonly Parser<Expression> ExpressionParser =
-            UnaryLogicalExpression.Or(BinaryLogicalExpression).Or(RelationalExpression).Or(ExpressionInParentheses);
+            BinaryLogicalExpression.Or(RelationalExpression).Or(UnaryLogicalExpression).Or(ExpressionInParentheses);
 
         public static readonly Parser<Expression> ConditionParser =
             ExpressionParser.End();
