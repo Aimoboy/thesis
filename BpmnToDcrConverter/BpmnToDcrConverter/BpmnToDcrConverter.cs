@@ -13,10 +13,11 @@ namespace BpmnToDcrConverter
         public static DcrGraph ConvertBpmnToDcr(BpmnGraph bpmnGraph)
         {
             MakeBpmnStartEventsToActivities(bpmnGraph);
-            RemoveAllEndEvents(bpmnGraph);
 
             HandleExclusiveGateways(bpmnGraph);
             HandleParallelGateways(bpmnGraph);
+
+            RemoveAllEndEvents(bpmnGraph);
 
             Dictionary<string, DataType> variableToDataTypeDict = GetVariableToDataTypeDict(bpmnGraph);
             Dictionary<string, DataType> activityIdToDataType = GetActivityIdToDataTypeDict(variableToDataTypeDict, bpmnGraph);
