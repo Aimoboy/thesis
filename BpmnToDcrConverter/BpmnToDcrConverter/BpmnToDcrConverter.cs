@@ -196,6 +196,11 @@ namespace BpmnToDcrConverter
 
             foreach (BpmnParallelGateway gateway in bpmnAnds)
             {
+                // Check if parallel split
+                // Find all elements in each path and the gate where they join
+                // Somehow remember that these elements need to be nested and that the nesting should point to the elements pointed to by the parallel join
+                // Remove parallel gateways
+
                 MakeArrowsSkipBpmnElement(gateway);
             }
 
