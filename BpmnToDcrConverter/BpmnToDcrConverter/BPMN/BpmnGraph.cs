@@ -117,6 +117,14 @@ namespace BpmnToDcrConverter.Bpmn
                 string duplicateArrowIdsString = string.Join(",", duplicateArrowIds);
                 throw new Exception($"BPMN exclusive gatewith with ID {bpmnXor.Id} has multiple arrows with ids \"{duplicateArrowIdsString}\".");
             }
+
+            List<BpmnFlowArrow> notDefaultArrows = bpmnXor.OutgoingArrows.Where(x => x.Id != bpmnXor.DefaultPath).ToList();
+            List<BpmnFlowArrow> notDefaultArrowsWithoutCondition = notDefaultArrows.Where(x => x.Condition == "").ToList();
+            if (notDefaultArrowsWithoutCondition.Count > 1 && notDefaultArrowsWithoutCondition.Any())
+            {
+                string errorString = string.Join(",", notDefaultArrowsWithoutCondition.Select(x => x.Id));
+                throw new Exception($"BPMN exclusive gatewith with ID {bpmnXor.Id} has arrows with IDs \"{errorString}\" without conditions");
+            }
         }
 
         private void TestValidArrowReferences(BpmnFlowElement element)
