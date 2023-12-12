@@ -237,14 +237,21 @@ namespace BpmnToDcrConverter.Bpmn
 
     public class BpmnSubProcess : BpmnFlowElement
     {
-        public List<BpmnFlowElement> flowElements;
+        public List<BpmnFlowElement> FlowElements { get; private set; }
+
+        public string StartEventId;
 
         public BpmnSubProcess(string id) : base(id)
         {
-            flowElements = new List<BpmnFlowElement>();
+
         }
 
         public BpmnSubProcess(string id, IEnumerable<BpmnFlowElement> newFlowElements) : base(id)
+        {
+            SetFlowElements(newFlowElements);
+        }
+
+        public void SetFlowElements(IEnumerable<BpmnFlowElement> newFlowElements)
         {
             List<string> duplicateIds = newFlowElements.GroupBy(x => x.Id).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
             if (duplicateIds.Any())
@@ -253,7 +260,8 @@ namespace BpmnToDcrConverter.Bpmn
                 throw new BpmnDuplicateIdException($"Multiple flow elements with the ids \"{exceptionString}\" are given in the sub-process with id \"{Id}\".");
             }
 
-            flowElements = newFlowElements.ToList();
+            FlowElements = newFlowElements.ToList();
+            StartEventId = FlowElements.OfType<BpmnStartEvent>().First().Id;
         }
 
         public override void TestValidity()
@@ -271,7 +279,7 @@ namespace BpmnToDcrConverter.Bpmn
                 throw new BpmnInvalidArrowException($"Sub-processes must have exactly 1 outgoing arrow, the sub-process with id \"{Id}\" has {incomingArrowCount} incoming arrows.");
             }
 
-            foreach (BpmnFlowElement flowElement in flowElements)
+            foreach (BpmnFlowElement flowElement in FlowElements)
             {
                 flowElement.TestValidity();
             }
@@ -279,24 +287,24 @@ namespace BpmnToDcrConverter.Bpmn
 
         public override List<BpmnFlowElement> GetFlowElementsFlat()
         {
-            return flowElements.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
+            return FlowElements.SelectMany(x => x.GetFlowElementsFlat()).Concat(new[] { this }).ToList();
         }
 
         protected override BpmnFlowElement CopyElement()
         {
             BpmnSubProcess copiedElement = new BpmnSubProcess(Id);
-            copiedElement.flowElements = flowElements.ConvertAll(x => x.Copy());
+            copiedElement.FlowElements = FlowElements.ConvertAll(x => x.Copy());
             return copiedElement;
         }
 
         public override List<BpmnFlowElement> GetElementCollectionFromId(string id)
         {
-            if (flowElements.Select(x => x.Id).Contains(id))
+            if (FlowElements.Select(x => x.Id).Contains(id))
             {
-                return flowElements;
+                return FlowElements;
             }
 
-            List<List<BpmnFlowElement>> results = flowElements.ConvertAll(x => x.GetElementCollectionFromId(id));
+            List<List<BpmnFlowElement>> results = FlowElements.ConvertAll(x => x.GetElementCollectionFromId(id));
             foreach (List<BpmnFlowElement> lst in results)
             {
                 if (lst != null)
@@ -310,7 +318,7 @@ namespace BpmnToDcrConverter.Bpmn
 
         public override void DeleteElementFromId(string id)
         {
-            Utilities.RemoveIdFromBpmnCollection(id, flowElements);
+            Utilities.RemoveIdFromBpmnCollection(id, FlowElements);
         }
     }
 

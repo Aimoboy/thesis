@@ -98,7 +98,9 @@ namespace BpmnToDcrConverter.Dcr
         public bool Executed;
         public bool Pending;
 
-        public DcrSubProcess(string id, string name, IEnumerable<DcrFlowElement> elements, bool included, bool executed, bool pending) : base(id)
+        public string StartActivityId;
+
+        public DcrSubProcess(string id, string name, IEnumerable<DcrFlowElement> elements, bool included, bool executed, bool pending, string startActivityId) : base(id)
         {
             Name = name;
             Elements = elements.ToList();
@@ -106,9 +108,11 @@ namespace BpmnToDcrConverter.Dcr
             Included = included;
             Executed = executed;
             Pending = pending;
+
+            StartActivityId = startActivityId;
         }
 
-        public DcrSubProcess(string id, IEnumerable<DcrFlowElement> elements) : this(id, "", elements, true, false, false) { }
+        public DcrSubProcess(string id, IEnumerable<DcrFlowElement> elements) : this(id, "", elements, true, false, false, "") { }
 
         public override List<DcrFlowElement> GetFlowElementsFlat()
         {
