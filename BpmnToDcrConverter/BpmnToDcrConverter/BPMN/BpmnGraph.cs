@@ -109,6 +109,11 @@ namespace BpmnToDcrConverter.Bpmn
             to.IncomingArrows.Add(new BpmnFlowArrow(id, type, from, condition));
         }
 
+        public void AddArrow(BpmnFlowArrowType type, BpmnFlowElement from, BpmnFlowElement to, string condition)
+        {
+            AddArrow(Guid.NewGuid().ToString("N"), type, from, to, condition);
+        }
+
         public void AddArrow(string id, BpmnFlowArrowType type, BpmnFlowElement from, BpmnFlowElement to)
         {
             AddArrow(id, type, from, to, "");
