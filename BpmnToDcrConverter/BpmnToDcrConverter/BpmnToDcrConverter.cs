@@ -244,7 +244,7 @@ namespace BpmnToDcrConverter
         {
             List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
             List<BpmnExclusiveGateway> bpmnXors = allBpmnElements.OfType<BpmnExclusiveGateway>().ToList();
-            GiveConditionsToArrowsWithoutOne(bpmnXors);
+            GiveConditionsToDefaultArrow(bpmnXors);
             SkipAllExclusiveGateways(bpmnXors);
             RemoveAllExclusiveGateways(bpmnGraph);
         }
@@ -316,21 +316,23 @@ namespace BpmnToDcrConverter
             }
         }
 
-        private static void GiveConditionsToArrowsWithoutOne(List<BpmnExclusiveGateway> bpmnXors)
+        private static void GiveConditionsToDefaultArrow(List<BpmnExclusiveGateway> bpmnXors)
         {
             foreach (BpmnExclusiveGateway bpmnXor in bpmnXors)
             {
-                BpmnFlowArrow arrowWithoutCondition = bpmnXor.OutgoingArrows.Where(x => x.Condition == "").FirstOrDefault();
-                List<BpmnFlowArrow> otherArrows = bpmnXor.OutgoingArrows.Where(x => x != arrowWithoutCondition).ToList();
-
-                if (arrowWithoutCondition != null)
+                if (bpmnXor.DefaultPath == "")
                 {
-                    List<string> otherConditions = otherArrows.ConvertAll(x => x.Condition);
-                    List<string> otherConditionsPrep = otherConditions.ConvertAll(x => $"(!({x}))");
-                    string newCondition = string.Join(" && ", otherConditionsPrep);
-
-                    arrowWithoutCondition.Condition = newCondition;
+                    continue;
                 }
+
+                BpmnFlowArrow defaultArrow = bpmnXor.OutgoingArrows.Where(x => x.Id == bpmnXor.DefaultPath).FirstOrDefault();
+                List<BpmnFlowArrow> notDefaultArrows = bpmnXor.OutgoingArrows.Where(x => x.Id != bpmnXor.DefaultPath).ToList();
+
+                List<string> conditions = notDefaultArrows.ConvertAll(x => x.Condition);
+                List<string> conditionsPrep = conditions.ConvertAll(x => $"(!({x}))");
+                string newCondition = string.Join(" && ", conditionsPrep);
+
+                defaultArrow.Condition = newCondition;
             }
         }
 
