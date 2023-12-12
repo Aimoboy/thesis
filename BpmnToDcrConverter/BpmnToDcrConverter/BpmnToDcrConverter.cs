@@ -296,7 +296,7 @@ namespace BpmnToDcrConverter
                         condition = outgoingArrow.Condition;
                     }
 
-                    Utilities.AddBpmnArrow(incomingArrow.Element, outgoingArrow.Element, BpmnFlowArrowType.Sequence, condition);
+                    Utilities.AddBpmnArrow(Guid.NewGuid().ToString("N"), incomingArrow.Element, outgoingArrow.Element, BpmnFlowArrowType.Sequence, condition);
                 }
             }
 
