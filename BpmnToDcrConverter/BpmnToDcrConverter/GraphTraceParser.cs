@@ -38,7 +38,7 @@ namespace BpmnToDcrConverter
         private static readonly Parser<TraceParseTrace> TraceParser =
             from firstBracket in Parse.Char('{').Token()
             from secondBracket in Parse.Char('(').Token()
-            from title in Parse.LetterOrDigit.Or(Parse.Char(' ')).Many().Text()
+            from title in Parse.LetterOrDigit.Or(Parse.Char(' ')).Or(Parse.Char('-')).Or(Parse.Char('_')).Many().Text()
             from firstColon in Parse.Char(':').Token()
             from description in Parse.LetterOrDigit.Or(Parse.Char(' ')).Many().Text()
             from secondColon in Parse.Char(':').Token()
