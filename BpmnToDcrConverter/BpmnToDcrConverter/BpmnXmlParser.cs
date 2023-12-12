@@ -142,15 +142,16 @@ namespace BpmnToDcrConverter
             }
 
             // Get flow arrows
-            List<Tuple<BpmnFlowArrowType, string, string, string>> arrows = processes.SelectMany(x => GetFlowArrows(x, bpmn)).ToList();
+            List<Tuple<BpmnFlowArrowType, string, string, string, string>> arrows = processes.SelectMany(x => GetFlowArrows(x, bpmn)).ToList();
             foreach (var arrow in arrows)
             {
                 BpmnFlowArrowType type = arrow.Item1;
-                BpmnFlowElement from = graph.GetFlowElementFromId(arrow.Item2);
-                BpmnFlowElement to = graph.GetFlowElementFromId(arrow.Item3);
-                string condition = arrow.Item4;
+                string arrowId = arrow.Item2;
+                BpmnFlowElement from = graph.GetFlowElementFromId(arrow.Item3);
+                BpmnFlowElement to = graph.GetFlowElementFromId(arrow.Item4);
+                string condition = arrow.Item5;
 
-                graph.AddArrow(type, from, to, condition);
+                graph.AddArrow(arrowId, type, from, to, condition);
             }
 
             graph.TestGraphValidity();
@@ -216,14 +217,15 @@ namespace BpmnToDcrConverter
             return flowElements;
         }
 
-        private static List<Tuple<BpmnFlowArrowType, string, string, string>> GetFlowArrows(XElement xmlElement, XNamespace bpmn)
+        private static List<Tuple<BpmnFlowArrowType, string, string, string, string>> GetFlowArrows(XElement xmlElement, XNamespace bpmn)
         {
-            List<Tuple<BpmnFlowArrowType, string, string, string>> arrows = new List<Tuple<BpmnFlowArrowType, string, string, string>>();
+            List<Tuple<BpmnFlowArrowType, string, string, string, string>> arrows = new List<Tuple<BpmnFlowArrowType, string, string, string, string>>();
 
             // Sequence flows
             IEnumerable<XElement> sequenceFlows = xmlElement.Elements(bpmn + "sequenceFlow");
             foreach (XElement item in sequenceFlows)
             {
+                string arrowId = item.Attribute("id").Value;
                 string fromId = item.Attribute("sourceRef").Value;
                 string toId = item.Attribute("targetRef").Value;
                 string condition = "";
@@ -234,14 +236,14 @@ namespace BpmnToDcrConverter
                     condition = conditionExpression.Value[1..].Trim();
                 }
 
-                arrows.Add(new Tuple<BpmnFlowArrowType, string, string, string>(BpmnFlowArrowType.Sequence, fromId, toId, condition));
+                arrows.Add(new Tuple<BpmnFlowArrowType, string, string, string, string>(BpmnFlowArrowType.Sequence, arrowId, fromId, toId, condition));
             }
 
             // Add sub process arrows
             IEnumerable<XElement> subProcesses = xmlElement.Elements(bpmn + "subProcess");
             foreach (XElement item in subProcesses)
             {
-                List<Tuple<BpmnFlowArrowType, string, string, string>> subProcessArrows = GetFlowArrows(item, bpmn);
+                List<Tuple<BpmnFlowArrowType, string, string, string, string>> subProcessArrows = GetFlowArrows(item, bpmn);
                 arrows = arrows.Concat(subProcessArrows).ToList();
             }
 

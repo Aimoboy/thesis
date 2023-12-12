@@ -103,15 +103,20 @@ namespace BpmnToDcrConverter.Bpmn
             }
         }
 
-        public void AddArrow(BpmnFlowArrowType type, BpmnFlowElement from, BpmnFlowElement to, string condition)
+        public void AddArrow(string id, BpmnFlowArrowType type, BpmnFlowElement from, BpmnFlowElement to, string condition)
         {
-            from.OutgoingArrows.Add(new BpmnFlowArrow(type, to, condition));
-            to.IncomingArrows.Add(new BpmnFlowArrow(type, from, condition));
+            from.OutgoingArrows.Add(new BpmnFlowArrow(id, type, to, condition));
+            to.IncomingArrows.Add(new BpmnFlowArrow(id, type, from, condition));
+        }
+
+        public void AddArrow(string id, BpmnFlowArrowType type, BpmnFlowElement from, BpmnFlowElement to)
+        {
+            AddArrow(id, type, from, to, "");
         }
 
         public void AddArrow(BpmnFlowArrowType type, BpmnFlowElement from, BpmnFlowElement to)
         {
-            AddArrow(type, from, to, "");
+            AddArrow(Guid.NewGuid().ToString("N"), type, from, to, "");
         }
 
         public BpmnFlowElement GetFlowElementFromId(string id)

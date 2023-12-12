@@ -343,7 +343,7 @@ namespace BpmnToDcrConverter
                 BpmnActivity activity = new BpmnActivity(startEvent.Id, "Start");
 
                 BpmnFlowArrow arrow = startEvent.OutgoingArrows.FirstOrDefault();
-                Utilities.AddBpmnArrow(activity, arrow.Element, BpmnFlowArrowType.Sequence, arrow.Condition);
+                Utilities.AddBpmnArrow(arrow.Id, activity, arrow.Element, BpmnFlowArrowType.Sequence, arrow.Condition);
                 Utilities.RemoveBpmnArrow(startEvent, arrow);
 
                 List<BpmnFlowElement> collection = bpmnGraph.GetElementCollectionFromId(startEvent.Id);

@@ -28,10 +28,10 @@ namespace BpmnToDcrConverter
             }
         }
 
-        public static void AddBpmnArrow(BpmnFlowElement from, BpmnFlowElement to, BpmnFlowArrowType arrowType, string condition)
+        public static void AddBpmnArrow(string id, BpmnFlowElement from, BpmnFlowElement to, BpmnFlowArrowType arrowType, string condition)
         {
-            from.OutgoingArrows.Add(new BpmnFlowArrow(arrowType, to, condition));
-            to.IncomingArrows.Add(new BpmnFlowArrow(arrowType, from, condition));
+            from.OutgoingArrows.Add(new BpmnFlowArrow(id, arrowType, to, condition));
+            to.IncomingArrows.Add(new BpmnFlowArrow(id, arrowType, from, condition));
         }
 
         public static void RemoveBpmnArrow(BpmnFlowElement from, BpmnFlowArrow arrow)

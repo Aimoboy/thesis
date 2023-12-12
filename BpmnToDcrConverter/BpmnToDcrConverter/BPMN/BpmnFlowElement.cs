@@ -334,12 +334,14 @@ namespace BpmnToDcrConverter.Bpmn
 
     public class BpmnFlowArrow
     {
+        public string Id;
         public BpmnFlowArrowType Type;
         public BpmnFlowElement Element;
         public string Condition;
 
-        public BpmnFlowArrow(BpmnFlowArrowType type, BpmnFlowElement element, string condition)
+        public BpmnFlowArrow(string id, BpmnFlowArrowType type, BpmnFlowElement element, string condition)
         {
+            Id = id;
             Type = type;
             Element = element;
             Condition = condition;
@@ -347,7 +349,7 @@ namespace BpmnToDcrConverter.Bpmn
 
         public BpmnFlowArrow Copy()
         {
-            BpmnFlowArrow newArrow = new BpmnFlowArrow(Type, Element, Condition);
+            BpmnFlowArrow newArrow = new BpmnFlowArrow(Id, Type, Element, Condition);
             return newArrow;
         }
     }
