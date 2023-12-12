@@ -86,6 +86,36 @@ namespace BpmnToDcrConverter.Bpmn
             {
                 element.TestValidity();
                 TestValidArrowReferences(element);
+
+                if (element is BpmnExclusiveGateway)
+                {
+                    TestXorGatewayArrows((BpmnExclusiveGateway)element);
+                }
+            }
+        }
+
+        private void TestXorGatewayArrows(BpmnExclusiveGateway bpmnXor)
+        {
+            if (bpmnXor.DefaultPath != "")
+            {
+                List<BpmnFlowArrow> defaultPaths = bpmnXor.OutgoingArrows.Where(x => x.Id == bpmnXor.DefaultPath).ToList();
+
+                if (defaultPaths.Count == 0)
+                {
+                    throw new Exception($"BPMN exclusive gateway is marked as having a default path {bpmnXor.DefaultPath}, but his does not exist amongst its arrows.");
+                }
+
+                if (defaultPaths.Count > 1)
+                {
+                    throw new Exception($"BPMN exclusive gateway is marked as having a default path {bpmnXor.DefaultPath}, but multiple paths were found with this ID.");
+                }
+            }
+
+            List<string> duplicateArrowIds = bpmnXor.OutgoingArrows.Select(x => x.Id).GroupBy(x => x).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
+            if (duplicateArrowIds.Any())
+            {
+                string duplicateArrowIdsString = string.Join(",", duplicateArrowIds);
+                throw new Exception($"BPMN exclusive gatewith with ID {bpmnXor.Id} has multiple arrows with ids \"{duplicateArrowIdsString}\".");
             }
         }
 
