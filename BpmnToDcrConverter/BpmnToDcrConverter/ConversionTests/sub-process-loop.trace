@@ -1,0 +1,8 @@
+{
+	{s=StartEvent_1, subS=Event_0xglhfn, 1=Activity_0audlca, 2=x, 3=Activity_0kq6jqr, 4=Activity_1mt1o2f}
+	{(No loop::required:accepting);s,subS,1,2(5)}
+	{(Loop once::required:accepting);s,subS,1,2(0),3,4,subS,1,2(1)}
+	{(Loop twice::required:accepting);s,subS,1,2(0),3,4,subS,1,2(-1),3,4,subS,1,2(2)}
+	{(Stop in the middle of loop::required:not accepting);s,subS,1,2(0),3}
+	{(Try to run sub-process start directly::forbidden:dont care);subS}
+}

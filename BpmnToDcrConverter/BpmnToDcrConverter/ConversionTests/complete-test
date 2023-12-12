@@ -4,3 +4,5 @@ branching
 chained-xor
 cycle
 gateway-to-end
+sub-process-simple
+sub-process-loop

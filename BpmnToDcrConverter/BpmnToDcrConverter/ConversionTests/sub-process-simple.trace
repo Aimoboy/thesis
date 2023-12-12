@@ -1,0 +1,10 @@
+{
+	{s=StartEvent_1, 1=Activity_1f7in7c, subS=Event_1qlbilu, 2=Activity_1prg2rk, 3=Activity_09kalmi}
+	{(Full run::required:accepting);s,1,subS,2,3}
+	{(Try not full run::required:not accepting);s,1,subS,2}
+	{(Try not full run 1::required:not accepting);s,1,subS}
+	{(Try not full run 2::required:not accepting);s,1}
+	{(Try not full run 3::required:not accepting);s}
+	{(Try not full run 4::required:not accepting);}
+	{(Try to run sub-process start directly::forbidden:dont care);subS}
+}
