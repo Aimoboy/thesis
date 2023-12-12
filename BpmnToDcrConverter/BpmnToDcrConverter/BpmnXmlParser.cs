@@ -191,7 +191,9 @@ namespace BpmnToDcrConverter
             foreach (XElement item in exclusiveGateways)
             {
                 string id = item.Attribute("id").Value;
-                flowElements.Add(new BpmnExclusiveGateway(id));
+                string defaultPath = item.Attribute("default")?.Value ?? "";
+
+                flowElements.Add(new BpmnExclusiveGateway(id, defaultPath));
             }
 
             // Find parallel gateways

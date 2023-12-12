@@ -177,7 +177,17 @@ namespace BpmnToDcrConverter.Bpmn
 
     public class BpmnExclusiveGateway : BpmnFlowElement
     {
-        public BpmnExclusiveGateway(string id) : base(id) { }
+        public string DefaultPath { get; private set; }
+
+        public BpmnExclusiveGateway(string id) : base(id)
+        {
+            DefaultPath = "";
+        }
+
+        public BpmnExclusiveGateway(string id, string defaultPath) : base(id)
+        {
+            DefaultPath = defaultPath;
+        }
 
         public override void TestValidity()
         {
@@ -203,7 +213,7 @@ namespace BpmnToDcrConverter.Bpmn
 
         protected override BpmnFlowElement CopyElement()
         {
-            BpmnExclusiveGateway copiedElement = new BpmnExclusiveGateway(Id);
+            BpmnExclusiveGateway copiedElement = new BpmnExclusiveGateway(Id, DefaultPath);
             return copiedElement;
         }
     }
