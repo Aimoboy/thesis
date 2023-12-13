@@ -332,6 +332,26 @@ namespace BpmnToDcrConverter.Bpmn
         }
     }
 
+    public class BpmnTemporaryNesting : BpmnFlowElement
+    {
+        public List<BpmnFlowElement> FlowElements;
+
+        public BpmnTemporaryNesting(string id, List<BpmnFlowElement> flowElements) : base(id)
+        {
+            FlowElements = flowElements;
+        }
+
+        public override void TestValidity()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override BpmnFlowElement CopyElement()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class BpmnFlowArrow
     {
         public string Id;
