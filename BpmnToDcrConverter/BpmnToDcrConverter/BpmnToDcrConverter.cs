@@ -14,6 +14,49 @@ namespace BpmnToDcrConverter
         public static DcrGraph ConvertBpmnToDcr(BpmnGraph bpmnGraph)
         {
             // Get nesting groups
+            List<(List<BpmnFlowElement>, List<BpmnFlowElement>, string)> nestingGroups = GetParallelGatewayNestingsAndSubsets(bpmnGraph);
+
+            MakeBpmnStartEventsToActivities(bpmnGraph);
+
+            HandleExclusiveGateways(bpmnGraph);
+            HandleParallelGateways(bpmnGraph);
+
+            RemoveAllEndEvents(bpmnGraph);
+
+            Dictionary<string, DataType> variableToDataTypeDict = GetVariableToDataTypeDict(bpmnGraph);
+            Dictionary<string, DataType> activityIdToDataType = GetActivityIdToDataTypeDict(variableToDataTypeDict, bpmnGraph);
+            Dictionary<string, string> idToRoleDict = GetIdToRoleDict(bpmnGraph);
+
+            // Create DCR activities
+            List<DcrActivity> dcrActivities = MakeDcrActivities(bpmnGraph, activityIdToDataType, idToRoleDict);
+            Dictionary<string, DcrActivity> idToDcrActivityDict = dcrActivities.ToDictionary(x => x.Id);
+
+            // Create DCR sub-processes
+            List<DcrSubProcess> dcrSubProcesses = MakeDcrSubProcesses(bpmnGraph);
+            Dictionary<string, DcrSubProcess> idToDcrSubProcessDict = dcrSubProcesses.ToDictionary(x => x.Id);
+            Dictionary<string, DcrSubProcess> idToNestedUnderSubProcessDict = GetSubProcessNestedElementsDict(bpmnGraph, idToDcrSubProcessDict);
+
+            // Create DCR nestings
+            Dictionary<string, DcrNesting> idToDcrNestingDict = MakeDcrNestings(nestingGroups, idToDcrActivityDict, idToDcrSubProcessDict);
+            List<DcrNesting> dcrNestings = idToDcrNestingDict.Values.ToList();
+            List<DcrFlowElement> nestedDcrElements = GetNestedDcrElements(idToDcrNestingDict);
+            Dictionary<string, DcrNesting> idToNestedUnder = GetNestedUnderDict(dcrNestings);
+
+            List<DcrFlowElement> allDcrFlowElements = dcrActivities.OfType<DcrFlowElement>().Concat(dcrSubProcesses.OfType<DcrFlowElement>()).Concat(dcrNestings.OfType<DcrFlowElement>()).ToList();
+            Dictionary<string, DcrFlowElement> idToDcrFlowElementDict = allDcrFlowElements.ToDictionary(x => x.Id);
+            NestSubProcessElements(idToNestedUnderSubProcessDict, allDcrFlowElements);
+
+            AddArrowsToDcrElements(bpmnGraph, idToDcrFlowElementDict, nestingGroups);
+            IncludeStartActivitiesAndSetThemToPending(bpmnGraph, idToDcrActivityDict);
+
+            List<DcrFlowElement> topLevelElements = allDcrFlowElements.Where(x => !idToNestedUnderSubProcessDict.ContainsKey(x.Id) && !idToNestedUnder.ContainsKey(x.Id)).ToList();
+            DcrGraph dcrGraph = new DcrGraph(topLevelElements);
+
+            return dcrGraph;
+        }
+
+        private static List<(List<BpmnFlowElement>, List<BpmnFlowElement>, string)> GetParallelGatewayNestingsAndSubsets(BpmnGraph bpmnGraph)
+        {
             List<(List<BpmnFlowElement>, List<BpmnFlowElement>, string)> nestingGroups = GetAllParallelGatewayNestingGroups(bpmnGraph);
 
             // Remove groups that does not point to anything
@@ -57,43 +100,7 @@ namespace BpmnToDcrConverter
                 }
             }
 
-            MakeBpmnStartEventsToActivities(bpmnGraph);
-
-            HandleExclusiveGateways(bpmnGraph);
-            HandleParallelGateways(bpmnGraph);
-
-            RemoveAllEndEvents(bpmnGraph);
-
-            Dictionary<string, DataType> variableToDataTypeDict = GetVariableToDataTypeDict(bpmnGraph);
-            Dictionary<string, DataType> activityIdToDataType = GetActivityIdToDataTypeDict(variableToDataTypeDict, bpmnGraph);
-            Dictionary<string, string> idToRoleDict = GetIdToRoleDict(bpmnGraph);
-
-            // Create DCR activities
-            List<DcrActivity> dcrActivities = MakeDcrActivities(bpmnGraph, activityIdToDataType, idToRoleDict);
-            Dictionary<string, DcrActivity> idToDcrActivityDict = dcrActivities.ToDictionary(x => x.Id);
-
-            // Create DCR sub-processes
-            List<DcrSubProcess> dcrSubProcesses = MakeDcrSubProcesses(bpmnGraph);
-            Dictionary<string, DcrSubProcess> idToDcrSubProcessDict = dcrSubProcesses.ToDictionary(x => x.Id);
-            Dictionary<string, DcrSubProcess> idToNestedUnderSubProcessDict = GetSubProcessNestedElementsDict(bpmnGraph, idToDcrSubProcessDict);
-
-            // Create DCR nestings
-            Dictionary<string, DcrNesting> idToDcrNestingDict = MakeDcrNestings(noDuplicateNestingGroups, idToDcrActivityDict, idToDcrSubProcessDict);
-            List<DcrNesting> dcrNestings = idToDcrNestingDict.Values.ToList();
-            List<DcrFlowElement> nestedDcrElements = GetNestedDcrElements(idToDcrNestingDict);
-            Dictionary<string, DcrNesting> idToNestedUnder = GetNestedUnderDict(dcrNestings);
-
-            List<DcrFlowElement> allDcrFlowElements = dcrActivities.OfType<DcrFlowElement>().Concat(dcrSubProcesses.OfType<DcrFlowElement>()).Concat(dcrNestings.OfType<DcrFlowElement>()).ToList();
-            Dictionary<string, DcrFlowElement> idToDcrFlowElementDict = allDcrFlowElements.ToDictionary(x => x.Id);
-            NestSubProcessElements(idToNestedUnderSubProcessDict, allDcrFlowElements);
-
-            AddArrowsToDcrElements(bpmnGraph, idToDcrFlowElementDict, noDuplicateNestingGroups);
-            IncludeStartActivitiesAndSetThemToPending(bpmnGraph, idToDcrActivityDict);
-
-            List<DcrFlowElement> topLevelElements = allDcrFlowElements.Where(x => !idToNestedUnderSubProcessDict.ContainsKey(x.Id) && !idToNestedUnder.ContainsKey(x.Id)).ToList();
-            DcrGraph dcrGraph = new DcrGraph(topLevelElements);
-
-            return dcrGraph;
+            return noDuplicateNestingGroups;
         }
 
         private static Dictionary<string, DcrNesting> GetNestedUnderDict(List<DcrNesting> nestings)
