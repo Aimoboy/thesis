@@ -18,8 +18,9 @@ namespace BpmnToDcrConverter
 
             MakeBpmnStartEventsToActivities(bpmnGraph);
 
-            HandleParallelGateways(bpmnGraph);
+            RemoveParallelGatewayConditions(bpmnGraph);
             HandleExclusiveGateways(bpmnGraph);
+            HandleParallelGateways(bpmnGraph);
 
             RemoveAllEndEvents(bpmnGraph);
 
@@ -54,6 +55,21 @@ namespace BpmnToDcrConverter
             DcrGraph dcrGraph = new DcrGraph(topLevelElements);
 
             return dcrGraph;
+        }
+
+        private static void RemoveParallelGatewayConditions(BpmnGraph bpmnGraph)
+        {
+            List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
+            List<BpmnParallelGateway> bpmnAnds = allBpmnElements.OfType<BpmnParallelGateway>().ToList();
+
+            // Parallel gateways ignore arrow conditions
+            foreach (BpmnParallelGateway gateway in bpmnAnds)
+            {
+                foreach (BpmnFlowArrow arrow in gateway.OutgoingArrows)
+                {
+                    arrow.Condition = "";
+                }
+            }
         }
 
         private static void PutNestingsInSubProcesses(Dictionary<string, DcrSubProcess> idToNestedUnderSubProcessDict, Dictionary<string, DcrFlowElement> idToDcrFlowElementDict, Dictionary<string, DcrNesting> idToDcrNestingDict, List<(List<BpmnFlowElement>, List<BpmnFlowElement>, string)> nestingGroups)
@@ -535,15 +551,6 @@ namespace BpmnToDcrConverter
         {
             List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
             List<BpmnParallelGateway> bpmnAnds = allBpmnElements.OfType<BpmnParallelGateway>().ToList();
-
-            // Parallel gateways ignore arrow conditions
-            foreach (BpmnParallelGateway gateway in bpmnAnds)
-            {
-                foreach (BpmnFlowArrow arrow in gateway.OutgoingArrows)
-                {
-                    arrow.Condition = "";
-                }
-            }
 
             foreach (BpmnParallelGateway gateway in bpmnAnds)
             {
