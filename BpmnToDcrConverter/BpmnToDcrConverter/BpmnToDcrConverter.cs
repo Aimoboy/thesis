@@ -18,8 +18,8 @@ namespace BpmnToDcrConverter
 
             MakeBpmnStartEventsToActivities(bpmnGraph);
 
-            HandleExclusiveGateways(bpmnGraph);
             HandleParallelGateways(bpmnGraph);
+            HandleExclusiveGateways(bpmnGraph);
 
             RemoveAllEndEvents(bpmnGraph);
 
@@ -69,7 +69,7 @@ namespace BpmnToDcrConverter
                 bool found = false;
                 foreach (var otherGroup in noDuplicateNestingGroups)
                 {
-                    if (IsListEqualOtherList(group.Item1, otherGroup.Item2))
+                    if (IsListEqualOtherList(group.Item1, otherGroup.Item1))
                     {
                         found = true;
                         break;
@@ -514,18 +514,17 @@ namespace BpmnToDcrConverter
             List<BpmnFlowElement> allBpmnElements = bpmnGraph.GetAllFlowElementsFlat();
             List<BpmnParallelGateway> bpmnAnds = allBpmnElements.OfType<BpmnParallelGateway>().ToList();
 
+            // Parallel gateways ignore arrow conditions
             foreach (BpmnParallelGateway gateway in bpmnAnds)
             {
-                // Handle combining gates first
-                // - Remove conditions on all arrows comin from parallel gateways
-                // - Skip all gatways by combining arrow conditions
-                // - Parallel gateways are needed for determining milestone arrows, so maybe determine this first?
+                foreach (BpmnFlowArrow arrow in gateway.OutgoingArrows)
+                {
+                    arrow.Condition = "";
+                }
+            }
 
-                // Check if parallel split
-                // Find all elements in each path and the gate where they join
-                // Somehow remember that these elements need to be nested and that the nesting should point to the elements pointed to by the parallel join
-                // Remove parallel gateways
-
+            foreach (BpmnParallelGateway gateway in bpmnAnds)
+            {
                 MakeArrowsSkipBpmnElement(gateway);
             }
 
