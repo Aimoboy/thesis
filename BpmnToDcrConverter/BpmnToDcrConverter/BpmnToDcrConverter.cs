@@ -45,6 +45,7 @@ namespace BpmnToDcrConverter
             List<DcrFlowElement> allDcrFlowElements = dcrActivities.OfType<DcrFlowElement>().Concat(dcrSubProcesses.OfType<DcrFlowElement>()).Concat(dcrNestings.OfType<DcrFlowElement>()).ToList();
             Dictionary<string, DcrFlowElement> idToDcrFlowElementDict = allDcrFlowElements.ToDictionary(x => x.Id);
             NestSubProcessElements(idToNestedUnderSubProcessDict, allDcrFlowElements);
+            PutNestingsInSubProcesses(idToNestedUnderSubProcessDict, idToDcrFlowElementDict, idToDcrNestingDict, nestingGroups);
 
             AddArrowsToDcrElements(bpmnGraph, idToDcrFlowElementDict, nestingGroups);
             IncludeStartActivitiesAndSetThemToPending(bpmnGraph, idToDcrActivityDict);
@@ -53,6 +54,26 @@ namespace BpmnToDcrConverter
             DcrGraph dcrGraph = new DcrGraph(topLevelElements);
 
             return dcrGraph;
+        }
+
+        private static void PutNestingsInSubProcesses(Dictionary<string, DcrSubProcess> idToNestedUnderSubProcessDict, Dictionary<string, DcrFlowElement> idToDcrFlowElementDict, Dictionary<string, DcrNesting> idToDcrNestingDict, List<(List<BpmnFlowElement>, List<BpmnFlowElement>, string)> nestingGroups)
+        {
+            foreach (var group in nestingGroups.OrderByDescending(x => x.Item1.Count))
+            {
+                List<string> elementIds = group.Item1.ConvertAll(x => x.Id);
+                if (elementIds.All(x => idToNestedUnderSubProcessDict.ContainsKey(x)))
+                {
+                    List<DcrFlowElement> dcrElements = elementIds.ConvertAll(x => idToDcrFlowElementDict[x]);
+                    DcrSubProcess dcrSubProcess = idToNestedUnderSubProcessDict[dcrElements.First().Id];
+                    DcrNesting dcrNesting = idToDcrNestingDict[group.Item3];
+                    
+                    List<DcrFlowElement> unwrappedNesting = dcrNesting.GetFlowElementsFlat().Where(x => !(x is DcrNesting)).ToList();
+                    dcrSubProcess.Elements = dcrSubProcess.Elements.Except(unwrappedNesting).ToList();
+                    dcrSubProcess.Elements.Add(dcrNesting);
+
+                    idToNestedUnderSubProcessDict[group.Item3] = dcrSubProcess;
+                }
+            }
         }
 
         private static List<(List<BpmnFlowElement>, List<BpmnFlowElement>, string)> GetParallelGatewayNestingsAndSubsets(BpmnGraph bpmnGraph)
@@ -418,6 +439,7 @@ namespace BpmnToDcrConverter
                 if (nestedUnderDict.ContainsKey(element))
                 {
                     activity.Included = false;
+                    activity.Pending = false;
                 }
             }
         }
