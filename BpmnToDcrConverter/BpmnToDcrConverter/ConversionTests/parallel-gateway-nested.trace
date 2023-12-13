@@ -1,0 +1,13 @@
+{
+	{s=StartEvent_1, 1=x, 2=Activity_1576wod, 3=Activity_0z7eybx, 4=Activity_0jpx8yy, 5=Activity_0rjb0m5, 6=Activity_02yrzyr, 7=Activity_0siow6h, 8=Activity_0mxwd9c, 9=Activity_1r6xtzb, 10=Activity_1l069v4, 11=Activity_0cmb1cy}
+	{(Normal run 1::required:accepting);s,1(0),3,4,5,6,7,8,9,10,11}
+	{(Normal run 2::required:accepting);s,1(1),2,6,7,8,4,5,10,9,11}
+	{(Try only top path::forbidden:dont care);s,1(0),3,9}
+	{(Try only middle path::forbidden:dont care);s,1(0),4,5,10}
+	{(Try only bottom path::forbidden:dont care);s,1(0),6,7,8,9}
+	{(Try only bottom path::forbidden:dont care);s,1(0),6,7,8,9}
+	{(Try almost all paths 1::forbidden:dont care);s,1(0),3,4,5,6,7,9}
+	{(Try almost all paths 2::forbidden:dont care);s,1(0),6,7,8,4,5,10}
+	{(Try almost all paths 3::forbidden:dont care);s,1(0),3,4,5,6,7,8,9,11}
+	{(Try almost all paths 4::forbidden:dont care);s,1(0),3,4,5,6,7,8,10,11}
+}

@@ -1,0 +1,10 @@
+{
+	{s=StartEvent_1, 1=Activity_125z8ms, 2=Activity_0cd7li4, 3=Activity_0jbm4m8, 4=Activity_04up46b, 5=Activity_1uzbnmk, 6=Activity_18ri8jj}
+	{(Top path first normal::required:accepting);s,1,2,3,4,5,6}
+	{(Bottom path first normal::required:accepting);s,1,4,5,2,3,6}
+	{(Alternating path normal::required:accepting);s,1,2,4,3,5,6}
+	{(Try last activity before finish bottom 1::forbidden:dont care);s,1,2,3,6}
+	{(Try last activity before finish bottom 2::forbidden:dont care);s,1,4,2,3,6}
+	{(Try last activity before finish top 1::forbidden:dont care);s,1,4,5,6}
+	{(Try last activity before finish top 2::forbidden:dont care);s,1,2,4,5,6}
+}
