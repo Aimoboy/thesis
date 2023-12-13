@@ -1,0 +1,10 @@
+{
+	{s=StartEvent_1, subS=Event_0kxhki9, 1=Activity_1a11rpu, 2=Activity_1eqdl85, 3=Activity_0yvp4qd, 4=Activity_0xtdnrq, 5=Activity_05knyjj, 6=Activity_1jk9n50, 7=Activity_13hqj09}
+	{(Normal run 1::required:accepting);s,1,subS,2,3,4,5,6,7}
+	{(Normal run 2::required:accepting);s,1,5,subS,2,6,3,4,7}
+	{(Forbidden run 1::forbidden:dont care);s,1,5,6,7}
+	{(Forbidden run 2::forbidden:dont care);s,1,2,3,4,7}
+	{(Forbidden run 3::forbidden:dont care);s,1,2,4}
+	{(Forbidden run 4::forbidden:dont care);s,1,3,4}
+	{(Forbidden run 5::forbidden:dont care);s,1,2,3,5,6,7}
+}

@@ -8,3 +8,4 @@ sub-process-simple
 sub-process-loop
 parallel-gateway-simple
 parallel-gateway-nested
+parallel-gateway-in-sub-process
