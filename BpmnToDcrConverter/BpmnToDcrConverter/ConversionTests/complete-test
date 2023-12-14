@@ -10,3 +10,4 @@ parallel-gateway-simple
 parallel-gateway-nested
 parallel-gateway-in-sub-process
 parallel-gateway-exclusive-gateway-mix
+roles

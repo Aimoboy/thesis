@@ -1,0 +1,8 @@
+{
+	{s1=Event_04nqpe1, s2=Event_0w3elbl, 1=Activity_01aupkn, 2=Activity_1nfqf0z, 3=Activity_1fidyj4, 4=Activity_1319w8h}
+	{(Normal 1::required:accepting);s1[Role1],1[Role1],2[Role1],s2[Role2],3[Role2],4[Role2]}
+	{(Normal 2::required:accepting);s1[Role1],s2[Role2],1[Role1],3[Role2],2[Role1],4[Role2]}
+	{(No roles::forbidden:dont care);s1,1,2,s2,3,4}
+	{(Swapped roles::forbidden:dont care);s1[Role2],1[Role2],2[Role2],s2[Role1],3[Role1],4[Role1]}
+	{(Missing one role::forbidden:dont care);s1[Role1],1[Role1],2[Role1],s2[Role2],3[Role2],4}
+}
