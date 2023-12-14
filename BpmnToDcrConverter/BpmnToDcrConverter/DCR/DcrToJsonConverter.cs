@@ -12,7 +12,7 @@ namespace BpmnToDcrConverter.Dcr
         public static string GetJsonString(DcrGraph dcrGraph)
         {
             DcrJsonModel jsonModel = DcrGraphToJsonTypes(dcrGraph);
-            return JsonSerializer.Serialize(jsonModel, new JsonSerializerOptions { IgnoreNullValues = true });
+            return JsonSerializer.Serialize(jsonModel, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
         }
 
         private static DcrJsonModel DcrGraphToJsonTypes(DcrGraph dcrGraph)
