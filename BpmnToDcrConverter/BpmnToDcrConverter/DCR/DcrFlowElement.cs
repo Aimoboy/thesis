@@ -8,6 +8,7 @@ namespace BpmnToDcrConverter.Dcr
     public abstract class DcrFlowElement
     {
         public string Id;
+        public string Role;
 
         public List<DcrFlowArrow> OutgoingArrows = new List<DcrFlowArrow>();
         public List<DcrFlowArrow> IncomingArrows = new List<DcrFlowArrow>();
@@ -19,9 +20,10 @@ namespace BpmnToDcrConverter.Dcr
 
         public string ArrowCondition = "";
 
-        public DcrFlowElement(string id)
+        public DcrFlowElement(string id, string role)
         {
             Id = id;
+            Role = role;
         }
 
         public void SetSize(int x, int y, int width, int height)
@@ -43,7 +45,6 @@ namespace BpmnToDcrConverter.Dcr
     public class DcrActivity : DcrFlowElement
     {
         public string Name;
-        public string Role;
 
         public bool Included;
         public bool Executed;
@@ -51,7 +52,7 @@ namespace BpmnToDcrConverter.Dcr
 
         public DataType DataType;
 
-        public DcrActivity(string id, string name, string role, bool included, bool executed, bool pending, DataType dataType) : base(id)
+        public DcrActivity(string id, string name, string role, bool included, bool executed, bool pending, DataType dataType) : base(id, role)
         {
             Name = name;
             Role = role;
@@ -75,13 +76,15 @@ namespace BpmnToDcrConverter.Dcr
         public string Name;
         public List<DcrFlowElement> Elements;
 
-        public DcrNesting(string id, string name, IEnumerable<DcrFlowElement> elements) : base(id)
+        public DcrNesting(string id, string name, string role, IEnumerable<DcrFlowElement> elements) : base(id, role)
         {
             Name = name;
             Elements = elements.ToList();
         }
 
-        public DcrNesting(string id, IEnumerable<DcrFlowElement> elements) : this(id, "", elements) { }
+        public DcrNesting(string id, string role, IEnumerable<DcrFlowElement> elements) : this(id, "", role, elements) { }
+
+        public DcrNesting(string id, IEnumerable<DcrFlowElement> elements) : this(id, "", "", elements) { }
 
         public override List<DcrFlowElement> GetFlowElementsFlat()
         {
@@ -100,7 +103,7 @@ namespace BpmnToDcrConverter.Dcr
 
         public string StartActivityId;
 
-        public DcrSubProcess(string id, string name, IEnumerable<DcrFlowElement> elements, bool included, bool executed, bool pending, string startActivityId) : base(id)
+        public DcrSubProcess(string id, string name, string role, IEnumerable<DcrFlowElement> elements, bool included, bool executed, bool pending, string startActivityId) : base(id, role)
         {
             Name = name;
             Elements = elements.ToList();
@@ -112,7 +115,7 @@ namespace BpmnToDcrConverter.Dcr
             StartActivityId = startActivityId;
         }
 
-        public DcrSubProcess(string id, IEnumerable<DcrFlowElement> elements) : this(id, "", elements, true, false, false, "") { }
+        public DcrSubProcess(string id, string role, IEnumerable<DcrFlowElement> elements) : this(id, "", role, elements, true, false, false, "") { }
 
         public override List<DcrFlowElement> GetFlowElementsFlat()
         {

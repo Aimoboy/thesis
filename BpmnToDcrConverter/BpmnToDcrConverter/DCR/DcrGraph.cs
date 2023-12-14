@@ -186,7 +186,7 @@ namespace BpmnToDcrConverter.Dcr
         {
             List<DcrFlowElement> allGraphElements = GetFlowElementsFlat();
             HashSet<string> allGraphElementsIds = allGraphElements.Select(x => x.Id).ToHashSet();
-            HashSet<string> roles = allGraphElements.OfType<DcrActivity>().Select(x => x.Role.ToLower()).ToHashSet();
+            HashSet<string> roles = allGraphElements.Select(x => x.Role.ToLower()).ToHashSet();
 
             List<TraceActivity> traceActivities = trace.TraceElements.OfType<TraceActivity>().ToList();
             List<TraceTransaction> traceTransactions = trace.TraceElements.OfType<TraceTransaction>().ToList();

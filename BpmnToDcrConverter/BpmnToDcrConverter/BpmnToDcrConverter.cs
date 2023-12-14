@@ -33,12 +33,12 @@ namespace BpmnToDcrConverter
             Dictionary<string, DcrActivity> idToDcrActivityDict = dcrActivities.ToDictionary(x => x.Id);
 
             // Create DCR sub-processes
-            List<DcrSubProcess> dcrSubProcesses = MakeDcrSubProcesses(bpmnGraph);
+            List<DcrSubProcess> dcrSubProcesses = MakeDcrSubProcesses(bpmnGraph, idToRoleDict);
             Dictionary<string, DcrSubProcess> idToDcrSubProcessDict = dcrSubProcesses.ToDictionary(x => x.Id);
             Dictionary<string, DcrSubProcess> idToNestedUnderSubProcessDict = GetSubProcessNestedElementsDict(bpmnGraph, idToDcrSubProcessDict);
 
             // Create DCR nestings
-            Dictionary<string, DcrNesting> idToDcrNestingDict = MakeDcrNestings(nestingGroups, idToDcrActivityDict, idToDcrSubProcessDict);
+            Dictionary<string, DcrNesting> idToDcrNestingDict = MakeDcrNestings(nestingGroups, idToDcrActivityDict, idToDcrSubProcessDict, idToRoleDict);
             List<DcrNesting> dcrNestings = idToDcrNestingDict.Values.ToList();
             List<DcrFlowElement> nestedDcrElements = GetNestedDcrElements(idToDcrNestingDict);
             Dictionary<string, DcrNesting> idToNestedUnder = GetNestedUnderDict(dcrNestings);
@@ -168,7 +168,7 @@ namespace BpmnToDcrConverter
             return elements.Distinct().ToList();
         }
 
-        private static Dictionary<string, DcrNesting> MakeDcrNestings(List<(List<BpmnFlowElement>, List<BpmnFlowElement>, string)> nestingGroups, Dictionary<string, DcrActivity> idToDcrActivityDict, Dictionary<string, DcrSubProcess> idToDcrSubProcessDict)
+        private static Dictionary<string, DcrNesting> MakeDcrNestings(List<(List<BpmnFlowElement>, List<BpmnFlowElement>, string)> nestingGroups, Dictionary<string, DcrActivity> idToDcrActivityDict, Dictionary<string, DcrSubProcess> idToDcrSubProcessDict, Dictionary<string, string> idToRoleDict)
         {
             Dictionary<string, DcrNesting> idToDcrNestingDict = new Dictionary<string, DcrNesting>();
 
@@ -194,7 +194,7 @@ namespace BpmnToDcrConverter
                     throw new Exception("");
                 }).ToList();
 
-                idToDcrNestingDict[group.Item3] = new DcrNesting(group.Item3, nestedElements);
+                idToDcrNestingDict[group.Item3] = new DcrNesting(group.Item3, idToRoleDict[group.Item1.First().Id], nestedElements);
             }
 
             return idToDcrNestingDict;
@@ -478,7 +478,7 @@ namespace BpmnToDcrConverter
             return idToNestedUnderSubProcessDict;
         }
 
-        private static List<DcrSubProcess> MakeDcrSubProcesses(BpmnGraph bpmnGraph)
+        private static List<DcrSubProcess> MakeDcrSubProcesses(BpmnGraph bpmnGraph, Dictionary<string, string> idToRoleDict)
         {
             List<BpmnSubProcess> bpmnSubProcesses = bpmnGraph.GetAllFlowElementsFlat().OfType<BpmnSubProcess>().ToList();
             return bpmnSubProcesses.ConvertAll(x =>
@@ -486,6 +486,7 @@ namespace BpmnToDcrConverter
                 return new DcrSubProcess(
                     x.Id,
                     "",
+                    idToRoleDict[x.Id],
                     new List<DcrActivity>(),
                     true,
                     false,
@@ -534,7 +535,7 @@ namespace BpmnToDcrConverter
             {
                 foreach (BpmnPoolLane lane in pool.Lanes)
                 {
-                    string role = lane.Role;
+                    string role = pool.Name;
 
                     List<string> laneElementIds = lane.GetFlowElementsFlat().ConvertAll(x => x.Id);
                     foreach (string id in laneElementIds)

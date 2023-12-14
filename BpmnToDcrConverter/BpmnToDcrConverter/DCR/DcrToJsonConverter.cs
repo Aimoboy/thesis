@@ -37,12 +37,14 @@ namespace BpmnToDcrConverter.Dcr
                 }
             }
 
+            List<Role> roles = allFlowElements.Select(x => x.Role).Distinct().Select(x => new Role { title = x }).ToList();
+
             return new DcrJsonModel
             {
                 title = dcrGraph.Name,
                 events = events,
                 rules = rules,
-                roles = new List<Role>()
+                roles = roles
             };
         }
 
@@ -68,10 +70,10 @@ namespace BpmnToDcrConverter.Dcr
                 {
                     id = activity.Id,
                     label = activity.Name,
+                    roles = activity.Role,
                     included = activity.Included,
                     pending = activity.Pending,
                     executed = activity.Executed,
-                    roles = activity.Role,
                     datatype = GetDataTypeString(activity.DataType)
                 };
 
@@ -90,6 +92,7 @@ namespace BpmnToDcrConverter.Dcr
                 {
                     id = nesting.Id,
                     label = nesting.Name,
+                    roles = nesting.Role,
                     type = "nesting"
                 };
 
@@ -111,6 +114,7 @@ namespace BpmnToDcrConverter.Dcr
                 {
                     id = subProcess.Id,
                     label = subProcess.Name,
+                    roles = subProcess.Role,
                     included = subProcess.Included,
                     executed = subProcess.Executed,
                     pending = subProcess.Pending,
