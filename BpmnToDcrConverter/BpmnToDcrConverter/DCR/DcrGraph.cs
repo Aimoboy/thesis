@@ -225,13 +225,6 @@ namespace BpmnToDcrConverter.Dcr
                     isValid = false;
                     continue;
                 }
-
-                if (activity.Role != "" && activity.Role.ToLower() != graphActivity.Role.ToLower())
-                {
-                    errorMessages.Add($"Activity with ID \"{activity.Id}\" has a given role of \"{activity.Role}\", but only the role \"{graphActivity.Role}\" can do this activity.");
-                    isValid = false;
-                    continue;
-                }
             }
 
             foreach (TraceTransaction transaction in traceTransactions)
