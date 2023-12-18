@@ -640,7 +640,7 @@ namespace BpmnToDcrConverter
 
         private static readonly Parser<Term> Variable =
             from letter in Parse.Letter
-            from rest in Parse.LetterOrDigit.Many().Text()
+            from rest in Parse.LetterOrDigit.Or(Parse.Char('-')).Or(Parse.Char('_')).Many().Text()
             select new Variable(letter + rest);
 
         private static readonly Parser<Term> TermParser =

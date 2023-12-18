@@ -22,11 +22,11 @@ namespace BpmnToDcrConverter
             HandleExclusiveGateways(bpmnGraph);
             HandleParallelGateways(bpmnGraph);
 
-            RemoveAllEndEvents(bpmnGraph);
-
             Dictionary<string, DataType> variableToDataTypeDict = GetVariableToDataTypeDict(bpmnGraph);
             Dictionary<string, DataType> activityIdToDataType = GetActivityIdToDataTypeDict(variableToDataTypeDict, bpmnGraph);
             Dictionary<string, string> idToRoleDict = GetIdToRoleDict(bpmnGraph);
+
+            RemoveAllEndEvents(bpmnGraph);
 
             // Create DCR activities
             List<DcrActivity> dcrActivities = MakeDcrActivities(bpmnGraph, activityIdToDataType, idToRoleDict);
