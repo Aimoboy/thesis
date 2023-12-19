@@ -271,7 +271,12 @@ namespace BpmnToDcrConverter.Bpmn
             }
 
             FlowElements = newFlowElements.ToList();
-            StartEventId = FlowElements.OfType<BpmnStartEvent>().First().Id;
+
+            BpmnStartEvent startEvent = FlowElements.OfType<BpmnStartEvent>().FirstOrDefault();
+            if (startEvent != null)
+            {
+                StartEventId = FlowElements.OfType<BpmnStartEvent>().First().Id;
+            }
         }
 
         public override void TestValidity()
