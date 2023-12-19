@@ -68,6 +68,10 @@ namespace BpmnToDcrConverter
                 foreach (BpmnFlowArrow arrow in gateway.OutgoingArrows)
                 {
                     arrow.Condition = "";
+
+                    BpmnFlowElement otherElement = arrow.Element;
+                    BpmnFlowArrow otherArrow = otherElement.IncomingArrows.Where(x => x.Element == gateway).First();
+                    otherArrow.Condition = "";
                 }
             }
         }
